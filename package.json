@@ -4,7 +4,13 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "build": "vite build",
+    "build": "npm run build:all",
+    "build:base": "vite build",
+    "build:chromium": "npm run build:base && node scripts/package-browser-builds.mjs chromium",
+    "build:firefox": "npm run build:base && node scripts/package-browser-builds.mjs firefox",
+    "build:all": "npm run build:base && node scripts/package-browser-builds.mjs all",
+    "firefox:run": "web-ext run --source-dir dist/firefox",
+    "firefox:build": "web-ext build --source-dir dist/firefox",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
@@ -15,6 +21,7 @@
     "jsdom": "^26.0.0",
     "typescript": "^5.0.0",
     "vite": "^6.0.0",
-    "vitest": "^2.0.0"
+    "vitest": "^2.0.0",
+    "web-ext": "^8.9.0"
   }
 }

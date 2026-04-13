@@ -1,6 +1,7 @@
 dist
 node_modules
 coverage
+web-ext-artifacts
 .DS_Store
 *.log
 .vite
