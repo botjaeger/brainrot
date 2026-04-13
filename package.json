@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/jsdom": "^28.0.1",
     "@types/node": "^22.0.0",
     "jsdom": "^26.0.0",
     "typescript": "^5.0.0",

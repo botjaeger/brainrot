@@ -7,7 +7,10 @@ import {
 
 export interface ShortsEngineEnvironment {
   document: Document;
-  window: Window;
+  window: {
+    location: Location;
+    MutationObserver?: typeof MutationObserver;
+  };
 }
 
 export interface ShortsEngineController {
@@ -41,6 +44,7 @@ export function startShortsEngine({
   let activeVideo: HTMLVideoElement | null = null;
   let observer: MutationObserver | null = null;
   let stopped = false;
+  const mutationObserverCtor = window.MutationObserver;
 
   const onEnded = (): void => {
     if (!activeVideo) {
@@ -103,14 +107,23 @@ export function startShortsEngine({
     attachActiveVideo(findActiveShortsVideo(document));
   };
 
-  observer = new window.MutationObserver(() => {
+  if (!mutationObserverCtor) {
+    rebind();
+    return {
+      stop,
+      rebind,
+    };
+  }
+
+  const mutationObserver = new mutationObserverCtor(() => {
     rebind();
   });
 
-  observer.observe(observationTarget, {
+  mutationObserver.observe(observationTarget, {
     childList: true,
     subtree: true,
   });
+  observer = mutationObserver;
 
   rebind();
 

@@ -71,7 +71,7 @@ describe("startShortsEngine", () => {
     firstVideo.dispatchEvent(new Event("ended"));
 
     expect(
-      addSpy.mock.calls.filter(([type]) => type === "ended"),
+      addSpy.mock.calls.filter((call) => call[0] === "ended"),
     ).toHaveLength(1);
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     expect(scrollIntoView).toHaveBeenCalledWith({
@@ -107,10 +107,10 @@ describe("startShortsEngine", () => {
     await flushMutations();
 
     expect(
-      addSpy.mock.calls.filter(([type]) => type === "ended"),
+      addSpy.mock.calls.filter((call) => call[0] === "ended"),
     ).toHaveLength(2);
     expect(
-      removeSpy.mock.calls.filter(([type]) => type === "ended"),
+      removeSpy.mock.calls.filter((call) => call[0] === "ended"),
     ).toHaveLength(1);
 
     firstVideo.dispatchEvent(new Event("ended"));
@@ -133,7 +133,7 @@ describe("startShortsEngine", () => {
     });
 
     expect(
-      addSpy.mock.calls.filter(([type]) => type === "ended"),
+      addSpy.mock.calls.filter((call) => call[0] === "ended"),
     ).toHaveLength(0);
 
     engine.stop();
