@@ -8,9 +8,12 @@
     "build:base": "vite build",
     "build:chromium": "npm run build:base && node scripts/package-browser-builds.mjs chromium",
     "build:firefox": "npm run build:base && node scripts/package-browser-builds.mjs firefox",
+    "build:safari": "npm run build:base && node scripts/package-safari-builds.mjs safari",
     "build:all": "npm run build:base && node scripts/package-browser-builds.mjs all",
     "firefox:run": "web-ext run --source-dir dist/firefox",
     "firefox:build": "web-ext build --source-dir dist/firefox",
+    "safari:build": "xcodebuild -project safari/AutoYouTubeShortsScroller.xcodeproj -scheme AutoYouTubeShortsScroller -configuration Debug -derivedDataPath /tmp/auto-youtube-shorts-scroller-safari CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build",
+    "safari:run": "npm run safari:build && open /tmp/auto-youtube-shorts-scroller-safari/Build/Products/Debug/AutoYouTubeShortsScroller.app",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
