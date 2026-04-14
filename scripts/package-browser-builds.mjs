@@ -1,11 +1,10 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = fileURLToPath(new URL("..", import.meta.url));
 const distDir = resolve(rootDir, "dist");
 const baseManifestPath = join(distDir, "manifest.json");
-const baseContentDir = join(distDir, "content");
 const firefoxOverlayPath = join(rootDir, "manifest.firefox.json");
 
 const target = process.argv[2] ?? "all";
@@ -13,6 +12,7 @@ const packageTargets = {
   chromium: join(distDir, "chromium"),
   firefox: join(distDir, "firefox"),
 };
+const packageTargetNames = new Set(Object.keys(packageTargets));
 
 function isPlainObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -27,8 +27,12 @@ function mergeDeep(baseValue, overlayValue) {
     const merged = { ...baseValue };
 
     for (const [key, value] of Object.entries(overlayValue)) {
-      merged[key] =
-        key in baseValue ? mergeDeep(baseValue[key], value) : value;
+      if (value === null) {
+        delete merged[key];
+      } else {
+        merged[key] =
+          key in baseValue ? mergeDeep(baseValue[key], value) : value;
+      }
     }
 
     return merged;
@@ -55,7 +59,18 @@ async function writePackage(packageName, manifest) {
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(outputDir, { recursive: true });
 
-  await cp(baseContentDir, join(outputDir, "content"), { recursive: true });
+  const entries = await readdir(distDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (entry.name === "manifest.json" || packageTargetNames.has(entry.name)) {
+      continue;
+    }
+
+    await cp(join(distDir, entry.name), join(outputDir, entry.name), {
+      recursive: true,
+    });
+  }
+
   await writeFile(
     join(outputDir, "manifest.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,

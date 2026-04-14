@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1280px;
+    height: 800px;
+    background: #0f0f0f;
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .layout {
+    display: flex;
+    align-items: center;
+    gap: 80px;
+  }
+
+  .popup {
+    width: 400px;
+    background: #121212;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 0 4px;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 22px;
+    font-weight: 800;
+    color: #f0f0f0;
+    letter-spacing: -0.03em;
+  }
+
+  .logo img { width: 56px; height: 56px; }
+
+  .version {
+    font-size: 11px;
+    font-weight: 500;
+    color: #949494;
+    margin-left: 4px;
+    margin-top: 4px;
+  }
+
+  .theme-icon { color: #949494; font-size: 22px; }
+
+  .hero {
+    background: #ffc20a;
+    border-radius: 32px;
+    padding: 24px;
+    margin-bottom: 32px;
+    color: #1a1a1a;
+    box-shadow: 0 0 30px rgba(255,194,10,0.3);
+  }
+
+  .hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .hero-title { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+  .hero-subtitle { margin: 4px 0 0; font-size: 14px; font-weight: 500; color: #3a2d00; }
+
+  .switch {
+    width: 64px; height: 36px;
+    background: #1a1a1a; border-radius: 34px;
+    position: relative;
+  }
+  .thumb {
+    position: absolute; width: 28px; height: 28px;
+    background: #f0f0f0; border-radius: 50%;
+    top: 4px; right: 4px;
+  }
+
+  .pill {
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.1); border-radius: 999px;
+    padding: 8px 16px; font-size: 13px; font-weight: 700;
+  }
+  .check {
+    width: 16px; height: 16px; min-width: 16px;
+    background: #1a1a1a; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #ffc20a; font-size: 10px;
+  }
+
+  .stats-label {
+    text-align: center;
+    font-size: 11px; font-weight: 800; letter-spacing: 0.1em;
+    color: #949494; padding: 4px; margin-bottom: 16px;
+  }
+
+  .stats-today {
+    text-align: center; font-size: 14px; font-weight: 700;
+    color: #949494; padding: 12px 0;
+  }
+  .stats-today span { color: #ffc20a; font-size: 20px; font-weight: 800; }
+
+  .stats-row {
+    background: #1a1a1a;
+    border: 1px solid transparent;
+    border-radius: 28px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .stats-row.active {
+    border-color: rgba(255,194,10,0.4);
+    box-shadow: 0 0 15px rgba(255,194,10,0.25);
+  }
+
+  .stats-left {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 14px; font-weight: 700; color: #f0f0f0;
+  }
+
+  .stats-right {
+    font-size: 14px; font-weight: 700; color: #f0f0f0;
+  }
+
+  .stats-row.active .stats-right { color: #ffc20a; }
+
+  .active-badge {
+    font-size: 11px; font-weight: 600; color: #ffc20a; opacity: 0.8;
+  }
+
+  /* Promo */
+  .promo { max-width: 420px; color: #f0f0f0; }
+  .promo h1 {
+    font-size: 44px; font-weight: 800;
+    letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 16px;
+  }
+  .promo h1 span { color: #ffc20a; }
+  .promo p { font-size: 20px; color: #949494; line-height: 1.5; }
+</style>
+</head>
+<body>
+  <div class="layout">
+    <div class="popup">
+      <div class="header">
+        <div class="logo">
+          <img src="/mascot.png" alt="">
+          <span>Brainrot</span>
+          <span class="version">v0.1.0</span>
+        </div>
+        <span class="theme-icon">&#9788;</span>
+      </div>
+      <div class="hero">
+        <div class="hero-top">
+          <div>
+            <div class="hero-title">Brainrot mode</div>
+            <div class="hero-subtitle">No taps. No swipes. Just watch.</div>
+          </div>
+          <div class="switch"><div class="thumb"></div></div>
+        </div>
+        <div class="pill">
+          <div class="check">&#10003;</div>
+          <span>TikTok detected</span>
+        </div>
+      </div>
+      <div class="stats-label">STATS &#8743;</div>
+      <div class="stats-today"><span>142</span> videos watched today</div>
+      <div class="stats-row active">
+        <div class="stats-left">
+          <span>TikTok</span>
+          <span class="active-badge">&#183; Active now</span>
+        </div>
+        <div class="stats-right">87 watched</div>
+      </div>
+      <div class="stats-row">
+        <div class="stats-left"><span>YouTube Shorts</span></div>
+        <div class="stats-right">42 watched</div>
+      </div>
+      <div class="stats-row">
+        <div class="stats-left"><span>Facebook Reels</span></div>
+        <div class="stats-right">13 watched</div>
+      </div>
+      <div class="stats-row">
+        <div class="stats-left"><span>Instagram Reels</span></div>
+        <div class="stats-right">0 watched</div>
+      </div>
+    </div>
+
+    <div class="promo">
+      <h1>Track your <span>scroll stats</span></h1>
+      <p>See how many videos you've watched per platform. Per-site counters update in real time as you scroll.</p>
+    </div>
+  </div>
+</body>
+</html>

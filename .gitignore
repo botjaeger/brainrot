@@ -4,4 +4,17 @@ coverage
 web-ext-artifacts
 .DS_Store
 *.log
+*.zip
 .vite
+*.tsbuildinfo
+
+# Compiled script artifacts (sources are .mjs)
+scripts/*.js
+scripts/*.d.ts
+
+# Claude Code / AI tooling
+.claude/
+.impeccable.md
+
+# Transient planning files
+.planning/debug/

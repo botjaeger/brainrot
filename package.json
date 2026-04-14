@@ -1,5 +1,5 @@
 {
-  "name": "auto-youtube-shorts-scroller",
+  "name": "brainrot",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -12,8 +12,12 @@
     "build:all": "npm run build:base && node scripts/package-browser-builds.mjs all",
     "firefox:run": "web-ext run --source-dir dist/firefox",
     "firefox:build": "web-ext build --source-dir dist/firefox",
-    "safari:build": "xcodebuild -project safari/AutoYouTubeShortsScroller.xcodeproj -scheme AutoYouTubeShortsScroller -configuration Debug -derivedDataPath /tmp/auto-youtube-shorts-scroller-safari CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build",
-    "safari:run": "npm run safari:build && open /tmp/auto-youtube-shorts-scroller-safari/Build/Products/Debug/AutoYouTubeShortsScroller.app",
+    "safari:build": "npm run build:safari && node scripts/build-safari-app.mjs",
+    "safari:build:signed": "npm run build:safari && node scripts/build-safari-app.mjs --signed",
+    "chrome:zip": "npm run build && node scripts/zip-chrome.mjs",
+    "firefox:zip": "npm run build && node scripts/zip-firefox.mjs",
+    "safari:run": "npm run safari:build && open /tmp/brainrot-safari/Build/Products/Debug/Brainrot.app",
+    "safari:run:signed": "npm run safari:build:signed && open /tmp/brainrot-safari/Build/Products/Debug/Brainrot.app",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"

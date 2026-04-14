@@ -26,6 +26,22 @@ function mockScrollIntoView(element: Element) {
   return scrollIntoView;
 }
 
+function setVideoPlaybackState(
+  video: HTMLVideoElement,
+  duration: number,
+  currentTime: number,
+) {
+  Object.defineProperty(video, "duration", {
+    configurable: true,
+    value: duration,
+  });
+  Object.defineProperty(video, "currentTime", {
+    configurable: true,
+    value: currentTime,
+    writable: true,
+  });
+}
+
 function getVideoById(document: Document, id: string): HTMLVideoElement {
   const video = document.querySelector<HTMLVideoElement>(id);
 
@@ -46,7 +62,24 @@ function getRendererById(document: Document, id: string): Element {
   return renderer;
 }
 
+function appendNextButton(document: Document): HTMLButtonElement {
+  const shortsRoot = document.createElement("ytd-shorts");
+  const wrapper = document.createElement("div");
+  wrapper.id = "navigation-button-down";
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.setAttribute("aria-label", "Next short");
+
+  wrapper.appendChild(button);
+  shortsRoot.appendChild(wrapper);
+  document.body.appendChild(shortsRoot);
+
+  return button;
+}
+
 async function flushMutations(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
   await new Promise((resolve) => setTimeout(resolve, 0));
 }
 
@@ -63,10 +96,14 @@ describe("startShortsEngine", () => {
     const nextShort = getRendererById(document, "#short-2");
     const scrollIntoView = mockScrollIntoView(nextShort);
 
+    firstVideo.loop = true;
+
     const engine = startShortsEngine({
       document,
       window: dom.window,
     });
+
+    expect(firstVideo.loop).toBe(false);
 
     firstVideo.dispatchEvent(new Event("ended"));
 
@@ -79,6 +116,78 @@ describe("startShortsEngine", () => {
       block: "nearest",
       inline: "nearest",
     });
+
+    engine.stop();
+  });
+
+  it("scrolls when playback reaches the end even if ended does not fire", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+
+    setVideoPlaybackState(firstVideo, 10, 9.9);
+
+    const engine = startShortsEngine({
+      document,
+      window: dom.window,
+    });
+
+    firstVideo.dispatchEvent(new Event("timeupdate"));
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    engine.stop();
+  });
+
+  it("clicks the Shorts next button when it is available", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextButton = appendNextButton(document);
+    const onClick = vi.fn();
+
+    nextButton.addEventListener("click", onClick);
+
+    const engine = startShortsEngine({
+      document,
+      window: dom.window,
+    });
+
+    firstVideo.dispatchEvent(new Event("ended"));
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+
+    engine.stop();
+  });
+
+  it("logs the advance path when diagnostics are enabled", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextButton = appendNextButton(document);
+    const infoSpy = vi.spyOn(console, "info").mockImplementation(() => undefined);
+
+    nextButton.addEventListener("click", () => undefined);
+
+    const engine = startShortsEngine({
+      document,
+      window: dom.window,
+      debugEnabled: true,
+    });
+
+    firstVideo.dispatchEvent(new Event("ended"));
+
+    expect(
+      infoSpy.mock.calls.find(
+        (call) =>
+          call[0] === "[Brainrot]" &&
+          call[1] === "advance" &&
+          call[2]?.method === "next-button" &&
+          call[2]?.selector === "#navigation-button-down button",
+      ),
+    ).toBeDefined();
 
     engine.stop();
   });

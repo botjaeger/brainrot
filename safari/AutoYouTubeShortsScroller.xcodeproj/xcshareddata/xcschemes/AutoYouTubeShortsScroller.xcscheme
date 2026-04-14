@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier="primary"
                BlueprintIdentifier="100000000000000000000030"
-               BuildableName="AutoYouTubeShortsScroller.app"
+               BuildableName="Brainrot.app"
                BlueprintName="AutoYouTubeShortsScroller"
                ReferencedContainer="container:AutoYouTubeShortsScroller.xcodeproj">
             </BuildableReference>
@@ -29,7 +29,7 @@
             <BuildableReference
                BuildableIdentifier="primary"
                BlueprintIdentifier="100000000000000000000031"
-               BuildableName="AutoYouTubeShortsScrollerExtension.appex"
+               BuildableName="BrainrotExtension.appex"
                BlueprintName="AutoYouTubeShortsScrollerExtension"
                ReferencedContainer="container:AutoYouTubeShortsScroller.xcodeproj">
             </BuildableReference>
@@ -51,7 +51,7 @@
          <BuildableReference
             BuildableIdentifier="primary"
             BlueprintIdentifier="100000000000000000000030"
-            BuildableName="AutoYouTubeShortsScroller.app"
+            BuildableName="Brainrot.app"
             BlueprintName="AutoYouTubeShortsScroller"
             ReferencedContainer="container:AutoYouTubeShortsScroller.xcodeproj">
          </BuildableReference>
@@ -68,7 +68,7 @@
          <BuildableReference
             BuildableIdentifier="primary"
             BlueprintIdentifier="100000000000000000000030"
-            BuildableName="AutoYouTubeShortsScroller.app"
+            BuildableName="Brainrot.app"
             BlueprintName="AutoYouTubeShortsScroller"
             ReferencedContainer="container:AutoYouTubeShortsScroller.xcodeproj">
          </BuildableReference>

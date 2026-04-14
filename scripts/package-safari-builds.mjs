@@ -1,11 +1,10 @@
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = fileURLToPath(new URL("..", import.meta.url));
 const distDir = resolve(rootDir, "dist");
 const baseManifestPath = join(distDir, "manifest.json");
-const baseContentDir = join(distDir, "content");
 const safariOverlayPath = join(rootDir, "manifest.safari.json");
 
 const target = process.argv[2] ?? "all";
@@ -54,7 +53,18 @@ async function writePackage(manifest) {
   await rm(outputDir, { recursive: true, force: true });
   await mkdir(outputDir, { recursive: true });
 
-  await cp(baseContentDir, join(outputDir, "content"), { recursive: true });
+  const entries = await readdir(distDir, { withFileTypes: true });
+
+  for (const entry of entries) {
+    if (entry.name === "manifest.json" || entry.name === "safari") {
+      continue;
+    }
+
+    await cp(join(distDir, entry.name), join(outputDir, entry.name), {
+      recursive: true,
+    });
+  }
+
   await writeFile(
     join(outputDir, "manifest.json"),
     `${JSON.stringify(manifest, null, 2)}\n`,

@@ -26,6 +26,11 @@ function buildSafariPackage() {
 function readSafariManifest() {
   const manifestPath = join(distDir, "safari", "manifest.json");
   return JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    name?: string;
+    permissions?: string[];
+    action?: {
+      default_popup?: string;
+    };
     browser_specific_settings?: {
       gecko?: {
         id?: string;
@@ -41,28 +46,64 @@ function readSafariManifest() {
   };
 }
 
+function readSafariContentScript() {
+  return readFileSync(join(distDir, "safari", "content", "index.js"), "utf8");
+}
+
+function readSafariPopupHtml() {
+  return readFileSync(join(distDir, "safari", "popup", "index.html"), "utf8");
+}
+
 beforeAll(() => {
   buildSafariPackage();
 });
 
 describe("safari packaging", () => {
   it("writes the staged Safari bundle", () => {
+    const contentBundle = readSafariContentScript();
+    const popupHtml = readSafariPopupHtml();
+
     expect(existsSync(join(distDir, "safari", "manifest.json"))).toBe(true);
     expect(existsSync(join(distDir, "safari", "content", "index.js"))).toBe(
       true,
     );
+    expect(existsSync(join(distDir, "safari", "popup", "popup.js"))).toBe(true);
+    expect(existsSync(join(distDir, "safari", "popup", "index.html"))).toBe(
+      true,
+    );
+    expect(popupHtml).toContain("Brainrot");
+
+    expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
+    expect(popupHtml).toContain("./popup.js");
+    expect(popupHtml).toContain("min-width: 320px;");
+    expect(contentBundle.trimStart().startsWith("import")).toBe(false);
   });
 
   it("keeps Safari compatibility metadata isolated", () => {
     const safariManifest = readSafariManifest();
     const contentScript = safariManifest.content_scripts?.[0];
 
+    expect(safariManifest.name).toBe("Brainrot");
+    expect(safariManifest.action?.default_popup).toBe("popup/index.html");
+    expect(safariManifest.permissions).toEqual(["scripting", "storage", "tabs"]);
     expect(
       safariManifest.browser_specific_settings?.safari?.strict_min_version,
     ).toBe("14.0");
     expect(safariManifest.browser_specific_settings?.gecko).toBeUndefined();
     expect(contentScript?.js).toEqual(["content/index.js"]);
-    expect(contentScript?.matches).toEqual(["https://www.youtube.com/shorts/*"]);
+    expect(contentScript?.matches).toEqual([
+      "https://www.youtube.com/shorts/*",
+      "https://www.facebook.com/reels",
+      "https://www.facebook.com/reels/*",
+      "https://www.facebook.com/reel",
+      "https://www.facebook.com/reel/*",
+      "https://www.tiktok.com/*",
+      "https://www.instagram.com/reels",
+      "https://www.instagram.com/reels/*",
+      "https://www.instagram.com/reel/*",
+    ]);
+    expect(readSafariPopupHtml()).toContain("./popup.js");
+    expect(readSafariPopupHtml()).toContain("min-width: 320px;");
   });
 
   it("points the Xcode project at the staged Safari bundle", () => {
@@ -71,6 +112,14 @@ describe("safari packaging", () => {
 
     expect(pbxproj).toContain("../dist/safari/manifest.json");
     expect(pbxproj).toContain("../dist/safari/content/index.js");
+    expect(pbxproj).toContain("Brainrot.app");
+    expect(pbxproj).toContain("BrainrotExtension.appex");
+    expect(pbxproj).toContain("com.botjaeger.brainrot");
+    expect(pbxproj).toContain("com.botjaeger.brainrot.extension");
+    expect(pbxproj).toContain(
+      "100000000000000000000018 /* BrainrotExtension.appex in Embed App Extensions */",
+    );
+    expect(pbxproj).toContain("10000000000000000000001A /* PBXTargetDependency */");
     expect(pbxproj).toContain("SafariWebExtensionHandler.swift");
     expect(extensionInfoPlist).toContain("com.apple.Safari.web-extension");
     expect(extensionInfoPlist).toContain("SafariWebExtensionHandler");

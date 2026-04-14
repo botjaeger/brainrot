@@ -14,7 +14,9 @@
 		100000000000000000000015 /* SafariServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 10000000000000000000000F /* SafariServices.framework */; };
 		100000000000000000000016 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000000D /* manifest.json */; };
 		100000000000000000000017 /* index.js in Resources */ = {isa = PBXBuildFile; fileRef = 10000000000000000000000E /* index.js */; };
-		100000000000000000000018 /* AutoYouTubeShortsScrollerExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 100000000000000000000008 /* AutoYouTubeShortsScrollerExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		100000000000000000000034 /* popup/index.html in Resources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000032 /* popup/index.html */; };
+		100000000000000000000035 /* popup/popup.js in Resources */ = {isa = PBXBuildFile; fileRef = 100000000000000000000033 /* popup/popup.js */; };
+		100000000000000000000018 /* BrainrotExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 100000000000000000000008 /* BrainrotExtension.appex */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -34,21 +36,23 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				100000000000000000000018 /* AutoYouTubeShortsScrollerExtension.appex in Embed App Extensions */,
+				100000000000000000000018 /* BrainrotExtension.appex in Embed App Extensions */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		100000000000000000000007 /* AutoYouTubeShortsScroller.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AutoYouTubeShortsScroller.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		100000000000000000000008 /* AutoYouTubeShortsScrollerExtension.appex */ = {isa = PBXFileReference; explicitFileType = wrapper.app-extension; includeInIndex = 0; path = AutoYouTubeShortsScrollerExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		100000000000000000000007 /* Brainrot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Brainrot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		100000000000000000000008 /* BrainrotExtension.appex */ = {isa = PBXFileReference; explicitFileType = wrapper.app-extension; includeInIndex = 0; path = BrainrotExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		100000000000000000000009 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoYouTubeShortsScroller/AppDelegate.swift; sourceTree = SOURCE_ROOT; };
 		10000000000000000000000A /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = AutoYouTubeShortsScroller/Info.plist; sourceTree = SOURCE_ROOT; };
 		10000000000000000000000B /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoYouTubeShortsScrollerExtension/SafariWebExtensionHandler.swift; sourceTree = SOURCE_ROOT; };
 		10000000000000000000000C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = AutoYouTubeShortsScrollerExtension/Info.plist; sourceTree = SOURCE_ROOT; };
 		10000000000000000000000D /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = ../dist/safari/manifest.json; sourceTree = SOURCE_ROOT; };
 		10000000000000000000000E /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ../dist/safari/content/index.js; sourceTree = SOURCE_ROOT; };
+		100000000000000000000032 /* popup/index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = ../dist/safari/popup/index.html; sourceTree = SOURCE_ROOT; };
+		100000000000000000000033 /* popup/popup.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = ../dist/safari/popup/popup.js; sourceTree = SOURCE_ROOT; };
 		10000000000000000000000F /* SafariServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SafariServices.framework; path = System/Library/Frameworks/SafariServices.framework; sourceTree = SDKROOT; };
 		100000000000000000000010 /* WebKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -87,8 +91,8 @@
 		100000000000000000000003 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				100000000000000000000007 /* AutoYouTubeShortsScroller.app */,
-				100000000000000000000008 /* AutoYouTubeShortsScrollerExtension.appex */,
+				100000000000000000000007 /* Brainrot.app */,
+				100000000000000000000008 /* BrainrotExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -109,6 +113,8 @@
 				10000000000000000000000C /* Info.plist */,
 				10000000000000000000000D /* manifest.json */,
 				10000000000000000000000E /* index.js */,
+				100000000000000000000032 /* popup/index.html */,
+				100000000000000000000033 /* popup/popup.js */,
 			);
 			path = AutoYouTubeShortsScrollerExtension;
 			sourceTree = SOURCE_ROOT;
@@ -139,8 +145,8 @@
 				10000000000000000000001A /* PBXTargetDependency */,
 			);
 			name = AutoYouTubeShortsScroller;
-			productName = AutoYouTubeShortsScroller;
-			productReference = 100000000000000000000007 /* AutoYouTubeShortsScroller.app */;
+			productName = Brainrot;
+			productReference = 100000000000000000000007 /* Brainrot.app */;
 			productType = "com.apple.product-type.application";
 		};
 		100000000000000000000031 /* AutoYouTubeShortsScrollerExtension */ = {
@@ -156,8 +162,8 @@
 			dependencies = (
 			);
 			name = AutoYouTubeShortsScrollerExtension;
-			productName = AutoYouTubeShortsScrollerExtension;
-			productReference = 100000000000000000000008 /* AutoYouTubeShortsScrollerExtension.appex */;
+			productName = BrainrotExtension;
+			productReference = 100000000000000000000008 /* BrainrotExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -196,6 +202,8 @@
 			files = (
 				100000000000000000000016 /* manifest.json in Resources */,
 				100000000000000000000017 /* index.js in Resources */,
+				100000000000000000000034 /* popup/index.html in Resources */,
+				100000000000000000000035 /* popup/popup.js in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -280,8 +288,8 @@
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				OTHER_LDFLAGS = ("-framework", "SafariServices", "-framework", "WebKit");
-				PRODUCT_BUNDLE_IDENTIFIER = com.tyson3101.AutoYouTubeShortsScroller;
-				PRODUCT_NAME = AutoYouTubeShortsScroller;
+				PRODUCT_BUNDLE_IDENTIFIER = com.botjaeger.brainrot;
+				PRODUCT_NAME = Brainrot;
 				SWIFT_VERSION = 6.0;
 			};
 			name = Debug;
@@ -303,8 +311,8 @@
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../Frameworks");
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				OTHER_LDFLAGS = ("-framework", "SafariServices", "-framework", "WebKit");
-				PRODUCT_BUNDLE_IDENTIFIER = com.tyson3101.AutoYouTubeShortsScroller;
-				PRODUCT_NAME = AutoYouTubeShortsScroller;
+				PRODUCT_BUNDLE_IDENTIFIER = com.botjaeger.brainrot;
+				PRODUCT_NAME = Brainrot;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 6.0;
@@ -327,8 +335,8 @@
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../../Frameworks");
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				OTHER_LDFLAGS = ("-framework", "SafariServices");
-				PRODUCT_BUNDLE_IDENTIFIER = com.tyson3101.AutoYouTubeShortsScroller.Extension;
-				PRODUCT_NAME = AutoYouTubeShortsScrollerExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.botjaeger.brainrot.extension;
+				PRODUCT_NAME = BrainrotExtension;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 6.0;
 			};
@@ -350,8 +358,8 @@
 				LD_RUNPATH_SEARCH_PATHS = ("$(inherited)", "@executable_path/../../Frameworks");
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				OTHER_LDFLAGS = ("-framework", "SafariServices");
-				PRODUCT_BUNDLE_IDENTIFIER = com.tyson3101.AutoYouTubeShortsScroller.Extension;
-				PRODUCT_NAME = AutoYouTubeShortsScrollerExtension;
+				PRODUCT_BUNDLE_IDENTIFIER = com.botjaeger.brainrot.extension;
+				PRODUCT_NAME = BrainrotExtension;
 				SKIP_INSTALL = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";

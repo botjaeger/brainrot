@@ -18,6 +18,11 @@ function buildBrowserPackages() {
 function readManifest(packageName: "chromium" | "firefox") {
   const manifestPath = join(distDir, packageName, "manifest.json");
   return JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    name?: string;
+    permissions?: string[];
+    action?: {
+      default_popup?: string;
+    };
     browser_specific_settings?: {
       gecko?: {
         id?: string;
@@ -30,6 +35,14 @@ function readManifest(packageName: "chromium" | "firefox") {
   };
 }
 
+function readContentScript(packageName: "chromium" | "firefox") {
+  return readFileSync(join(distDir, packageName, "content", "index.js"), "utf8");
+}
+
+function readPopupHtml(packageName: "chromium" | "firefox") {
+  return readFileSync(join(distDir, packageName, "popup", "index.html"), "utf8");
+}
+
 beforeAll(() => {
   buildBrowserPackages();
 });
@@ -38,31 +51,75 @@ describe("browser packaging", () => {
   it("writes self-contained Chromium and Firefox package roots", () => {
     expect(existsSync(join(distDir, "chromium", "manifest.json"))).toBe(true);
     expect(existsSync(join(distDir, "firefox", "manifest.json"))).toBe(true);
-    expect(existsSync(join(distDir, "chromium", "content", "index.js"))).toBe(
-      true,
-    );
-    expect(existsSync(join(distDir, "firefox", "content", "index.js"))).toBe(
-      true,
-    );
+    expect(existsSync(join(distDir, "chromium", "background", "index.js"))).toBe(true);
+    expect(existsSync(join(distDir, "chromium", "content", "index.js"))).toBe(true);
+    expect(existsSync(join(distDir, "chromium", "popup", "popup.js"))).toBe(true);
+    expect(existsSync(join(distDir, "firefox", "background", "index.js"))).toBe(true);
+    expect(existsSync(join(distDir, "firefox", "content", "index.js"))).toBe(true);
+    expect(existsSync(join(distDir, "firefox", "popup", "popup.js"))).toBe(true);
+    expect(existsSync(join(distDir, "chromium", "popup", "index.html"))).toBe(true);
+    expect(existsSync(join(distDir, "firefox", "popup", "index.html"))).toBe(true);
   });
 
   it("keeps Chromium free of Firefox-only metadata", () => {
     const chromiumManifest = readManifest("chromium");
     const contentScript = chromiumManifest.content_scripts?.[0];
+    const contentBundle = readContentScript("chromium");
+    const popupHtml = readPopupHtml("chromium");
 
+    expect(chromiumManifest.name).toBe("Brainrot");
+    expect(chromiumManifest.action?.default_popup).toBe("popup/index.html");
     expect(chromiumManifest.browser_specific_settings).toBeUndefined();
+    expect(chromiumManifest.permissions).toEqual(["scripting", "storage", "tabs"]);
     expect(contentScript?.js).toEqual(["content/index.js"]);
-    expect(contentScript?.matches).toEqual(["https://www.youtube.com/shorts/*"]);
+    expect(contentScript?.matches).toEqual([
+      "https://www.youtube.com/shorts/*",
+      "https://www.facebook.com/reels",
+      "https://www.facebook.com/reels/*",
+      "https://www.facebook.com/reel",
+      "https://www.facebook.com/reel/*",
+      "https://www.tiktok.com/*",
+      "https://www.instagram.com/reels",
+      "https://www.instagram.com/reels/*",
+      "https://www.instagram.com/reel/*",
+    ]);
+    expect(popupHtml).toContain("Brainrot");
+
+    expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
+    expect(popupHtml).toContain("./popup.js");
+    expect(popupHtml).toContain("min-width: 320px;");
+    expect(contentBundle.trimStart().startsWith("import")).toBe(false);
   });
 
   it("adds Firefox gecko metadata without changing the shared Shorts match", () => {
     const firefoxManifest = readManifest("firefox");
     const contentScript = firefoxManifest.content_scripts?.[0];
+    const contentBundle = readContentScript("firefox");
+    const popupHtml = readPopupHtml("firefox");
 
+    expect(firefoxManifest.name).toBe("Brainrot");
+    expect(firefoxManifest.action?.default_popup).toBe("popup/index.html");
     expect(firefoxManifest.browser_specific_settings?.gecko?.id).toBe(
-      "auto-youtube-shorts-scroller@example.com",
+      "brainrot@example.com",
     );
+    expect(firefoxManifest.permissions).toEqual(["scripting", "storage", "tabs"]);
     expect(contentScript?.js).toEqual(["content/index.js"]);
-    expect(contentScript?.matches).toEqual(["https://www.youtube.com/shorts/*"]);
+    expect(contentScript?.matches).toEqual([
+      "https://www.youtube.com/shorts/*",
+      "https://www.facebook.com/reels",
+      "https://www.facebook.com/reels/*",
+      "https://www.facebook.com/reel",
+      "https://www.facebook.com/reel/*",
+      "https://www.tiktok.com/*",
+      "https://www.instagram.com/reels",
+      "https://www.instagram.com/reels/*",
+      "https://www.instagram.com/reel/*",
+    ]);
+    expect(popupHtml).toContain("Brainrot");
+
+    expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
+    expect(popupHtml).toContain("./popup.js");
+    expect(popupHtml).toContain("min-width: 320px;");
+    expect(contentBundle.trimStart().startsWith("import")).toBe(false);
   });
 });

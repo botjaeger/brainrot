@@ -1,13 +1,13 @@
 <!-- GSD:project-start source:PROJECT.md -->
 ## Project
 
-**Auto YouTube Shorts Scroller**
+**Brainrot**
 
-A browser extension that automatically advances YouTube Shorts to the next Short when the current one reaches the end of playback. It targets Chrome, Microsoft Edge, Firefox, Brave, and desktop Safari on macOS.
+A browser extension that automatically advances supported short-form feeds to the next item when the current one reaches the end of playback. It targets Chrome, Microsoft Edge, Firefox, Brave, and desktop Safari on macOS.
 
 This project is intentionally narrow for v1. The goal is to ship the core auto-scroll behavior across the major desktop browsers without adding filters, block lists, account sync, or other extra feature surface.
 
-**Core Value:** Keep YouTube Shorts moving automatically across the major desktop browsers with as little manual interaction as possible.
+**Core Value:** Keep supported short-form feeds moving automatically across the major desktop browsers with as little manual interaction as possible.
 
 ### Constraints
 
