@@ -212,7 +212,7 @@ export function createPopupHtml(): string {
         color: var(--hero-text);
         position: relative;
         box-shadow: 0 8px 24px rgba(255, 193, 7, 0.15);
-        transition: background 0.3s, box-shadow 0.3s, transform 0.15s ease;
+        transition: transform 0.15s ease;
         cursor: pointer;
         user-select: none;
       }
@@ -451,7 +451,7 @@ export function createPopupHtml(): string {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
       .stats-left {
@@ -543,7 +543,6 @@ export function createPopupHtml(): string {
       /* Animations */
       .is-ready body {
         animation: fadeIn 0.3s ease-out;
-        transition: background 0.3s, color 0.3s;
       }
 
       @keyframes fadeIn {

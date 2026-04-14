@@ -9,7 +9,7 @@
     "build:chromium": "npm run build:base && node scripts/package-browser-builds.mjs chromium",
     "build:firefox": "npm run build:base && node scripts/package-browser-builds.mjs firefox",
     "build:safari": "npm run build:base && node scripts/package-safari-builds.mjs safari",
-    "build:all": "npm run build:base && node scripts/package-browser-builds.mjs all",
+    "build:all": "npm run build:base && node scripts/package-browser-builds.mjs all && node scripts/package-safari-builds.mjs safari",
     "firefox:run": "web-ext run --source-dir dist/firefox",
     "firefox:build": "web-ext build --source-dir dist/firefox",
     "safari:build": "npm run build:safari && node scripts/build-safari-app.mjs",

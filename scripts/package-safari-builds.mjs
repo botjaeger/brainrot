@@ -56,7 +56,7 @@ async function writePackage(manifest) {
   const entries = await readdir(distDir, { withFileTypes: true });
 
   for (const entry of entries) {
-    if (entry.name === "manifest.json" || entry.name === "safari") {
+    if (entry.name === "manifest.json" || entry.name === "safari" || entry.name === "chromium" || entry.name === "firefox") {
       continue;
     }
 

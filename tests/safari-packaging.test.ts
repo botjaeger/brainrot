@@ -110,8 +110,8 @@ describe("safari packaging", () => {
     const pbxproj = readFileSync(safariProjectPath, "utf8");
     const extensionInfoPlist = readFileSync(safariExtensionInfoPlist, "utf8");
 
-    expect(pbxproj).toContain("../dist/safari/manifest.json");
-    expect(pbxproj).toContain("../dist/safari/content/index.js");
+    expect(pbxproj).toContain("../dist/safari");
+    expect(pbxproj).toContain("lastKnownFileType = folder");
     expect(pbxproj).toContain("Brainrot.app");
     expect(pbxproj).toContain("BrainrotExtension.appex");
     expect(pbxproj).toContain("com.botjaeger.brainrot");
