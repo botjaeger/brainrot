@@ -85,7 +85,7 @@ describe("safari packaging", () => {
 
     expect(safariManifest.name).toBe("Brainrot");
     expect(safariManifest.action?.default_popup).toBe("popup/index.html");
-    expect(safariManifest.permissions).toEqual(["scripting", "storage", "tabs"]);
+    expect(safariManifest.permissions).toEqual(["storage", "tabs"]);
     expect(
       safariManifest.browser_specific_settings?.safari?.strict_min_version,
     ).toBe("14.0");

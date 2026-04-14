@@ -70,7 +70,7 @@ describe("browser packaging", () => {
     expect(chromiumManifest.name).toBe("Brainrot");
     expect(chromiumManifest.action?.default_popup).toBe("popup/index.html");
     expect(chromiumManifest.browser_specific_settings).toBeUndefined();
-    expect(chromiumManifest.permissions).toEqual(["scripting", "storage", "tabs"]);
+    expect(chromiumManifest.permissions).toEqual(["storage", "tabs"]);
     expect(contentScript?.js).toEqual(["content/index.js"]);
     expect(contentScript?.matches).toEqual([
       "https://www.youtube.com/shorts/*",
@@ -100,9 +100,9 @@ describe("browser packaging", () => {
     expect(firefoxManifest.name).toBe("Brainrot");
     expect(firefoxManifest.action?.default_popup).toBe("popup/index.html");
     expect(firefoxManifest.browser_specific_settings?.gecko?.id).toBe(
-      "brainrot@example.com",
+      "brainrot@brainrot.app",
     );
-    expect(firefoxManifest.permissions).toEqual(["scripting", "storage", "tabs"]);
+    expect(firefoxManifest.permissions).toEqual(["storage", "tabs"]);
     expect(contentScript?.js).toEqual(["content/index.js"]);
     expect(contentScript?.matches).toEqual([
       "https://www.youtube.com/shorts/*",

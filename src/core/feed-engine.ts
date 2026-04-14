@@ -215,10 +215,13 @@ export function startFeedEngine({
   let loopLockedVideo: HTMLVideoElement | null = null;
 
   const lockLoop = (video: HTMLVideoElement): void => {
-    loopDescriptor = Object.getOwnPropertyDescriptor(
-      HTMLMediaElement.prototype,
-      "loop",
-    );
+    let proto: object | null = Object.getPrototypeOf(video);
+    while (proto && !Object.getOwnPropertyDescriptor(proto, "loop")) {
+      proto = Object.getPrototypeOf(proto);
+    }
+    loopDescriptor = proto
+      ? Object.getOwnPropertyDescriptor(proto, "loop")
+      : undefined;
     video.loop = false;
     video.removeAttribute("loop");
     Object.defineProperty(video, "loop", {

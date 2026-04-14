@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Brainrot - Auto Scroll for Shorts & Reels",
+  "name": "Brainrot",
   "version": "0.1.1",
   "description": "Automatically scrolls short-form videos. No taps. No swipes. Just watch.",
   "icons": {
@@ -24,10 +24,15 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.youtube.com/*",
-        "https://www.facebook.com/*",
+        "https://www.youtube.com/shorts/*",
+        "https://www.facebook.com/reels",
+        "https://www.facebook.com/reels/*",
+        "https://www.facebook.com/reel",
+        "https://www.facebook.com/reel/*",
         "https://www.tiktok.com/*",
-        "https://www.instagram.com/*"
+        "https://www.instagram.com/reels",
+        "https://www.instagram.com/reels/*",
+        "https://www.instagram.com/reel/*"
       ],
       "js": ["content/index.js"],
       "run_at": "document_idle"

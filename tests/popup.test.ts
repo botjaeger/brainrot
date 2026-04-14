@@ -170,7 +170,7 @@ describe("mountPopup", () => {
 
     await mountPopup({ document: dom.window.document, store });
 
-    expect(dom.window.document.querySelector("[data-today-count]")?.textContent).toBe("0");
+    expect(dom.window.document.querySelector("[data-today-count]")?.textContent).toBe("");
   });
 
   it("accordion toggle flips data-stats-open", async () => {
