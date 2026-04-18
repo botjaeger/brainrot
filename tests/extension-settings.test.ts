@@ -108,19 +108,16 @@ describe("extension settings storage", () => {
     });
 
     expect(get).toHaveBeenCalledTimes(1);
-    expect(set).toHaveBeenCalledWith(
-      {
-        enabled: false,
-        debugLogging: true,
-        loopVideo: false,
-        pauseOnHover: true,
-        backgroundPlayback: true,
-        scrollStats: {},
-        todayDate: "",
-        todayStats: {},
-        theme: "light",
-      },
-      expect.any(Function),
-    );
+    expect(set).toHaveBeenCalledWith({
+      enabled: false,
+      debugLogging: true,
+      loopVideo: false,
+      pauseOnHover: true,
+      backgroundPlayback: true,
+      scrollStats: {},
+      todayDate: "",
+      todayStats: {},
+      theme: "light",
+    });
   });
 });
