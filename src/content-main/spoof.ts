@@ -30,25 +30,14 @@
     // Already defined non-configurable — acceptable
   }
 
-  // 3. Suppress visibilitychange in capture phase before site listeners see it
-  document.addEventListener(
-    "visibilitychange",
-    (e: Event) => {
-      e.stopImmediatePropagation();
-    },
-    { capture: true, passive: false },
-  );
+  // Note: visibilitychange events are intentionally NOT suppressed here.
+  // The spoofed document.hidden=false and visibilityState="visible" getters
+  // already prevent site players from pausing on tab-switch. Suppressing the
+  // event via stopImmediatePropagation would also block the feed engine's own
+  // onVisibilityChange listener, which handles background-poll and Safari
+  // elapsed-time fallback logic.
 
-  // 4. Also suppress legacy webkitvisibilitychange (some older site implementations)
-  document.addEventListener(
-    "webkitvisibilitychange",
-    (e: Event) => {
-      e.stopImmediatePropagation();
-    },
-    { capture: true, passive: false },
-  );
-
-  // 5. postMessage channel for Phase 7 toggle (no-op in Phase 5)
+  // 4. postMessage channel for Phase 7 toggle (no-op in Phase 5)
   window.addEventListener("message", (event: MessageEvent) => {
     if (event.source !== window) return;
     const data = event.data as { type?: string; enabled?: boolean } | null;
