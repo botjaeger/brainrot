@@ -1,4 +1,4 @@
-import type { FeedSiteAdapter } from "../core/feed-engine.js";
+import type { AdvanceOptions, FeedSiteAdapter } from "../core/feed-engine.js";
 import {
   findClickableMatch,
   scrollDocumentForward,
@@ -84,6 +84,7 @@ export const facebookReelsSiteAdapter: FeedSiteAdapter = {
   advancePlayback(
     document: Document,
     currentVideo: HTMLVideoElement,
+    _options?: AdvanceOptions,
   ): { method: string; selector?: string } {
     const nextButton = findClickableMatch(
       document,

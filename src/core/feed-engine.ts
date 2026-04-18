@@ -8,6 +8,10 @@ export interface FeedAdvanceResult {
   selector?: string;
 }
 
+export interface AdvanceOptions {
+  useKeyboard?: boolean;
+}
+
 export interface FeedSiteAdapter {
   name: string;
   siteKey: string;
@@ -16,6 +20,7 @@ export interface FeedSiteAdapter {
   advancePlayback(
     document: Document,
     currentVideo: HTMLVideoElement,
+    options?: AdvanceOptions,
   ): FeedAdvanceResult;
 }
 
@@ -27,7 +32,6 @@ export interface FeedEngineEnvironment {
   };
   adapters?: readonly FeedSiteAdapter[];
   debugEnabled?: boolean;
-  backgroundPlayback?: boolean;
   onAdvance?: (siteKey: string) => void;
 }
 
@@ -118,7 +122,6 @@ export function startFeedEngine({
   window,
   adapters = DEFAULT_FEED_SITES,
   debugEnabled = false,
-  backgroundPlayback = true,
   onAdvance,
 }: FeedEngineEnvironment): FeedEngineController {
   const adapter = selectAdapter(window.location, adapters);
@@ -223,20 +226,22 @@ export function startFeedEngine({
     }, 500);
   };
 
-  const advanceFeed = (trigger: "ended" | "timeupdate" | "visibility-return"): void => {
+  const advanceFeed = (trigger: "ended" | "timeupdate" | "visibility-return", { useKeyboard = false }: { useKeyboard?: boolean } = {}): void => {
     if (!activeVideo || playbackAdvanced) {
       return;
     }
 
-    // Never invoke DOM actions while hidden — they silently fail
-    if (getRealHidden(document)) {
+    // When hidden, only proceed if using keyboard (which may work while hidden)
+    const isHidden = getRealHidden(document);
+    if (isHidden && !useKeyboard) {
       return;
     }
 
     playbackAdvanced = true;
     let result: FeedAdvanceResult;
     try {
-      result = adapter.advancePlayback(document, activeVideo);
+      // Pass useKeyboard option to adapter if it supports it
+      result = adapter.advancePlayback(document, activeVideo, { useKeyboard });
     } catch (err) {
       playbackAdvanced = false; // allow retry on next trigger
       log?.("advance-error", { error: String(err) });
@@ -254,8 +259,14 @@ export function startFeedEngine({
 
   const onEnded = (): void => {
     if (getRealHidden(document)) {
-      videoEndedWhileHidden = true;
-      log?.("ended-while-hidden: deferring to visibility-return");
+      // Try keyboard advance while hidden - may work where clicks don't
+      log?.("ended-while-hidden: trying keyboard advance");
+      advanceFeed("ended", { useKeyboard: true });
+      // If advance didn't happen (playbackAdvanced still false), defer to visibility-return
+      if (!playbackAdvanced) {
+        videoEndedWhileHidden = true;
+        log?.("keyboard-advance-failed: deferring to visibility-return");
+      }
       return;
     }
     advanceFeed("ended");
@@ -284,10 +295,14 @@ export function startFeedEngine({
       maxTimeReached >= duration - 0.25 &&
       activeVideo.currentTime < 1
     ) {
-      // If hidden, defer to visibility-return (same as onEnded)
+      // If hidden, try keyboard advance first
       if (getRealHidden(document)) {
-        videoEndedWhileHidden = true;
-        log?.("loop-seek-while-hidden: deferring to visibility-return");
+        log?.("loop-seek-while-hidden: trying keyboard advance");
+        advanceFeed("ended", { useKeyboard: true });
+        if (!playbackAdvanced) {
+          videoEndedWhileHidden = true;
+          log?.("keyboard-advance-failed: deferring to visibility-return");
+        }
         return;
       }
       advanceFeed("ended");
@@ -309,8 +324,8 @@ export function startFeedEngine({
       userPaused = true;
       return;
     }
-    // Hidden pause: only resume if user did not pause intentionally AND backgroundPlayback is enabled
-    if (backgroundPlayback && !userPaused && !activeVideo.ended) {
+    // Hidden pause: resume if user did not pause intentionally
+    if (!userPaused && !activeVideo.ended) {
       log?.("pause-while-hidden: resuming");
       activeVideo.play().catch(() => { /* best effort */ });
     }
@@ -367,7 +382,7 @@ export function startFeedEngine({
         setTimeout(() => {
           if (!stopped) advanceFeed("visibility-return");
         }, 0);
-      } else if (backgroundPlayback && activeVideo && wasPlayingBeforeHidden && activeVideo.paused && !activeVideo.ended && !userPaused) {
+      } else if (activeVideo && wasPlayingBeforeHidden && activeVideo.paused && !activeVideo.ended && !userPaused) {
         activeVideo.play().catch(() => { /* best effort */ });
       }
     }

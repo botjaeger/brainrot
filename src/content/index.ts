@@ -43,7 +43,6 @@ function startEngineIfNeeded(): void {
     document,
     window,
     debugEnabled: currentSettings.debugLogging,
-    backgroundPlayback: currentSettings.backgroundPlayback,
     // Count every engine-driven advance directly — most reliable for sites
     // that use transforms/virtual scroll (Facebook, Instagram).
     onAdvance: (siteKey) => {
@@ -53,21 +52,13 @@ function startEngineIfNeeded(): void {
 }
 
 function applySettings(nextSettings: ExtensionSettings): void {
-  const bgPlaybackChanged = currentSettings.backgroundPlayback !== nextSettings.backgroundPlayback;
   const settingsChanged =
     currentSettings.enabled !== nextSettings.enabled ||
     currentSettings.debugLogging !== nextSettings.debugLogging;
 
   currentSettings = nextSettings;
 
-  // Forward backgroundPlayback changes to MAIN-world spoof via postMessage
-  if (bgPlaybackChanged) {
-    window.postMessage({ type: "brainrot:spoof", enabled: nextSettings.backgroundPlayback }, "*");
-  }
-
-  // Restart engine if enabled/debugLogging changed, OR if backgroundPlayback changed
-  // (engine needs the new backgroundPlayback value to guard onPause resume)
-  if (!settingsChanged && !bgPlaybackChanged && engine?.isRunning()) {
+  if (!settingsChanged && engine?.isRunning()) {
     return;
   }
 
@@ -218,9 +209,6 @@ async function initializeContentScript(): Promise<void> {
 
   // Another injection may have started during the async gap above.
   if (abort.signal.aborted) return;
-
-  // Sync MAIN-world spoof with stored setting on first load
-  window.postMessage({ type: "brainrot:spoof", enabled: currentSettings.backgroundPlayback }, "*");
 
   startEngineIfNeeded();
   setupScrollCounting(abort.signal);

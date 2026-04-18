@@ -1,13 +1,11 @@
 export interface ExtensionSettings {
   enabled: boolean;
   debugLogging: boolean;
-  backgroundPlayback: boolean;
 }
 
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   enabled: true,
   debugLogging: false,
-  backgroundPlayback: true,
 };
 
 type StorageSnapshot = Partial<Record<keyof ExtensionSettings, unknown>>;
@@ -37,7 +35,6 @@ type StorageApi = {
 const STORAGE_KEYS: Array<keyof ExtensionSettings> = [
   "enabled",
   "debugLogging",
-  "backgroundPlayback",
 ];
 
 function getStorageApi(): StorageApi | null {
@@ -63,10 +60,6 @@ function normalizeSettings(snapshot: StorageSnapshot): ExtensionSettings {
       typeof snapshot.debugLogging === "boolean"
         ? snapshot.debugLogging
         : DEFAULT_EXTENSION_SETTINGS.debugLogging,
-    backgroundPlayback:
-      typeof snapshot.backgroundPlayback === "boolean"
-        ? snapshot.backgroundPlayback
-        : DEFAULT_EXTENSION_SETTINGS.backgroundPlayback,
   };
 }
 
@@ -108,7 +101,7 @@ export function watchExtensionSettings(
       return;
     }
 
-    if (!("enabled" in changes) && !("debugLogging" in changes) && !("backgroundPlayback" in changes)) {
+    if (!("enabled" in changes) && !("debugLogging" in changes)) {
       return;
     }
 

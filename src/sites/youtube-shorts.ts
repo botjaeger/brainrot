@@ -1,4 +1,4 @@
-import type { FeedSiteAdapter } from "../core/feed-engine.js";
+import type { AdvanceOptions, FeedSiteAdapter } from "../core/feed-engine.js";
 import {
   advanceShortsPlayback,
   findActiveShortsVideo,
@@ -21,7 +21,8 @@ export const youtubeShortsSiteAdapter: FeedSiteAdapter = {
   advancePlayback(
     document: Document,
     currentVideo: HTMLVideoElement,
+    options?: AdvanceOptions,
   ): { method: string; selector?: string } {
-    return advanceShortsPlayback(document, currentVideo);
+    return advanceShortsPlayback(document, currentVideo, options);
   },
 };

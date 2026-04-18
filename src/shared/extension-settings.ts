@@ -3,7 +3,6 @@ export interface ExtensionSettings {
   debugLogging: boolean;
   loopVideo: boolean;
   pauseOnHover: boolean;
-  backgroundPlayback: boolean;
   scrollStats: Record<string, number>;
   todayDate: string;
   todayStats: Record<string, number>;
@@ -15,7 +14,6 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   debugLogging: false,
   loopVideo: false,
   pauseOnHover: true,
-  backgroundPlayback: true,
   scrollStats: {
     "facebook-reels": 0,
     "instagram-reels": 0,
@@ -68,7 +66,6 @@ const STORAGE_KEYS: Array<keyof ExtensionSettings> = [
   "debugLogging",
   "loopVideo",
   "pauseOnHover",
-  "backgroundPlayback",
   "scrollStats",
   "todayDate",
   "todayStats",
@@ -106,10 +103,6 @@ function normalizeSettings(snapshot: StorageSnapshot): ExtensionSettings {
       typeof snapshot.pauseOnHover === "boolean"
         ? snapshot.pauseOnHover
         : DEFAULT_EXTENSION_SETTINGS.pauseOnHover,
-    backgroundPlayback:
-      typeof snapshot.backgroundPlayback === "boolean"
-        ? snapshot.backgroundPlayback
-        : DEFAULT_EXTENSION_SETTINGS.backgroundPlayback,
     scrollStats:
       snapshot.scrollStats && typeof snapshot.scrollStats === "object"
         ? (snapshot.scrollStats as Record<string, number>)
@@ -163,7 +156,6 @@ async function writeStorageSnapshot(
     debugLogging: settings.debugLogging,
     loopVideo: settings.loopVideo,
     pauseOnHover: settings.pauseOnHover,
-    backgroundPlayback: settings.backgroundPlayback,
     scrollStats: settings.scrollStats,
     todayDate: settings.todayDate,
     todayStats: settings.todayStats,
@@ -213,7 +205,6 @@ export function watchExtensionSettings(
       !("debugLogging" in changes) &&
       !("loopVideo" in changes) &&
       !("pauseOnHover" in changes) &&
-      !("backgroundPlayback" in changes) &&
       !("scrollStats" in changes) &&
       !("todayDate" in changes) &&
       !("todayStats" in changes) &&

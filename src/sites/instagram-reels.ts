@@ -1,4 +1,4 @@
-import type { FeedSiteAdapter } from "../core/feed-engine.js";
+import type { AdvanceOptions, FeedSiteAdapter } from "../core/feed-engine.js";
 import { scrollDocumentForward } from "../shared/dom.js";
 
 const INSTAGRAM_VIDEO_SELECTORS = [
@@ -51,6 +51,7 @@ export const instagramReelsSiteAdapter: FeedSiteAdapter = {
   advancePlayback(
     document: Document,
     currentVideo: HTMLVideoElement,
+    _options?: AdvanceOptions,
   ): { method: string; selector?: string } {
     for (const selector of INSTAGRAM_NEXT_BUTTON_SELECTORS) {
       const btn = document.querySelector<HTMLElement>(selector);

@@ -617,17 +617,6 @@ export function createPopupHtml({ version }: { version: string }): string {
       </div>
     </div>
 
-    <div class="setting-row">
-      <div class="setting-label">
-        <span class="setting-title">Background playback</span>
-        <span class="setting-desc">Keep video playing when tab is inactive</span>
-      </div>
-      <label class="switch">
-        <input type="checkbox" id="bg-playback-toggle">
-        <span class="track"><span class="thumb"></span></span>
-      </label>
-    </div>
-
     <button class="stats-header" id="stats-toggle" type="button" aria-expanded="false">
       <span>STATS</span>
       <span class="stats-chevron">${iconArrowUpSvg}</span>
