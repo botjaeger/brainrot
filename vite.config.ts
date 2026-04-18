@@ -51,7 +51,7 @@ export default defineConfig({
         "background/index": resolve(rootDir, "src/background/index.ts"),
         "content/index": resolve(rootDir, "src/content/index.ts"),
         "content-main/spoof": resolve(rootDir, "src/content-main/spoof.ts"),
-        "popup/popup": resolve(rootDir, "src/popup/index.ts"),
+        "popup/index": resolve(rootDir, "src/popup/index.ts"),
       },
       output: {
         entryFileNames: "[name].js",

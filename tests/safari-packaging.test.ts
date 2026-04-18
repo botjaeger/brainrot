@@ -69,7 +69,7 @@ describe("safari packaging", () => {
     expect(existsSync(join(distDir, "safari", "content", "index.js"))).toBe(
       true,
     );
-    expect(existsSync(join(distDir, "safari", "popup", "popup.js"))).toBe(true);
+    expect(existsSync(join(distDir, "safari", "popup", "index.js"))).toBe(true);
     expect(existsSync(join(distDir, "safari", "popup", "index.html"))).toBe(
       true,
     );

@@ -55,10 +55,10 @@ describe("browser packaging", () => {
     expect(existsSync(join(distDir, "firefox", "manifest.json"))).toBe(true);
     expect(existsSync(join(distDir, "chromium", "background", "index.js"))).toBe(true);
     expect(existsSync(join(distDir, "chromium", "content", "index.js"))).toBe(true);
-    expect(existsSync(join(distDir, "chromium", "popup", "popup.js"))).toBe(true);
+    expect(existsSync(join(distDir, "chromium", "popup", "index.js"))).toBe(true);
     expect(existsSync(join(distDir, "firefox", "background", "index.js"))).toBe(true);
     expect(existsSync(join(distDir, "firefox", "content", "index.js"))).toBe(true);
-    expect(existsSync(join(distDir, "firefox", "popup", "popup.js"))).toBe(true);
+    expect(existsSync(join(distDir, "firefox", "popup", "index.js"))).toBe(true);
     expect(existsSync(join(distDir, "chromium", "popup", "index.html"))).toBe(true);
     expect(existsSync(join(distDir, "firefox", "popup", "index.html"))).toBe(true);
     expect(existsSync(join(distDir, "chromium", "content-main", "spoof.js"))).toBe(true);
