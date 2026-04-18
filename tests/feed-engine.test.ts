@@ -127,20 +127,21 @@ describe("document.hidden guard", () => {
 
     vi.useFakeTimers();
 
-    let hidden = true;
+    let hidden = false;
     Object.defineProperty(document, "hidden", {
       configurable: true,
       get: () => hidden,
     });
 
-    // Set up video as ended
+    let videoEnded = false;
+    let videoPaused = false;
     Object.defineProperty(firstVideo, "ended", {
       configurable: true,
-      get: () => true,
+      get: () => videoEnded,
     });
     Object.defineProperty(firstVideo, "paused", {
       configurable: true,
-      get: () => false,
+      get: () => videoPaused,
     });
     Object.defineProperty(firstVideo, "duration", {
       configurable: true,
@@ -148,7 +149,7 @@ describe("document.hidden guard", () => {
     });
     Object.defineProperty(firstVideo, "currentTime", {
       configurable: true,
-      get: () => 30,
+      get: () => videoEnded ? 30 : 5,
     });
 
     const engine = startFeedEngine({
@@ -156,14 +157,22 @@ describe("document.hidden guard", () => {
       window: dom.window,
     });
 
-    // Simulate tab becoming visible
+    // Simulate tab going hidden while video is playing
+    hidden = true;
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    // Simulate video ending while hidden
+    videoEnded = true;
+    firstVideo.dispatchEvent(new Event("ended"));
+
+    // Simulate tab returning to foreground
     hidden = false;
     document.dispatchEvent(new Event("visibilitychange"));
 
-    // advanceFeed should be deferred — not called yet
+    // advanceFeed is deferred via setTimeout(0) — not called yet
     expect(scrollIntoView).not.toHaveBeenCalled();
 
-    // After setTimeout(0) fires, it should advance
+    // After the deferred setTimeout fires, advance should occur
     vi.runAllTimers();
 
     expect(scrollIntoView).toHaveBeenCalledTimes(1);

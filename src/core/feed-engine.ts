@@ -115,6 +115,15 @@ export function startFeedEngine({
   const mutationObserverCtor = window.MutationObserver;
   const log = createDiagnosticLogger(debugEnabled);
 
+  // Background / visibility tracking state
+  let lastKnownTime = 0;
+  let lastKnownDuration = 0;
+  let wasPlayingBeforeHidden = false;
+  let videoEndedWhileHidden = false;
+  let userPaused = false;
+  let hideTimestamp = 0;
+  let backgroundPollTimer: ReturnType<typeof setInterval> | null = null;
+
   const isPlaybackNearEnd = (video: HTMLVideoElement): boolean => {
     const duration = video.duration;
 
@@ -155,8 +164,45 @@ export function startFeedEngine({
     }, 0);
   };
 
-  const advanceFeed = (trigger: "ended" | "timeupdate"): void => {
+  const clearBackgroundPoll = (): void => {
+    if (backgroundPollTimer !== null) {
+      clearInterval(backgroundPollTimer);
+      backgroundPollTimer = null;
+    }
+  };
+
+  const startBackgroundPoll = (): void => {
+    // Always clear first to prevent duplicate intervals
+    clearBackgroundPoll();
+
+    if (!wasPlayingBeforeHidden) {
+      return;
+    }
+
+    backgroundPollTimer = setInterval(() => {
+      if (stopped) {
+        clearBackgroundPoll();
+        return;
+      }
+
+      if (!activeVideo || videoEndedWhileHidden) {
+        return;
+      }
+
+      if (activeVideo.ended || isPlaybackNearEnd(activeVideo)) {
+        videoEndedWhileHidden = true;
+        log?.("background-poll: video ended while hidden");
+      }
+    }, 500);
+  };
+
+  const advanceFeed = (trigger: "ended" | "timeupdate" | "visibility-return"): void => {
     if (!activeVideo || playbackAdvanced) {
+      return;
+    }
+
+    // Never invoke DOM actions while hidden — they silently fail
+    if (document.hidden) {
       return;
     }
 
@@ -173,6 +219,11 @@ export function startFeedEngine({
   };
 
   const onEnded = (): void => {
+    if (document.hidden) {
+      videoEndedWhileHidden = true;
+      log?.("ended-while-hidden: deferring to visibility-return");
+      return;
+    }
     advanceFeed("ended");
   };
 
@@ -206,6 +257,76 @@ export function startFeedEngine({
   const trackTime = (): void => {
     if (activeVideo && activeVideo.currentTime > maxTimeReached) {
       maxTimeReached = activeVideo.currentTime;
+    }
+  };
+
+  // Pause handler: distinguish user-initiated pause (foreground) from site-driven
+  // pause (while hidden). Only resume site-driven pauses.
+  const onPause = (): void => {
+    if (!activeVideo || playbackAdvanced) return;
+    if (!document.hidden) {
+      // Foreground pause = user-initiated
+      userPaused = true;
+      return;
+    }
+    // Hidden pause: only resume if user did not pause intentionally
+    if (!userPaused && !activeVideo.ended) {
+      log?.("pause-while-hidden: resuming");
+      activeVideo.play().catch(() => { /* best effort */ });
+    }
+  };
+
+  // Play handler: user resumed, reset userPaused flag
+  const onPlay = (): void => {
+    userPaused = false;
+  };
+
+  // Visibility change handler: snapshot state on hide, check for completion on return
+  const onVisibilityChange = (): void => {
+    if (stopped) return;
+
+    if (document.hidden) {
+      // Tab going to background — snapshot current state
+      if (activeVideo) {
+        wasPlayingBeforeHidden = !activeVideo.paused;
+        lastKnownTime = activeVideo.currentTime;
+        lastKnownDuration = activeVideo.duration || 0;
+      } else {
+        wasPlayingBeforeHidden = false;
+      }
+      videoEndedWhileHidden = false;
+      hideTimestamp = Date.now();
+
+      if (wasPlayingBeforeHidden) {
+        startBackgroundPoll();
+      }
+    } else {
+      // Tab returning to foreground
+      clearBackgroundPoll();
+
+      const elapsedMs = Date.now() - hideTimestamp;
+      const remainingMs = (lastKnownDuration - lastKnownTime) * 1000;
+
+      const shouldAdvance = videoEndedWhileHidden ||
+        (activeVideo && wasPlayingBeforeHidden && (
+          activeVideo.ended ||
+          (lastKnownDuration > 0 && activeVideo.currentTime >= lastKnownDuration - 0.25) ||
+          (lastKnownDuration > 0 && lastKnownTime >= lastKnownDuration - 0.25 && activeVideo.currentTime < 1) ||
+          // Safari elapsed-time fallback: enough real time has passed for video to have finished
+          (hideTimestamp > 0 && lastKnownDuration > 0 && lastKnownTime > 0 &&
+           elapsedMs >= remainingMs - 500)
+        ));
+
+      videoEndedWhileHidden = false;
+
+      if (shouldAdvance) {
+        // Defer one tick so document.hidden is reliably false when advanceFeed checks it
+        setTimeout(() => {
+          if (!stopped) advanceFeed("visibility-return");
+        }, 0);
+      } else if (activeVideo && wasPlayingBeforeHidden && activeVideo.paused && !activeVideo.ended && !userPaused) {
+        activeVideo.play().catch(() => { /* best effort */ });
+      }
     }
   };
 
@@ -250,9 +371,12 @@ export function startFeedEngine({
     activeVideo.removeEventListener("timeupdate", onPlaybackProgress);
     activeVideo.removeEventListener("timeupdate", trackTime);
     activeVideo.removeEventListener("seeked", onSeeked);
+    activeVideo.removeEventListener("pause", onPause);
+    activeVideo.removeEventListener("play", onPlay);
     activeVideo = null;
     playbackAdvanced = false;
     maxTimeReached = 0;
+    userPaused = false;
   };
 
   const attachActiveVideo = (video: HTMLVideoElement | null): void => {
@@ -277,6 +401,8 @@ export function startFeedEngine({
       activeVideo.addEventListener("timeupdate", onPlaybackProgress);
       activeVideo.addEventListener("timeupdate", trackTime);
       activeVideo.addEventListener("seeked", onSeeked);
+      activeVideo.addEventListener("pause", onPause);
+      activeVideo.addEventListener("play", onPlay);
     }
   };
 
@@ -287,6 +413,8 @@ export function startFeedEngine({
 
     stopped = true;
     clearScheduledRebind();
+    clearBackgroundPoll();
+    document.removeEventListener("visibilitychange", onVisibilityChange);
     observer?.disconnect();
     observer = null;
     detachActiveVideo();
@@ -306,6 +434,9 @@ export function startFeedEngine({
 
     attachActiveVideo(adapter.findActiveVideo(document));
   };
+
+  // Register visibility change listener for background handling
+  document.addEventListener("visibilitychange", onVisibilityChange);
 
   if (!mutationObserverCtor) {
     rebind();
