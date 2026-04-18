@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "noEmit": true,
     "allowImportingTsExtensions": false,
-    "types": ["node", "vitest/globals"]
+    "types": ["node", "vitest/globals", "chrome"]
   },
   "include": ["src", "tests", "vite.config.ts", "vitest.config.ts"],
   "exclude": ["dist", "node_modules"]

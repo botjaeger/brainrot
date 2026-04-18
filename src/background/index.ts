@@ -19,6 +19,41 @@ async function reloadSupportedTabs(): Promise<void> {
   }
 }
 
+/**
+ * Safari fallback: register MAIN-world script dynamically.
+ * Chrome/Firefox use static manifest declaration; Safari may need dynamic registration.
+ * Silently fails if scripting.registerContentScripts with world: "MAIN" is unsupported.
+ */
+async function registerMainWorldSpoofFallback(): Promise<void> {
+  // Check if scripting API is available (may not be in all browsers/contexts)
+  if (typeof chrome?.scripting?.registerContentScripts !== "function") {
+    return;
+  }
+
+  try {
+    // Unregister first to avoid "script already registered" errors on reinstall
+    await chrome.scripting.unregisterContentScripts({
+      ids: ["brainrot-visibility-spoof"],
+    }).catch(() => {
+      // Script not registered yet — this is fine
+    });
+
+    await chrome.scripting.registerContentScripts([
+      {
+        id: "brainrot-visibility-spoof",
+        js: ["content-main/spoof.js"],
+        matches: SUPPORTED_URL_PATTERNS,
+        runAt: "document_start",
+        world: "MAIN",
+      },
+    ]);
+  } catch {
+    // Silently fail — static manifest declaration will work on Chrome/Firefox
+    // Safari may or may not support world: "MAIN" in registerContentScripts
+  }
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   void reloadSupportedTabs();
+  void registerMainWorldSpoofFallback();
 });

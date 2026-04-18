@@ -17,7 +17,7 @@
       "48": "assets/icon-48.png"
     }
   },
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "scripting"],
   "background": {
     "service_worker": "background/index.js"
   },
