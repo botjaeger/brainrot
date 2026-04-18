@@ -27,6 +27,7 @@ export interface FeedEngineEnvironment {
   };
   adapters?: readonly FeedSiteAdapter[];
   debugEnabled?: boolean;
+  backgroundPlayback?: boolean;
   onAdvance?: (siteKey: string) => void;
 }
 
@@ -92,6 +93,7 @@ export function startFeedEngine({
   window,
   adapters = DEFAULT_FEED_SITES,
   debugEnabled = false,
+  backgroundPlayback = true,
   onAdvance,
 }: FeedEngineEnvironment): FeedEngineController {
   const adapter = selectAdapter(window.location, adapters);
@@ -276,8 +278,8 @@ export function startFeedEngine({
       userPaused = true;
       return;
     }
-    // Hidden pause: only resume if user did not pause intentionally
-    if (!userPaused && !activeVideo.ended) {
+    // Hidden pause: only resume if user did not pause intentionally AND backgroundPlayback is enabled
+    if (backgroundPlayback && !userPaused && !activeVideo.ended) {
       log?.("pause-while-hidden: resuming");
       activeVideo.play().catch(() => { /* best effort */ });
     }
@@ -334,7 +336,7 @@ export function startFeedEngine({
         setTimeout(() => {
           if (!stopped) advanceFeed("visibility-return");
         }, 0);
-      } else if (activeVideo && wasPlayingBeforeHidden && activeVideo.paused && !activeVideo.ended && !userPaused) {
+      } else if (backgroundPlayback && activeVideo && wasPlayingBeforeHidden && activeVideo.paused && !activeVideo.ended && !userPaused) {
         activeVideo.play().catch(() => { /* best effort */ });
       }
     }
