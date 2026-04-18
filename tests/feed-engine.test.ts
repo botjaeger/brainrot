@@ -90,3 +90,212 @@ describe("startFeedEngine", () => {
     engine.stop();
   });
 });
+
+describe("document.hidden guard", () => {
+  it("does not advance feed when document.hidden is true on ended event", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+
+    // Make document appear hidden
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => true,
+    });
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+    });
+
+    firstVideo.dispatchEvent(new Event("ended"));
+
+    // Should NOT have advanced because document is hidden
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    engine.stop();
+  });
+
+  it("advances feed after visibility-return via setTimeout defer", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+
+    vi.useFakeTimers();
+
+    let hidden = true;
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => hidden,
+    });
+
+    // Set up video as ended
+    Object.defineProperty(firstVideo, "ended", {
+      configurable: true,
+      get: () => true,
+    });
+    Object.defineProperty(firstVideo, "paused", {
+      configurable: true,
+      get: () => false,
+    });
+    Object.defineProperty(firstVideo, "duration", {
+      configurable: true,
+      get: () => 30,
+    });
+    Object.defineProperty(firstVideo, "currentTime", {
+      configurable: true,
+      get: () => 30,
+    });
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+    });
+
+    // Simulate tab becoming visible
+    hidden = false;
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    // advanceFeed should be deferred — not called yet
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    // After setTimeout(0) fires, it should advance
+    vi.runAllTimers();
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    vi.useRealTimers();
+    engine.stop();
+  });
+});
+
+describe("userPaused flag", () => {
+  it("sets userPaused when pause fires while document is visible (foreground pause)", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+
+    // Document is NOT hidden (foreground)
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => false,
+    });
+
+    // Mock video.play so we can spy on it
+    const playSpy = vi.fn(() => Promise.resolve());
+    Object.defineProperty(firstVideo, "play", {
+      configurable: true,
+      value: playSpy,
+    });
+    Object.defineProperty(firstVideo, "ended", {
+      configurable: true,
+      get: () => false,
+    });
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+    });
+
+    // User pauses in foreground
+    firstVideo.dispatchEvent(new Event("pause"));
+
+    // Now simulate hidden state where site tries to trigger another pause
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => true,
+    });
+    firstVideo.dispatchEvent(new Event("pause"));
+
+    // play() should NOT have been called — userPaused=true prevents resume
+    expect(playSpy).not.toHaveBeenCalled();
+    // And advance should not have occurred either
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    engine.stop();
+  });
+
+  it("does not resume video while hidden when userPaused is false (site-driven pause)", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+
+    let hidden = false;
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => hidden,
+    });
+
+    const playSpy = vi.fn(() => Promise.resolve());
+    Object.defineProperty(firstVideo, "play", {
+      configurable: true,
+      value: playSpy,
+    });
+    Object.defineProperty(firstVideo, "ended", {
+      configurable: true,
+      get: () => false,
+    });
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+    });
+
+    // Switch to hidden state — site pauses video (no user action)
+    hidden = true;
+    firstVideo.dispatchEvent(new Event("pause"));
+
+    // play() SHOULD be called (site-driven pause while hidden, userPaused is false)
+    expect(playSpy).toHaveBeenCalledTimes(1);
+
+    engine.stop();
+  });
+
+  it("resets userPaused to false on play event", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+
+    let hidden = false;
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => hidden,
+    });
+
+    const playSpy = vi.fn(() => Promise.resolve());
+    Object.defineProperty(firstVideo, "play", {
+      configurable: true,
+      value: playSpy,
+    });
+    Object.defineProperty(firstVideo, "ended", {
+      configurable: true,
+      get: () => false,
+    });
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+    });
+
+    // User pauses in foreground → userPaused = true
+    firstVideo.dispatchEvent(new Event("pause"));
+
+    // User resumes → play event fires → userPaused = false
+    firstVideo.dispatchEvent(new Event("play"));
+
+    // Now switch to hidden and site pauses — should resume since userPaused=false
+    hidden = true;
+    firstVideo.dispatchEvent(new Event("pause"));
+
+    // play() was called from: the site-driven resume (userPaused is now false)
+    expect(playSpy).toHaveBeenCalledTimes(1);
+
+    engine.stop();
+  });
+});
