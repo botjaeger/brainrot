@@ -13,6 +13,7 @@ function manifestPlugin(): Plugin {
     name: "emit-manifest-json",
     generateBundle() {
       const manifest = readFileSync(resolve(rootDir, "manifest.json"), "utf8");
+      const { version } = JSON.parse(manifest) as { version: string };
       this.emitFile({
         type: "asset",
         fileName: "manifest.json",
@@ -21,7 +22,7 @@ function manifestPlugin(): Plugin {
       this.emitFile({
         type: "asset",
         fileName: "popup/index.html",
-        source: createPopupHtml(),
+        source: createPopupHtml({ version }),
       });
       for (const size of iconSizes) {
         this.emitFile({
@@ -49,6 +50,7 @@ export default defineConfig({
       input: {
         "background/index": resolve(rootDir, "src/background/index.ts"),
         "content/index": resolve(rootDir, "src/content/index.ts"),
+        "content-main/spoof": resolve(rootDir, "src/content-main/spoof.ts"),
         "popup/popup": resolve(rootDir, "src/popup/index.ts"),
       },
       output: {

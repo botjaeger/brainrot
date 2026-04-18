@@ -6,7 +6,7 @@
 (() => {
   // Guard: do not apply twice if script re-injected on extension reload
   const MARKER = "__brainrotSpoofActive";
-  const win = window as Window & { [key: string]: unknown };
+  const win = window as unknown as { [key: string]: unknown };
   if (win[MARKER]) return;
   win[MARKER] = true;
 
