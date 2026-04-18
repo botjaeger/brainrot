@@ -1,7 +1,7 @@
 /**
  * MAIN-world visibility spoof script.
  * Runs at document_start before site player code to prevent pause-on-tab-switch.
- * Sources: xjavascript.com, w3tutorials.net visibility API spoof patterns.
+ * Implements toggle via postMessage from content script.
  */
 (() => {
   // Guard: do not apply twice if script re-injected on extension reload
@@ -10,35 +10,58 @@
   if (win[MARKER]) return;
   win[MARKER] = true;
 
-  // 1. visibilityState: always "visible"
-  try {
-    Object.defineProperty(document, "visibilityState", {
-      get: () => "visible",
-      configurable: true,   // must remain configurable for phase-7 spoof toggle
-    });
-  } catch {
-    // Already defined non-configurable (second injection) — acceptable
+  // State: spoof starts enabled (default backgroundPlayback: true)
+  let spoofEnabled = true;
+
+  // Apply spoof: override document.visibilityState and document.hidden
+  function applySpoofOverrides(): void {
+    try {
+      Object.defineProperty(document, "visibilityState", {
+        get: () => "visible",
+        configurable: true,
+      });
+    } catch {
+      // Already defined non-configurable — acceptable
+    }
+    try {
+      Object.defineProperty(document, "hidden", {
+        get: () => false,
+        configurable: true,
+      });
+    } catch {
+      // Already defined non-configurable — acceptable
+    }
   }
 
-  // 2. hidden: always false
-  try {
-    Object.defineProperty(document, "hidden", {
-      get: () => false,
-      configurable: true,   // must remain configurable for phase-7 spoof toggle
-    });
-  } catch {
-    // Already defined non-configurable — acceptable
+  // Remove spoof: delete own properties to restore Document.prototype getters
+  function removeSpoofOverrides(): void {
+    try {
+      delete (document as unknown as Record<string, unknown>)["visibilityState"];
+    } catch {
+      // Non-configurable — acceptable
+    }
+    try {
+      delete (document as unknown as Record<string, unknown>)["hidden"];
+    } catch {
+      // Non-configurable — acceptable
+    }
   }
 
-  // Note: visibilitychange events are intentionally NOT suppressed here.
-  // The spoofed document.hidden=false and visibilityState="visible" getters
-  // already prevent site players from pausing on tab-switch. Suppressing the
-  // event via stopImmediatePropagation would also block the feed engine's own
-  // onVisibilityChange listener, which handles background-poll and Safari
-  // elapsed-time fallback logic.
+  // Apply spoof on initial load (before content script sends first postMessage)
+  applySpoofOverrides();
 
-  // TODO(phase-7, #<issue>): implement spoof enable/disable toggle via postMessage
-  // The message channel listener will be added here once the toggle
-  // protocol is defined. Sending { type: "brainrot:spoof", enabled: boolean }
-  // from the content script will reconfigure the spoofed getters.
+  // Listen for toggle messages from ISOLATED-world content script
+  window.addEventListener("message", (event) => {
+    if (event.source !== window) return;
+    const data = event.data as { type?: string; enabled?: boolean } | null;
+    if (data?.type !== "brainrot:spoof" || typeof data.enabled !== "boolean") return;
+
+    if (data.enabled && !spoofEnabled) {
+      applySpoofOverrides();
+      spoofEnabled = true;
+    } else if (!data.enabled && spoofEnabled) {
+      removeSpoofOverrides();
+      spoofEnabled = false;
+    }
+  });
 })();
