@@ -77,6 +77,15 @@ const iconTrashSvg = `
   </svg>
 `.trim();
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function createPopupHtml({ version }: { version: string }): string {
   return `<!doctype html>
 <html lang="en" data-enabled="true" data-theme="light" data-stats-open="false">
@@ -555,7 +564,7 @@ export function createPopupHtml({ version }: { version: string }): string {
       <div class="logo">
         <img class="logo-mascot" src="../assets/mascot.png" alt="" />
         <span>${APP_NAME}</span>
-        <span class="version">v${version}</span>
+        <span class="version">v${escapeHtml(version)}</span>
       </div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" type="button">
         ${iconSunSvg}
