@@ -37,12 +37,8 @@
   // onVisibilityChange listener, which handles background-poll and Safari
   // elapsed-time fallback logic.
 
-  // 4. postMessage channel for Phase 7 toggle (no-op in Phase 5)
-  window.addEventListener("message", (event: MessageEvent) => {
-    if (event.source !== window) return;
-    const data = event.data as { type?: string; enabled?: boolean } | null;
-    if (data?.type === "brainrot:spoof" && typeof data.enabled === "boolean") {
-      // Phase 7 will implement enable/disable here
-    }
-  });
+  // TODO(phase-7): implement spoof enable/disable toggle via postMessage
+  // The message channel listener will be added here once the toggle
+  // protocol is defined. Sending { type: "brainrot:spoof", enabled: boolean }
+  // from the content script will reconfigure the spoofed getters.
 })();
