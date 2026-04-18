@@ -77,7 +77,7 @@ describe("safari packaging", () => {
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
-    expect(popupHtml).toContain("./popup.js");
+    expect(popupHtml).toContain("./index.js");
     expect(popupHtml).toContain("min-width: 320px;");
     expect(contentBundle.trimStart().startsWith("import")).toBe(false);
   });
@@ -105,7 +105,7 @@ describe("safari packaging", () => {
     );
     expect(mainWorldScript).toBeDefined();
     expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
-    expect(readSafariPopupHtml()).toContain("./popup.js");
+    expect(readSafariPopupHtml()).toContain("./index.js");
     expect(readSafariPopupHtml()).toContain("min-width: 320px;");
   });
 

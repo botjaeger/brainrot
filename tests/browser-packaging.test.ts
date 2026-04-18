@@ -91,7 +91,7 @@ describe("browser packaging", () => {
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
-    expect(popupHtml).toContain("./popup.js");
+    expect(popupHtml).toContain("./index.js");
     expect(popupHtml).toContain("min-width: 320px;");
     expect(contentBundle.trimStart().startsWith("import")).toBe(false);
   });
@@ -124,7 +124,7 @@ describe("browser packaging", () => {
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
-    expect(popupHtml).toContain("./popup.js");
+    expect(popupHtml).toContain("./index.js");
     expect(popupHtml).toContain("min-width: 320px;");
     expect(contentBundle.trimStart().startsWith("import")).toBe(false);
   });
