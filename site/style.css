@@ -215,3 +215,159 @@ body {
     max-width: 480px;
   }
 }
+
+/* ── Phase 11: Features Section ─────────────────────────────────────────── */
+
+.features {
+  padding: 48px 0;
+}
+
+.features-heading {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 32px;
+  text-align: center;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+.feature-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
+
+.feature-icon {
+  width: 32px;
+  height: 32px;
+  fill: var(--hero-bg);
+}
+
+.feature-title {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--ink);
+  margin: 8px 0 4px;
+}
+
+.feature-body {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ── Phase 11: Supported Sites Section ───────────────────────────────────── */
+
+.sites {
+  padding: 0 0 48px 0;
+}
+
+.sites-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.site-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-icon {
+  opacity: 0.7;
+}
+
+.site-icon svg {
+  fill: var(--ink);
+}
+
+.site-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ── Phase 11: Footer ────────────────────────────────────────────────────── */
+
+.footer {
+  background: var(--card-bg);
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 24px 0;
+}
+
+:root[data-theme="dark"] .footer {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+.footer-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.footer-copy {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.footer-links {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+  align-items: center;
+}
+
+.footer-links a {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.footer-links a:hover {
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+/* ── Phase 11: Responsive overrides (640px) ──────────────────────────────── */
+
+@media (min-width: 640px) {
+  .features-heading {
+    text-align: left;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sites-row {
+    gap: 32px;
+  }
+
+  .footer-inner {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
+}
