@@ -63,7 +63,8 @@ async function registerMainWorldSpoofFallback(): Promise<void> {
       "not allowed",
       "not permitted",
     ];
-    const shouldSuppress = SUPPRESSED_FRAGMENTS.some((f) => message.includes(f));
+    const lowerMessage = message.toLowerCase();
+    const shouldSuppress = SUPPRESSED_FRAGMENTS.some((f) => lowerMessage.includes(f));
     if (!shouldSuppress) {
       console.warn("[Brainrot] registerContentScripts failed:", message);
     }
