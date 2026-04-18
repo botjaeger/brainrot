@@ -10,7 +10,13 @@ const SUPPORTED_URL_PATTERNS = [
 // way to get a working content script is a page reload, which creates a fresh
 // content script world with valid API bindings.
 async function reloadSupportedTabs(): Promise<void> {
-  const tabs = await chrome.tabs.query({ url: SUPPORTED_URL_PATTERNS });
+  let tabs: chrome.tabs.Tab[];
+  try {
+    tabs = await chrome.tabs.query({ url: SUPPORTED_URL_PATTERNS });
+  } catch {
+    // tabs permission not granted or API unavailable — skip reload
+    return;
+  }
 
   for (const tab of tabs) {
     if (tab.id != null) {
