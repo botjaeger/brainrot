@@ -17,6 +17,7 @@ function makeSettings(overrides: Partial<ExtensionSettings> = {}): ExtensionSett
     debugLogging: false,
     loopVideo: false,
     pauseOnHover: true,
+    backgroundPlayback: true,
     scrollStats: { "youtube-shorts": 0, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
     todayDate: "",
     todayStats: { "youtube-shorts": 0, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
