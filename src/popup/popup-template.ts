@@ -1,6 +1,5 @@
 import {
   APP_NAME,
-  APP_VERSION,
 } from "../shared/brand.js";
 
 const iconSunSvg = `
@@ -78,7 +77,7 @@ const iconTrashSvg = `
   </svg>
 `.trim();
 
-export function createPopupHtml(): string {
+export function createPopupHtml({ version }: { version: string }): string {
   return `<!doctype html>
 <html lang="en" data-enabled="true" data-theme="light" data-stats-open="false">
   <head>
@@ -556,7 +555,7 @@ export function createPopupHtml(): string {
       <div class="logo">
         <img class="logo-mascot" src="../assets/mascot.png" alt="" />
         <span>${APP_NAME}</span>
-        <span class="version">v${APP_VERSION}</span>
+        <span class="version">v${version}</span>
       </div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" type="button">
         ${iconSunSvg}

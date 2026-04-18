@@ -14,7 +14,7 @@
   try {
     Object.defineProperty(document, "visibilityState", {
       get: () => "visible",
-      configurable: false,
+      configurable: true,   // was false - enables Phase 7 toggle
     });
   } catch {
     // Already defined non-configurable (second injection) — acceptable
@@ -24,7 +24,7 @@
   try {
     Object.defineProperty(document, "hidden", {
       get: () => false,
-      configurable: false,
+      configurable: true,   // was false - enables Phase 7 toggle
     });
   } catch {
     // Already defined non-configurable — acceptable

@@ -5,7 +5,7 @@ import { mountPopup } from "../src/popup/popup.js";
 import type { ExtensionSettings, ExtensionSettingsStore } from "../src/shared/extension-settings.js";
 
 function loadPopupDom() {
-  return new JSDOM(createPopupHtml(), {
+  return new JSDOM(createPopupHtml({ version: "0.0.0-test" }), {
     pretendToBeVisual: true,
     url: "https://brainrot.test/",
   });

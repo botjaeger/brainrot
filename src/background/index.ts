@@ -47,9 +47,16 @@ async function registerMainWorldSpoofFallback(): Promise<void> {
         world: "MAIN",
       },
     ]);
-  } catch {
-    // Silently fail — static manifest declaration will work on Chrome/Firefox
-    // Safari may or may not support world: "MAIN" in registerContentScripts
+  } catch (err) {
+    // Only suppress errors that indicate the feature is unsupported.
+    // Log unexpected errors so Safari QA can catch registration failures.
+    const message = err instanceof Error ? err.message : String(err);
+    if (
+      !message.includes("not supported") &&
+      !message.includes("not implemented")
+    ) {
+      console.warn("[Brainrot] registerContentScripts failed:", message);
+    }
   }
 }
 
