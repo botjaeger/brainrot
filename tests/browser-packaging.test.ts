@@ -31,6 +31,8 @@ function readManifest(packageName: "chromium" | "firefox") {
     content_scripts?: Array<{
       js?: string[];
       matches?: string[];
+      world?: string;
+      run_at?: string;
     }>;
   };
 }
@@ -59,6 +61,8 @@ describe("browser packaging", () => {
     expect(existsSync(join(distDir, "firefox", "popup", "popup.js"))).toBe(true);
     expect(existsSync(join(distDir, "chromium", "popup", "index.html"))).toBe(true);
     expect(existsSync(join(distDir, "firefox", "popup", "index.html"))).toBe(true);
+    expect(existsSync(join(distDir, "chromium", "content-main", "spoof.js"))).toBe(true);
+    expect(existsSync(join(distDir, "firefox", "content-main", "spoof.js"))).toBe(true);
   });
 
   it("keeps Chromium free of Firefox-only metadata", () => {
@@ -70,19 +74,20 @@ describe("browser packaging", () => {
     expect(chromiumManifest.name).toBe("Brainrot");
     expect(chromiumManifest.action?.default_popup).toBe("popup/index.html");
     expect(chromiumManifest.browser_specific_settings).toBeUndefined();
-    expect(chromiumManifest.permissions).toEqual(["storage", "tabs"]);
+    expect(chromiumManifest.permissions).toEqual(["storage", "tabs", "scripting"]);
     expect(contentScript?.js).toEqual(["content/index.js"]);
     expect(contentScript?.matches).toEqual([
-      "https://www.youtube.com/shorts/*",
-      "https://www.facebook.com/reels",
-      "https://www.facebook.com/reels/*",
-      "https://www.facebook.com/reel",
-      "https://www.facebook.com/reel/*",
+      "https://www.youtube.com/*",
+      "https://www.facebook.com/*",
       "https://www.tiktok.com/*",
-      "https://www.instagram.com/reels",
-      "https://www.instagram.com/reels/*",
-      "https://www.instagram.com/reel/*",
+      "https://www.instagram.com/*",
     ]);
+    const mainWorldScript = chromiumManifest.content_scripts?.find(
+      (cs: { world?: string }) => cs.world === "MAIN"
+    );
+    expect(mainWorldScript).toBeDefined();
+    expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
+    expect(mainWorldScript?.run_at).toBe("document_start");
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
@@ -102,19 +107,20 @@ describe("browser packaging", () => {
     expect(firefoxManifest.browser_specific_settings?.gecko?.id).toBe(
       "brainrot@brainrot.app",
     );
-    expect(firefoxManifest.permissions).toEqual(["storage", "tabs"]);
+    expect(firefoxManifest.permissions).toEqual(["storage", "tabs", "scripting"]);
     expect(contentScript?.js).toEqual(["content/index.js"]);
     expect(contentScript?.matches).toEqual([
-      "https://www.youtube.com/shorts/*",
-      "https://www.facebook.com/reels",
-      "https://www.facebook.com/reels/*",
-      "https://www.facebook.com/reel",
-      "https://www.facebook.com/reel/*",
+      "https://www.youtube.com/*",
+      "https://www.facebook.com/*",
       "https://www.tiktok.com/*",
-      "https://www.instagram.com/reels",
-      "https://www.instagram.com/reels/*",
-      "https://www.instagram.com/reel/*",
+      "https://www.instagram.com/*",
     ]);
+    const mainWorldScript = firefoxManifest.content_scripts?.find(
+      (cs: { world?: string }) => cs.world === "MAIN"
+    );
+    expect(mainWorldScript).toBeDefined();
+    expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
+    expect(mainWorldScript?.run_at).toBe("document_start");
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');

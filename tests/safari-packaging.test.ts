@@ -42,6 +42,8 @@ function readSafariManifest() {
     content_scripts?: Array<{
       js?: string[];
       matches?: string[];
+      world?: string;
+      run_at?: string;
     }>;
   };
 }
@@ -71,6 +73,7 @@ describe("safari packaging", () => {
     expect(existsSync(join(distDir, "safari", "popup", "index.html"))).toBe(
       true,
     );
+    expect(existsSync(join(distDir, "safari", "content-main", "spoof.js"))).toBe(true);
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
@@ -85,23 +88,23 @@ describe("safari packaging", () => {
 
     expect(safariManifest.name).toBe("Brainrot");
     expect(safariManifest.action?.default_popup).toBe("popup/index.html");
-    expect(safariManifest.permissions).toEqual(["storage", "tabs"]);
+    expect(safariManifest.permissions).toEqual(["storage", "tabs", "scripting"]);
     expect(
       safariManifest.browser_specific_settings?.safari?.strict_min_version,
     ).toBe("14.0");
     expect(safariManifest.browser_specific_settings?.gecko).toBeUndefined();
     expect(contentScript?.js).toEqual(["content/index.js"]);
     expect(contentScript?.matches).toEqual([
-      "https://www.youtube.com/shorts/*",
-      "https://www.facebook.com/reels",
-      "https://www.facebook.com/reels/*",
-      "https://www.facebook.com/reel",
-      "https://www.facebook.com/reel/*",
+      "https://www.youtube.com/*",
+      "https://www.facebook.com/*",
       "https://www.tiktok.com/*",
-      "https://www.instagram.com/reels",
-      "https://www.instagram.com/reels/*",
-      "https://www.instagram.com/reel/*",
+      "https://www.instagram.com/*",
     ]);
+    const mainWorldScript = safariManifest.content_scripts?.find(
+      (cs: { world?: string }) => cs.world === "MAIN"
+    );
+    expect(mainWorldScript).toBeDefined();
+    expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
     expect(readSafariPopupHtml()).toContain("./popup.js");
     expect(readSafariPopupHtml()).toContain("min-width: 320px;");
   });
