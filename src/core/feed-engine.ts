@@ -319,9 +319,11 @@ export function startFeedEngine({
           activeVideo.ended ||
           (lastKnownDuration > 0 && activeVideo.currentTime >= lastKnownDuration - 0.25) ||
           (lastKnownDuration > 0 && lastKnownTime >= lastKnownDuration - 0.25 && activeVideo.currentTime < 1) ||
-          // Safari elapsed-time fallback: enough real time has passed for video to have finished
+          // Safari elapsed-time fallback: enough real time has passed for the video to
+          // have finished. Only apply when remaining time was > 500 ms at hide time,
+          // so a brief tab-switch near the end does not trigger a spurious advance.
           (hideTimestamp > 0 && lastKnownDuration > 0 && lastKnownTime > 0 &&
-           elapsedMs >= remainingMs - 500)
+           remainingMs > 500 && elapsedMs >= remainingMs - 500)
         ));
 
       videoEndedWhileHidden = false;
