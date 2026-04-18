@@ -11,6 +11,6 @@
     "allowImportingTsExtensions": false,
     "types": ["node", "vitest/globals", "chrome"]
   },
-  "include": ["src", "tests", "vite.config.ts", "vitest.config.ts"],
+  "include": ["src", "tests", "site", "vite.config.ts", "vite.site.config.ts", "vitest.config.ts"],
   "exclude": ["dist", "node_modules"]
 }

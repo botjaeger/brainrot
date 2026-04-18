@@ -20,7 +20,9 @@
     "safari:run:signed": "npm run safari:build:signed && open /tmp/brainrot-safari/Build/Products/Debug/Brainrot.app",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev:site": "vite --config vite.site.config.ts",
+    "build:site": "vite build --config vite.site.config.ts"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.40",
