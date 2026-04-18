@@ -92,7 +92,7 @@ export function createPopupHtml({ version }: { version: string }): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${APP_NAME}</title>
+    <title>${escapeHtml(APP_NAME)}</title>
     <style>
       :root {
         --bg: #fcfcf9;
