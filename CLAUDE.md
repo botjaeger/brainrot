@@ -80,6 +80,17 @@ Firefox differences live entirely in `manifest.firefox.json` (overlay). The merg
 
 Safari packaging is a separate flow: `build:safari` produces `dist/safari/`, then `scripts/build-safari-app.mjs` invokes `xcodebuild` to wrap it in the Xcode project under `safari/`.
 
+### Versioning
+
+Two version schemes coexist:
+
+| Context | Format | Example | Where |
+|---------|--------|---------|-------|
+| Git tags / manifest | semver | `0.1.2` | `manifest.json`, `git tag` |
+| GSD milestones | vX.Y | `v1.2` | `.planning/MILESTONES.md` |
+
+Git tags match the extension version in `manifest.json`. GSD milestones are internal planning labels unrelated to semver.
+
 ### Testing
 
 Tests run in `vitest` with `environment: "node"`. Browser DOM is provided by `jsdom` — tests instantiate it directly:
