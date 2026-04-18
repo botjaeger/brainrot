@@ -284,6 +284,12 @@ export function startFeedEngine({
       maxTimeReached >= duration - 0.25 &&
       activeVideo.currentTime < 1
     ) {
+      // If hidden, defer to visibility-return (same as onEnded)
+      if (getRealHidden(document)) {
+        videoEndedWhileHidden = true;
+        log?.("loop-seek-while-hidden: deferring to visibility-return");
+        return;
+      }
       advanceFeed("ended");
     }
   };
