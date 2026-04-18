@@ -14,7 +14,7 @@
   try {
     Object.defineProperty(document, "visibilityState", {
       get: () => "visible",
-      configurable: true,   // was false - enables Phase 7 toggle
+      configurable: true,   // must remain configurable for phase-7 spoof toggle
     });
   } catch {
     // Already defined non-configurable (second injection) — acceptable
@@ -24,7 +24,7 @@
   try {
     Object.defineProperty(document, "hidden", {
       get: () => false,
-      configurable: true,   // was false - enables Phase 7 toggle
+      configurable: true,   // must remain configurable for phase-7 spoof toggle
     });
   } catch {
     // Already defined non-configurable — acceptable
@@ -37,7 +37,7 @@
   // onVisibilityChange listener, which handles background-poll and Safari
   // elapsed-time fallback logic.
 
-  // TODO(phase-7): implement spoof enable/disable toggle via postMessage
+  // TODO(phase-7, #<issue>): implement spoof enable/disable toggle via postMessage
   // The message channel listener will be added here once the toggle
   // protocol is defined. Sending { type: "brainrot:spoof", enabled: boolean }
   // from the content script will reconfigure the spoofed getters.
