@@ -170,17 +170,27 @@ async function writeStorageSnapshot(
     theme: settings.theme,
   };
 
-  const maybeWrite = storage.local.set(snapshot);
-
-  if (isPromiseLike<void>(maybeWrite)) {
-    await maybeWrite;
-    return;
-  }
-
-  await new Promise<void>((resolve) => {
-    storage.local.set(snapshot, () => {
-      resolve();
+  // Use callback form first - works for both promise and callback APIs.
+  // In MV3 Chrome/Firefox, this returns a Promise AND calls the callback.
+  // We primarily await the Promise when available; callback is fallback.
+  return new Promise<void>((resolve, reject) => {
+    const maybePromise = storage.local.set(snapshot, () => {
+      // Callback for older APIs or as fallback
+      const g = globalThis as typeof globalThis & {
+        chrome?: { runtime?: { lastError?: { message?: string } } };
+      };
+      const lastError = g.chrome?.runtime?.lastError;
+      if (lastError) {
+        reject(new Error(lastError.message ?? "Storage write failed"));
+      } else {
+        resolve();
+      }
     });
+
+    // If the API returns a promise (MV3), prefer it over callback
+    if (isPromiseLike<void>(maybePromise)) {
+      maybePromise.then(resolve).catch(reject);
+    }
   });
 }
 

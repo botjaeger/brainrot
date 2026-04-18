@@ -51,13 +51,24 @@ async function writeScrollStorage(data: ScrollStorage): Promise<void> {
   const storage = getStorageApi();
   if (!storage) return;
 
-  const maybeWrite = storage.local.set(data);
-  if (isPromiseLike<void>(maybeWrite)) {
-    await maybeWrite;
-    return;
-  }
-  await new Promise<void>((resolve) => {
-    storage.local.set(data, () => resolve());
+  // Use callback form - works for both promise and callback APIs
+  return new Promise<void>((resolve, reject) => {
+    const maybePromise = storage.local.set(data, () => {
+      const g = globalThis as typeof globalThis & {
+        chrome?: { runtime?: { lastError?: { message?: string } } };
+      };
+      const lastError = g.chrome?.runtime?.lastError;
+      if (lastError) {
+        reject(new Error(lastError.message ?? "Storage write failed"));
+      } else {
+        resolve();
+      }
+    });
+
+    // If the API returns a promise (MV3), prefer it
+    if (isPromiseLike<void>(maybePromise)) {
+      maybePromise.then(resolve).catch(reject);
+    }
   });
 }
 
