@@ -14,7 +14,13 @@ export interface BrowserStoreUrls {
 }
 
 export const STORE_URLS: BrowserStoreUrls = {
-  chrome: { state: "coming_soon" },
-  firefox: { state: "coming_soon" },
+  chrome: {
+    state: "live",
+    url: "https://chromewebstore.google.com/detail/brainrot-auto-scroll-for/epnminblfookppcemedaonmnanembgik",
+  },
+  firefox: {
+    state: "live",
+    url: "https://addons.mozilla.org/en-US/firefox/addon/brainrot-auto-scroll/",
+  },
   safari: { state: "coming_soon" },
 };
