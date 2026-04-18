@@ -388,10 +388,7 @@ export function startFeedEngine({
 
   const attachActiveVideo = (video: HTMLVideoElement | null): void => {
     if (video === activeVideo) {
-      if (activeVideo) {
-        lockLoop(activeVideo);
-      }
-
+      // Already tracking this video — nothing to do.
       return;
     }
 
