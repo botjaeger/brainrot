@@ -375,6 +375,7 @@ export function startFeedEngine({
       return;
     }
 
+    clearBackgroundPoll();
     unlockLoop();
     activeVideo.removeEventListener("ended", onEnded);
     activeVideo.removeEventListener("timeupdate", onPlaybackProgress);
