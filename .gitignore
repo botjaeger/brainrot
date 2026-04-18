@@ -18,6 +18,3 @@ scripts/*.d.ts
 
 # Transient planning files
 .planning/debug/
-
-# Source assets (GIF recordings, screenshots)
-assets/
