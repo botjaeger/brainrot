@@ -62,7 +62,7 @@ async function writePackage(packageName, manifest) {
   const entries = await readdir(distDir, { withFileTypes: true });
 
   for (const entry of entries) {
-    if (entry.name === "manifest.json" || packageTargetNames.has(entry.name)) {
+    if (entry.name === "manifest.json" || packageTargetNames.has(entry.name) || entry.name === "site") {
       continue;
     }
 
