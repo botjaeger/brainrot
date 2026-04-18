@@ -51,10 +51,14 @@ async function registerMainWorldSpoofFallback(): Promise<void> {
     // Only suppress errors that indicate the feature is unsupported.
     // Log unexpected errors so Safari QA can catch registration failures.
     const message = err instanceof Error ? err.message : String(err);
-    if (
-      !message.includes("not supported") &&
-      !message.includes("not implemented")
-    ) {
+    const SUPPRESSED_FRAGMENTS = [
+      "not supported",
+      "not implemented",
+      "not allowed",
+      "not permitted",
+    ];
+    const shouldSuppress = SUPPRESSED_FRAGMENTS.some((f) => message.includes(f));
+    if (!shouldSuppress) {
       console.warn("[Brainrot] registerContentScripts failed:", message);
     }
   }
