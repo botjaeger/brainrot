@@ -207,7 +207,14 @@ export function startFeedEngine({
     }
 
     playbackAdvanced = true;
-    const result = adapter.advancePlayback(document, activeVideo);
+    let result: FeedAdvanceResult;
+    try {
+      result = adapter.advancePlayback(document, activeVideo);
+    } catch (err) {
+      playbackAdvanced = false; // allow retry on next trigger
+      log?.("advance-error", { error: String(err) });
+      return;
+    }
     onAdvance?.(adapter.siteKey);
 
     log?.("advance", {
