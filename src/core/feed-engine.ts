@@ -364,8 +364,18 @@ export function startFeedEngine({
   };
 
   const unlockLoop = (): void => {
-    if (loopLockedVideo && loopDescriptor) {
-      Object.defineProperty(loopLockedVideo, "loop", loopDescriptor);
+    if (loopLockedVideo) {
+      if (loopDescriptor) {
+        Object.defineProperty(loopLockedVideo, "loop", loopDescriptor);
+      } else {
+        // No prototype descriptor was saved; remove the per-instance override
+        // to restore prototype-chain lookup (prevents permanent lock on reused elements).
+        try {
+          delete (loopLockedVideo as unknown as Record<string, unknown>)["loop"];
+        } catch {
+          // Property is non-configurable — nothing to do.
+        }
+      }
     }
     loopLockedVideo = null;
     loopDescriptor = undefined;
