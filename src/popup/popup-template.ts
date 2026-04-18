@@ -537,6 +537,33 @@ export function createPopupHtml({ version }: { version: string }): string {
         display: none;
       }
 
+      /* Settings Rows */
+      .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 16px 20px;
+        margin-bottom: 16px;
+      }
+
+      .setting-label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .setting-title {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .setting-desc {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
       /* Focus */
       :focus-visible {
         outline: 2px solid var(--hero-bg);
@@ -588,6 +615,17 @@ export function createPopupHtml({ version }: { version: string }): string {
         <span data-status-chip aria-live="polite">Checking active tab</span>
         <button class="reload-btn" id="reload-tab" type="button" aria-label="Reload page">${iconRefreshSvg}</button>
       </div>
+    </div>
+
+    <div class="setting-row">
+      <div class="setting-label">
+        <span class="setting-title">Background playback</span>
+        <span class="setting-desc">Keep video playing when tab is inactive</span>
+      </div>
+      <label class="switch">
+        <input type="checkbox" id="bg-playback-toggle">
+        <span class="track"><span class="thumb"></span></span>
+      </label>
     </div>
 
     <button class="stats-header" id="stats-toggle" type="button" aria-expanded="false">

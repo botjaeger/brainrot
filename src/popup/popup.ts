@@ -30,6 +30,8 @@ function renderExtensionState(
 ): void {
   document.documentElement.dataset.enabled = String(settings.enabled);
   document.documentElement.dataset.theme = settings.theme;
+  const bgToggle = document.querySelector<HTMLInputElement>("#bg-playback-toggle");
+  if (bgToggle) bgToggle.checked = settings.backgroundPlayback;
 
   if (!siteState) {
     statusChip.textContent = "Checking active tab";
@@ -131,6 +133,10 @@ export async function mountPopup({
     document,
     "#enabled-toggle",
   );
+  const bgPlaybackToggle = getRequiredElement<HTMLInputElement>(
+    document,
+    "#bg-playback-toggle",
+  );
   const themeToggle = getRequiredElement<HTMLElement>(
     document,
     "#theme-toggle",
@@ -181,10 +187,18 @@ export async function mountPopup({
   };
 
   enabledToggle.checked = currentSettings.enabled;
+  bgPlaybackToggle.checked = currentSettings.backgroundPlayback;
   enabledToggle.addEventListener("change", () => {
     void commitSettings({
       ...currentSettings,
       enabled: enabledToggle.checked,
+    });
+  });
+
+  bgPlaybackToggle.addEventListener("change", () => {
+    void commitSettings({
+      ...currentSettings,
+      backgroundPlayback: bgPlaybackToggle.checked,
     });
   });
 
