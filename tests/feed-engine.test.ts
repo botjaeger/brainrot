@@ -91,6 +91,66 @@ describe("startFeedEngine", () => {
   });
 });
 
+describe("getRealHidden spoof bypass", () => {
+  it("uses real document.hidden from prototype even when instance property spoofed to false", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+
+    // Simulate spoof: instance-level property always returns false ("not hidden")
+    Object.defineProperty(document, "hidden", {
+      configurable: true,
+      get: () => false,
+    });
+
+    // Simulate real browser state: prototype getter returns true ("actually hidden")
+    Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
+      configurable: true,
+      get: () => true,
+    });
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+    });
+
+    // Feed engine reads real visibility via prototype, so it sees hidden=true
+    // and should NOT advance even though the spoof instance property says false
+    firstVideo.dispatchEvent(new Event("ended"));
+
+    expect(scrollIntoView).not.toHaveBeenCalled();
+
+    engine.stop();
+  });
+
+  it("advances feed when prototype getter returns false (real foreground) even if instance property not set", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+
+    // Prototype getter says not hidden (real foreground)
+    Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
+      configurable: true,
+      get: () => false,
+    });
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+    });
+
+    firstVideo.dispatchEvent(new Event("ended"));
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    engine.stop();
+  });
+});
+
 describe("document.hidden guard", () => {
   it("does not advance feed when document.hidden is true on ended event", () => {
     const dom = loadShortsDom();
