@@ -100,7 +100,7 @@ describe("document.hidden guard", () => {
     const scrollIntoView = mockScrollIntoView(nextShort);
 
     // Make document appear hidden
-    Object.defineProperty(document, "hidden", {
+    Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
       configurable: true,
       get: () => true,
     });
@@ -128,7 +128,7 @@ describe("document.hidden guard", () => {
     vi.useFakeTimers();
 
     let hidden = false;
-    Object.defineProperty(document, "hidden", {
+    Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
       configurable: true,
       get: () => hidden,
     });
@@ -191,7 +191,7 @@ describe("background-aware behavior", () => {
       const nextShort = getRendererById(document, "#short-2");
       const scrollIntoView = mockScrollIntoView(nextShort);
 
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => true,
       });
@@ -218,7 +218,7 @@ describe("background-aware behavior", () => {
       const nextShort = getRendererById(document, "#short-2");
       const scrollIntoView = mockScrollIntoView(nextShort);
 
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => false,
       });
@@ -246,7 +246,7 @@ describe("background-aware behavior", () => {
       const firstVideo = getVideoById(document, "#video-1");
 
       let hidden = false;
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => hidden,
       });
@@ -285,7 +285,7 @@ describe("background-aware behavior", () => {
       const firstVideo = getVideoById(document, "#video-1");
 
       let hidden = false;
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => hidden,
       });
@@ -321,7 +321,7 @@ describe("background-aware behavior", () => {
       const firstVideo = getVideoById(document, "#video-1");
 
       let hidden = false;
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => hidden,
       });
@@ -362,7 +362,7 @@ describe("background-aware behavior", () => {
       const secondVideo = getVideoById(document, "#video-2");
 
       let hidden = false;
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => hidden,
       });
@@ -426,7 +426,7 @@ describe("background-aware behavior", () => {
       vi.spyOn(Date, "now").mockImplementation(() => nowMs);
 
       let hidden = false;
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => hidden,
       });
@@ -490,7 +490,7 @@ describe("background-aware behavior", () => {
       vi.spyOn(Date, "now").mockImplementation(() => nowMs);
 
       let hidden = false;
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => hidden,
       });
@@ -550,7 +550,7 @@ describe("background-aware behavior", () => {
       vi.useFakeTimers();
 
       let hidden = false;
-      Object.defineProperty(document, "hidden", {
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
         configurable: true,
         get: () => hidden,
       });
@@ -612,7 +612,7 @@ describe("userPaused flag", () => {
     const scrollIntoView = mockScrollIntoView(nextShort);
 
     // Document is NOT hidden (foreground)
-    Object.defineProperty(document, "hidden", {
+    Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
       configurable: true,
       get: () => false,
     });
@@ -637,7 +637,7 @@ describe("userPaused flag", () => {
     firstVideo.dispatchEvent(new Event("pause"));
 
     // Now simulate hidden state where site tries to trigger another pause
-    Object.defineProperty(document, "hidden", {
+    Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
       configurable: true,
       get: () => true,
     });
@@ -657,7 +657,7 @@ describe("userPaused flag", () => {
     const firstVideo = getVideoById(document, "#video-1");
 
     let hidden = false;
-    Object.defineProperty(document, "hidden", {
+    Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
       configurable: true,
       get: () => hidden,
     });
@@ -693,7 +693,7 @@ describe("userPaused flag", () => {
     const firstVideo = getVideoById(document, "#video-1");
 
     let hidden = false;
-    Object.defineProperty(document, "hidden", {
+    Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
       configurable: true,
       get: () => hidden,
     });

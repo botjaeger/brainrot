@@ -51,6 +51,31 @@ const noopController: FeedEngineController = {
 
 const LOG_PREFIX = "[Brainrot]";
 
+/**
+ * Returns the real visibility state of the document, bypassing any instance-level
+ * property override set by the MAIN-world visibility spoof (src/content-main/spoof.ts).
+ *
+ * The spoof overrides `document.hidden` on the document instance to always return false.
+ * Walking the prototype chain to find the `hidden` property descriptor bypasses that
+ * instance override and returns the genuine browser visibility state. Falls back to
+ * `doc.hidden` in environments where no getter is found on the prototype chain
+ * (e.g. minimal test stubs that define `hidden` directly on the object).
+ *
+ * Avoids referencing the global `Document` directly so this works in Node.js/JSDOM
+ * test environments where `Document` is not a global.
+ */
+function getRealHidden(doc: Document): boolean {
+  let proto: object | null = Object.getPrototypeOf(doc);
+  while (proto !== null) {
+    const desc = Object.getOwnPropertyDescriptor(proto, "hidden");
+    if (desc) {
+      return desc.get?.call(doc) ?? doc.hidden;
+    }
+    proto = Object.getPrototypeOf(proto);
+  }
+  return doc.hidden;
+}
+
 const DEFAULT_FEED_SITES: readonly FeedSiteAdapter[] = [
   youtubeShortsSiteAdapter,
   facebookReelsSiteAdapter,
@@ -204,7 +229,7 @@ export function startFeedEngine({
     }
 
     // Never invoke DOM actions while hidden — they silently fail
-    if (document.hidden) {
+    if (getRealHidden(document)) {
       return;
     }
 
@@ -228,7 +253,7 @@ export function startFeedEngine({
   };
 
   const onEnded = (): void => {
-    if (document.hidden) {
+    if (getRealHidden(document)) {
       videoEndedWhileHidden = true;
       log?.("ended-while-hidden: deferring to visibility-return");
       return;
@@ -273,7 +298,7 @@ export function startFeedEngine({
   // pause (while hidden). Only resume site-driven pauses.
   const onPause = (): void => {
     if (!activeVideo || playbackAdvanced) return;
-    if (!document.hidden) {
+    if (!getRealHidden(document)) {
       // Foreground pause = user-initiated
       userPaused = true;
       return;
@@ -294,7 +319,7 @@ export function startFeedEngine({
   const onVisibilityChange = (): void => {
     if (stopped) return;
 
-    if (document.hidden) {
+    if (getRealHidden(document)) {
       // Tab going to background — snapshot current state
       if (activeVideo) {
         wasPlayingBeforeHidden = !activeVideo.paused;
