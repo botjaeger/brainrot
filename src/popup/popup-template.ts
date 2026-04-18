@@ -641,7 +641,7 @@ export function createPopupHtml({ version }: { version: string }): string {
       Open YouTube Shorts → enable Brainrot mode
     </div>
 
-    <script type="module" src="./popup.js"></script>
+    <script type="module" src="./index.js"></script>
   </body>
 </html>
 `;
