@@ -101,4 +101,6 @@ document.querySelector('a[href="#privacy"]')?.addEventListener("click", (e) => {
 });
 
 // --- Vercel Web Analytics ---
-inject();
+inject({
+  mode: import.meta.env.MODE === "development" ? "development" : "production",
+});
