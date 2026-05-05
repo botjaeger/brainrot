@@ -1,6 +1,7 @@
 // Only allowed imports from src/shared/ — no extension-specific modules
 import { STORE_URLS } from "../src/shared/store-urls.js";
 import manifest from "../manifest.json";
+import { inject } from "@vercel/analytics";
 
 const APP_VERSION = manifest.version;
 
@@ -98,3 +99,6 @@ document.querySelector('a[href="#privacy"]')?.addEventListener("click", (e) => {
     privacyFaq.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 });
+
+// --- Vercel Web Analytics ---
+inject();
