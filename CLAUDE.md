@@ -5,21 +5,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run build           # Full build → dist/chromium + dist/firefox
-npm run build:base      # Vite only (dist/ root, no browser packages)
-npm test                # Run all tests once
-npm run test:watch      # Watch mode
-npm run typecheck       # Type-check without emitting
-npm run firefox:run     # Load extension in Firefox via web-ext
+pnpm build              # Full build → Chromium + Firefox + Safari
+pnpm build:base         # Vite only (dist/ root, no browser packages)
+pnpm test               # Run all tests once
+pnpm test:watch         # Watch mode
+pnpm typecheck          # Type-check without emitting
+pnpm firefox:run        # Load extension in Firefox via web-ext
 
 # Run a single test file
-npx vitest run tests/popup.test.ts
+pnpm exec vitest run tests/popup.test.ts
 
 # Run tests matching a name pattern
-npx vitest run -t "theme toggle"
+pnpm exec vitest run -t "theme toggle"
 
 # Safari (requires macOS + Xcode)
-npm run safari:run
+pnpm safari:run
 ```
 
 ## Architecture

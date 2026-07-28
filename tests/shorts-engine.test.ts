@@ -84,6 +84,7 @@ async function flushMutations(): Promise<void> {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -121,6 +122,7 @@ describe("startShortsEngine", () => {
   });
 
   it("scrolls when playback reaches the end even if ended does not fire", () => {
+    vi.useFakeTimers();
     const dom = loadShortsDom();
     const { document, Event } = dom.window;
     const firstVideo = getVideoById(document, "#video-1");
@@ -136,7 +138,82 @@ describe("startShortsEngine", () => {
 
     firstVideo.dispatchEvent(new Event("timeupdate"));
 
+    expect(scrollIntoView).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(350);
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    engine.stop();
+  });
+
+  it("advances once when a near-end video rewinds and emits seeked plus ended", () => {
+    vi.useFakeTimers();
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+
+    setVideoPlaybackState(firstVideo, 10, 9.9);
+
+    const engine = startShortsEngine({
+      document,
+      window: dom.window,
+    });
+
+    firstVideo.dispatchEvent(new Event("timeupdate"));
+    firstVideo.currentTime = 0;
+    firstVideo.dispatchEvent(new Event("timeupdate"));
+    firstVideo.dispatchEvent(new Event("seeked"));
+    firstVideo.dispatchEvent(new Event("ended"));
+    vi.runAllTimers();
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    engine.stop();
+  });
+
+  it("cancels a pending near-end fallback when stopped", () => {
+    vi.useFakeTimers();
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+
+    setVideoPlaybackState(firstVideo, 10, 9.9);
+    const engine = startShortsEngine({
+      document,
+      window: dom.window,
+    });
+
+    firstVideo.dispatchEvent(new Event("timeupdate"));
+    engine.stop();
+    vi.runAllTimers();
+
+    expect(scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it("rearms only after the tracked media source changes", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const nextShort = getRendererById(document, "#short-2");
+    const scrollIntoView = mockScrollIntoView(nextShort);
+    firstVideo.src = "https://media.test/first.mp4";
+
+    const engine = startShortsEngine({
+      document,
+      window: dom.window,
+    });
+
+    firstVideo.dispatchEvent(new Event("ended"));
+    firstVideo.dispatchEvent(new Event("ended"));
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+
+    firstVideo.src = "https://media.test/second.mp4";
+    engine.rebind();
+    firstVideo.dispatchEvent(new Event("ended"));
+    expect(scrollIntoView).toHaveBeenCalledTimes(2);
 
     engine.stop();
   });
@@ -184,6 +261,7 @@ describe("startShortsEngine", () => {
         (call) =>
           call[0] === "[Brainrot]" &&
           call[1] === "advance" &&
+          call[2]?.generation === 1 &&
           call[2]?.method === "next-button" &&
           call[2]?.selector === "#navigation-button-down button",
       ),

@@ -1,5 +1,4 @@
 const SHORTS_RENDERER_SELECTOR = "ytd-reel-video-renderer";
-const SCROLL_FORWARD_DELAY_MS = 300;
 const SHORTS_CONTAINER_SELECTORS = ["#shorts-container", "ytd-shorts"];
 const SHORTS_NEXT_BUTTON_SELECTORS = [
   "#navigation-button-down button",
@@ -37,6 +36,19 @@ function isInsideShortsUi(element: Element): boolean {
 
 function isInsideAnyScope(element: Element, selectors: readonly string[]): boolean {
   return selectors.some((selector) => element.closest(selector) !== null);
+}
+
+export function getViewportOverlapRatio(element: Element): number {
+  const view = element.ownerDocument.defaultView;
+  if (!view) return 0;
+
+  const rect = element.getBoundingClientRect();
+  const viewportHeight =
+    view.innerHeight || element.ownerDocument.documentElement.clientHeight;
+  const overlap =
+    Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+
+  return rect.height > 0 ? Math.max(0, overlap) / rect.height : 0;
 }
 
 function isScrollableElement(element: Element): boolean {
@@ -116,37 +128,35 @@ export function scrollDocumentForward(
   document: Document,
   startElement?: Element | null,
 ): void {
-  globalThis.setTimeout(() => {
-    const ancestor = findScrollableAncestor(startElement ?? null);
+  const ancestor = findScrollableAncestor(startElement ?? null);
 
-    if (ancestor) {
-      const scrollAmount = Math.max(
-        1,
-        Math.floor((ancestor.clientHeight || 1) * 0.9),
-      );
-      ancestor.scrollTop += scrollAmount;
-      return;
-    }
+  if (ancestor) {
+    const scrollAmount = Math.max(
+      1,
+      Math.floor((ancestor.clientHeight || 1) * 0.9),
+    );
+    ancestor.scrollTop += scrollAmount;
+    return;
+  }
 
-    const scrollTarget =
-      document.scrollingElement ?? document.documentElement ?? document.body;
+  const scrollTarget =
+    document.scrollingElement ?? document.documentElement ?? document.body;
 
-    if (scrollTarget && "scrollTop" in scrollTarget) {
-      const target = scrollTarget as HTMLElement;
-      const scrollAmount = Math.max(
-        1,
-        Math.floor((target.clientHeight || 1) * 0.9),
-      );
+  if (scrollTarget && "scrollTop" in scrollTarget) {
+    const target = scrollTarget as HTMLElement;
+    const scrollAmount = Math.max(
+      1,
+      Math.floor((target.clientHeight || 1) * 0.9),
+    );
 
-      target.scrollTop += scrollAmount;
-      return;
-    }
+    target.scrollTop += scrollAmount;
+    return;
+  }
 
-    document.defaultView?.scrollBy({
-      behavior: "smooth",
-      top: 1,
-    });
-  }, SCROLL_FORWARD_DELAY_MS);
+  document.defaultView?.scrollBy({
+    behavior: "smooth",
+    top: 1,
+  });
 }
 
 export type ShortsAdvanceMethod =
@@ -170,15 +180,39 @@ export function isShortsPathname(pathname: string): boolean {
 }
 
 export function findActiveShortsVideo(document: Document): HTMLVideoElement | null {
-  for (const selector of ACTIVE_SHORTS_VIDEO_SELECTORS) {
-    const element = document.querySelector(selector);
+  const candidates: HTMLVideoElement[] = [];
+  const seen = new Set<HTMLVideoElement>();
 
-    if (isVideoElement(element) && element.closest(SHORTS_RENDERER_SELECTOR)) {
-      return element;
+  for (const selector of ACTIVE_SHORTS_VIDEO_SELECTORS) {
+    for (const element of document.querySelectorAll(selector)) {
+      if (
+        isVideoElement(element) &&
+        element.closest(SHORTS_RENDERER_SELECTOR) &&
+        !seen.has(element)
+      ) {
+        seen.add(element);
+        candidates.push(element);
+      }
     }
   }
 
-  return null;
+  candidates.sort((left, right) => {
+    const score = (video: HTMLVideoElement): number => {
+      const renderer = video.closest(SHORTS_RENDERER_SELECTOR);
+      const active =
+        renderer?.hasAttribute("is-active") ||
+        renderer?.classList.contains("is-active");
+      return (
+        (active ? 8 : 0) +
+        (!video.paused && !video.ended ? 4 : 0) +
+        (getViewportOverlapRatio(video) >= 0.5 ? 2 : 0)
+      );
+    };
+
+    return score(right) - score(left);
+  });
+
+  return candidates[0] ?? null;
 }
 
 export function findShortsContainer(document: Document): HTMLElement | null {
@@ -249,21 +283,21 @@ export function scrollShortsFeedForward(
   document: Document,
   currentVideo: HTMLVideoElement,
 ): ShortsAdvanceResult {
-  const shortsContainer = findShortsContainer(document);
-
-  if (shortsContainer) {
-    shortsContainer.scrollTop += 1;
-    return {
-      method: "shorts-container-scroll",
-    };
-  }
-
   const nextContainer = findNextShortsContainer(document, currentVideo);
 
   if (nextContainer) {
     scrollShortsContainerIntoView(nextContainer);
     return {
       method: "renderer-scroll",
+    };
+  }
+
+  const shortsContainer = findShortsContainer(document);
+
+  if (shortsContainer) {
+    shortsContainer.scrollTop += 1;
+    return {
+      method: "shorts-container-scroll",
     };
   }
 
@@ -276,59 +310,10 @@ export function scrollShortsFeedForward(
   };
 }
 
-/**
- * Try advancing via keyboard event.
- * YouTube Shorts listens for keyboard events on specific elements, not document.
- * Dispatch to multiple targets and try multiple keys (ArrowDown, 'j' shortcut).
- * Fire both keydown and keyup as some handlers require the full sequence.
- */
-function tryKeyboardAdvance(document: Document): boolean {
-  // Keys to try: ArrowDown (Shorts navigation) and 'j' (YouTube next video shortcut)
-  const keys: KeyboardEventInit[] = [
-    { key: "ArrowDown", code: "ArrowDown", keyCode: 40, which: 40 },
-    { key: "j", code: "KeyJ", keyCode: 74, which: 74 },
-  ];
-
-  // Targets in priority order: active renderer, shorts container, body, document
-  const targets: EventTarget[] = [
-    document.querySelector("ytd-reel-video-renderer[is-active]"),
-    document.querySelector("ytd-reel-video-renderer.is-active"),
-    document.querySelector("#shorts-container"),
-    document.querySelector("ytd-shorts"),
-    document.body,
-    document,
-  ].filter((t): t is EventTarget => t !== null);
-
-  for (const keyInit of keys) {
-    const eventInit: KeyboardEventInit = {
-      ...keyInit,
-      bubbles: true,
-      cancelable: true,
-      view: document.defaultView ?? undefined,
-    };
-
-    for (const target of targets) {
-      target.dispatchEvent(new KeyboardEvent("keydown", eventInit));
-      target.dispatchEvent(new KeyboardEvent("keyup", eventInit));
-    }
-  }
-
-  return true;
-}
-
 export function advanceShortsPlayback(
   document: Document,
   currentVideo: HTMLVideoElement,
-  { useKeyboard = false }: { useKeyboard?: boolean } = {},
 ): ShortsAdvanceResult {
-  // When hidden, prefer keyboard event as it may work where clicks don't
-  if (useKeyboard) {
-    tryKeyboardAdvance(document);
-    return {
-      method: "keyboard-arrow-down",
-    };
-  }
-
   const nextButton = findShortsNextButton(document);
 
   if (nextButton) {

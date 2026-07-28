@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { createPopupHtml } from "../src/popup/popup-template.js";
 import { mountPopup } from "../src/popup/popup.js";
 import type { ExtensionSettings, ExtensionSettingsStore } from "../src/shared/extension-settings.js";
@@ -17,7 +17,6 @@ function makeSettings(overrides: Partial<ExtensionSettings> = {}): ExtensionSett
     debugLogging: false,
     loopVideo: false,
     pauseOnHover: true,
-    backgroundPlayback: true,
     scrollStats: { "youtube-shorts": 0, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
     todayDate: "",
     todayStats: { "youtube-shorts": 0, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
@@ -25,6 +24,10 @@ function makeSettings(overrides: Partial<ExtensionSettings> = {}): ExtensionSett
     ...overrides,
   };
 }
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("mountPopup", () => {
   it("renders stored settings, detected site, and controls", async () => {
@@ -192,4 +195,45 @@ describe("mountPopup", () => {
     dom.window.document.querySelector<HTMLElement>("#stats-toggle")?.click();
     expect(html.dataset.statsOpen).toBe("false");
   });
+
+  it.each(["promise", "callback"] as const)(
+    "reloads the active tab through the %s tabs API",
+    async (apiStyle) => {
+      const dom = loadPopupDom();
+      const reload = vi.fn();
+      const query =
+        apiStyle === "promise"
+          ? vi.fn(() => Promise.resolve([{ id: 42 }]))
+          : vi.fn(
+              (
+                _options: unknown,
+                callback?: (tabs: Array<{ id: number }>) => void,
+              ) => {
+                if (!callback) {
+                  throw new TypeError("Callback required");
+                }
+                callback([{ id: 42 }]);
+              },
+            );
+
+      vi.stubGlobal("chrome", { tabs: { query, reload } });
+
+      const store: ExtensionSettingsStore = {
+        read: async () => makeSettings(),
+        write: vi.fn(async () => undefined),
+      };
+
+      await mountPopup({
+        document: dom.window.document,
+        store,
+        readActiveSite: async () => null,
+      });
+
+      dom.window.document.querySelector<HTMLElement>("#reload-tab")?.click();
+
+      await vi.waitFor(() => {
+        expect(reload).toHaveBeenCalledWith(42);
+      });
+    },
+  );
 });

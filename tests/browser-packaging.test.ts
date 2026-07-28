@@ -6,10 +6,10 @@ import { beforeAll, describe, expect, it } from "vitest";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const distDir = resolve(repoRoot, "dist");
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 function buildBrowserPackages() {
-  execFileSync(npmCommand, ["run", "build:all"], {
+  execFileSync(pnpmCommand, ["run", "build:all"], {
     cwd: repoRoot,
     stdio: "inherit",
   });
@@ -41,6 +41,16 @@ function readContentScript(packageName: "chromium" | "firefox") {
   return readFileSync(join(distDir, packageName, "content", "index.js"), "utf8");
 }
 
+function readVisibilityScript(
+  packageName: "chromium" | "firefox",
+  scriptName: "control" | "spoof",
+) {
+  return readFileSync(
+    join(distDir, packageName, "content-main", `${scriptName}.js`),
+    "utf8",
+  );
+}
+
 function readPopupHtml(packageName: "chromium" | "firefox") {
   return readFileSync(join(distDir, packageName, "popup", "index.html"), "utf8");
 }
@@ -63,6 +73,9 @@ describe("browser packaging", () => {
     expect(existsSync(join(distDir, "firefox", "popup", "index.html"))).toBe(true);
     expect(existsSync(join(distDir, "chromium", "content-main", "spoof.js"))).toBe(true);
     expect(existsSync(join(distDir, "firefox", "content-main", "spoof.js"))).toBe(true);
+    expect(existsSync(join(distDir, "chromium", "content-main", "control.js"))).toBe(true);
+    expect(existsSync(join(distDir, "firefox", "content-main", "control.js"))).toBe(true);
+    expect(readContentScript("chromium")).toBe(readContentScript("firefox"));
   });
 
   it("keeps Chromium free of Firefox-only metadata", () => {
@@ -88,12 +101,23 @@ describe("browser packaging", () => {
     expect(mainWorldScript).toBeDefined();
     expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
     expect(mainWorldScript?.run_at).toBe("document_start");
+    const controlScript = chromiumManifest.content_scripts?.find(
+      (cs) => cs.js?.includes("content-main/control.js"),
+    );
+    expect(controlScript?.run_at).toBe("document_start");
+    expect(controlScript?.world).toBeUndefined();
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
     expect(popupHtml).toContain("./index.js");
     expect(popupHtml).toContain("min-width: 320px;");
     expect(contentBundle.trimStart().startsWith("import")).toBe(false);
+    expect(
+      readVisibilityScript("chromium", "control").trimStart().startsWith("import"),
+    ).toBe(false);
+    expect(
+      readVisibilityScript("chromium", "spoof").trimStart().startsWith("import"),
+    ).toBe(false);
   });
 
   it("adds Firefox gecko metadata without changing the shared Shorts match", () => {
@@ -121,11 +145,22 @@ describe("browser packaging", () => {
     expect(mainWorldScript).toBeDefined();
     expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
     expect(mainWorldScript?.run_at).toBe("document_start");
+    const controlScript = firefoxManifest.content_scripts?.find(
+      (cs) => cs.js?.includes("content-main/control.js"),
+    );
+    expect(controlScript?.run_at).toBe("document_start");
+    expect(controlScript?.world).toBeUndefined();
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
     expect(popupHtml).toContain("./index.js");
     expect(popupHtml).toContain("min-width: 320px;");
     expect(contentBundle.trimStart().startsWith("import")).toBe(false);
+    expect(
+      readVisibilityScript("firefox", "control").trimStart().startsWith("import"),
+    ).toBe(false);
+    expect(
+      readVisibilityScript("firefox", "spoof").trimStart().startsWith("import"),
+    ).toBe(false);
   });
 });

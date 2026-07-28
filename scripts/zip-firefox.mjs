@@ -10,7 +10,7 @@ const firefoxDir = resolve(rootDir, "dist/firefox");
 const outFile = resolve(rootDir, "brainrot-firefox.zip");
 
 if (!existsSync(firefoxDir)) {
-  console.error("dist/firefox/ not found — run `npm run build` first.");
+  console.error("dist/firefox/ not found — run `pnpm build` first.");
   process.exit(1);
 }
 

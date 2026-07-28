@@ -14,10 +14,10 @@ const safariExtensionInfoPlist = resolve(
   repoRoot,
   "safari/AutoYouTubeShortsScrollerExtension/Info.plist",
 );
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
 
 function buildSafariPackage() {
-  execFileSync(npmCommand, ["run", "build:safari"], {
+  execFileSync(pnpmCommand, ["run", "build:safari"], {
     cwd: repoRoot,
     stdio: "inherit",
   });
@@ -63,6 +63,10 @@ beforeAll(() => {
 describe("safari packaging", () => {
   it("writes the staged Safari bundle", () => {
     const contentBundle = readSafariContentScript();
+    const sharedContentBundle = readFileSync(
+      join(distDir, "content", "index.js"),
+      "utf8",
+    );
     const popupHtml = readSafariPopupHtml();
 
     expect(existsSync(join(distDir, "safari", "manifest.json"))).toBe(true);
@@ -74,12 +78,14 @@ describe("safari packaging", () => {
       true,
     );
     expect(existsSync(join(distDir, "safari", "content-main", "spoof.js"))).toBe(true);
+    expect(existsSync(join(distDir, "safari", "content-main", "control.js"))).toBe(true);
     expect(popupHtml).toContain("Brainrot");
 
     expect(popupHtml).toContain('<h1 class="hero-title" id="hero-title">Brainrot mode</h1>');
     expect(popupHtml).toContain("./index.js");
     expect(popupHtml).toContain("min-width: 320px;");
     expect(contentBundle.trimStart().startsWith("import")).toBe(false);
+    expect(contentBundle).toBe(sharedContentBundle);
   });
 
   it("keeps Safari compatibility metadata isolated", () => {
@@ -105,6 +111,11 @@ describe("safari packaging", () => {
     );
     expect(mainWorldScript).toBeDefined();
     expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
+    const controlScript = safariManifest.content_scripts?.find(
+      (cs) => cs.js?.includes("content-main/control.js"),
+    );
+    expect(controlScript?.run_at).toBe("document_start");
+    expect(controlScript?.world).toBeUndefined();
     expect(readSafariPopupHtml()).toContain("./index.js");
     expect(readSafariPopupHtml()).toContain("min-width: 320px;");
   });

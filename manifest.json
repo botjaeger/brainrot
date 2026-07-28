@@ -42,6 +42,16 @@
       "js": ["content-main/spoof.js"],
       "run_at": "document_start",
       "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://www.facebook.com/*",
+        "https://www.tiktok.com/*",
+        "https://www.instagram.com/*"
+      ],
+      "js": ["content-main/control.js"],
+      "run_at": "document_start"
     }
   ]
 }

@@ -15,9 +15,12 @@ describe("getSiteKey", () => {
     expect(getSiteKey(loc("www.facebook.com", "/reel/456"))).toBe("facebook-reels");
   });
 
-  it("returns tiktok for any TikTok URL", () => {
+  it("returns tiktok only for supported TikTok feed URLs", () => {
     expect(getSiteKey(loc("www.tiktok.com", "/"))).toBe("tiktok");
     expect(getSiteKey(loc("www.tiktok.com", "/@user/video/123"))).toBe("tiktok");
+    expect(getSiteKey(loc("www.tiktok.com", "/foryou"))).toBe("tiktok");
+    expect(getSiteKey(loc("www.tiktok.com", "/search"))).toBeNull();
+    expect(getSiteKey(loc("www.tiktok.com", "/@user"))).toBeNull();
   });
 
   it("returns instagram-reels for Instagram Reels URLs", () => {
@@ -31,6 +34,9 @@ describe("getSiteKey", () => {
     expect(getSiteKey(loc("www.youtube.com", "/"))).toBeNull();
     expect(getSiteKey(loc("www.facebook.com", "/profile.php"))).toBeNull();
     expect(getSiteKey(loc("www.instagram.com", "/p/abc"))).toBeNull();
+    expect(getSiteKey(loc("www.facebook.com", "/reelsettings"))).toBeNull();
+    expect(getSiteKey(loc("www.instagram.com", "/reelsarchive"))).toBeNull();
+    expect(getSiteKey(loc("evilyoutube.com", "/shorts/abc"))).toBeNull();
     expect(getSiteKey(loc("www.example.com", "/shorts/abc"))).toBeNull();
   });
 });

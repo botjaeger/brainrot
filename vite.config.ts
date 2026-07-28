@@ -50,6 +50,7 @@ export default defineConfig({
       input: {
         "background/index": resolve(rootDir, "src/background/index.ts"),
         "content/index": resolve(rootDir, "src/content/index.ts"),
+        "content-main/control": resolve(rootDir, "src/content-main/control.ts"),
         "content-main/spoof": resolve(rootDir, "src/content-main/spoof.ts"),
         "popup/index": resolve(rootDir, "src/popup/index.ts"),
       },

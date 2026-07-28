@@ -52,33 +52,33 @@ Just open a supported feed and turn on Brainrot mode.
 
 ### Chrome / Edge / Brave
 
-1. `npm install && npm run build`
+1. `pnpm install && pnpm build`
 2. Open `chrome://extensions`, enable **Developer mode**
 3. Click **Load unpacked** and select `dist/chromium/`
 
 ### Firefox
 
-1. `npm install && npm run build`
-2. `npm run firefox:run` -- or load `dist/firefox/` as a temporary add-on in `about:debugging`
+1. `pnpm install && pnpm build`
+2. `pnpm firefox:run` -- or load `dist/firefox/` as a temporary add-on in `about:debugging`
 
 ### Safari (macOS)
 
 Requires Xcode.
 
 ```bash
-npm install
-npm run safari:run
+pnpm install
+pnpm safari:run
 ```
 
 ## Development
 
 ```bash
-npm install
-npm run build           # Full build (Chromium + Firefox)
-npm run build:base      # Vite only (no browser packaging)
-npm test                # Run all tests
-npm run test:watch      # Watch mode
-npm run typecheck       # Type-check without emitting
+pnpm install
+pnpm build              # Full build (Chromium + Firefox + Safari)
+pnpm build:base         # Vite only (no browser packaging)
+pnpm test               # Run all tests
+pnpm test:watch         # Watch mode
+pnpm typecheck          # Type-check without emitting
 ```
 
 ## Adding a new site

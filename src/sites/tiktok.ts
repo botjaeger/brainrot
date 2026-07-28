@@ -1,8 +1,13 @@
-import type { AdvanceOptions, FeedSiteAdapter } from "../core/feed-engine.js";
+import type {
+  ActiveFeedItem,
+  FeedSiteAdapter,
+} from "../core/feed-engine.js";
 import {
   findClickableMatch,
+  getViewportOverlapRatio,
   scrollDocumentForward,
 } from "../shared/dom.js";
+import { matchesSiteHostname } from "../shared/site-host.js";
 
 const TIKTOK_LOCALE_PREFIX = /^\/[a-z]{2}(?:[-_][a-zA-Z0-9]{2,8})?(?=\/|$)/;
 
@@ -18,14 +23,14 @@ const TIKTOK_VIDEO_SELECTORS = [
   "video",
 ];
 
-const TIKTOK_CONTAINER_SELECTORS = [
-  "[data-e2e='feed-active-video']",
+const TIKTOK_ITEM_SELECTORS = [
   "[data-e2e='recommend-list-item-container']",
-  "[data-e2e='feed-video']",
+  "[data-e2e='feed-item-container']",
   ".swiper-slide.swiper-slide-active",
   ".swiper-slide-active",
-  "[data-e2e='recommend-list']",
-  "[data-e2e='feed-item-container']",
+  ".swiper-slide",
+  "[data-e2e='feed-video']",
+  "[data-e2e='feed-active-video']",
 ];
 
 const TIKTOK_BUTTON_SCOPE_SELECTORS = [
@@ -88,63 +93,63 @@ export function isTikTokPathname(pathname: string): boolean {
 }
 
 function findActiveTikTokVideo(document: Document): HTMLVideoElement | null {
-  // Prefer the currently playing video — querySelector returns DOM order (first),
-  // which is wrong when the user has scrolled past earlier videos.
+  const candidates: HTMLVideoElement[] = [];
+  const seen = new Set<HTMLVideoElement>();
+
   for (const selector of TIKTOK_VIDEO_SELECTORS) {
     for (const el of document.querySelectorAll<HTMLVideoElement>(selector)) {
-      if (el.tagName.toLowerCase() === "video" && !el.paused && !el.ended) {
-        return el;
+      if (el.tagName.toLowerCase() === "video" && !seen.has(el)) {
+        seen.add(el);
+        candidates.push(el);
       }
     }
   }
 
-  // Fall back to first found
-  for (const selector of TIKTOK_VIDEO_SELECTORS) {
-    const element = document.querySelector<HTMLVideoElement>(selector);
-    if (element?.tagName.toLowerCase() === "video") {
-      return element;
-    }
-  }
-
-  return null;
+  return (
+    candidates.find(
+      (video) =>
+        !video.paused &&
+        !video.ended &&
+        getViewportOverlapRatio(video) >= 0.5,
+    ) ??
+    candidates.find((video) => !video.paused && !video.ended) ??
+    candidates.find((video) => getViewportOverlapRatio(video) >= 0.5) ??
+    candidates[0] ??
+    null
+  );
 }
 
-function getTikTokContainers(document: Document): Element[] {
-  const containers: Element[] = [];
+function getTikTokItem(video: HTMLVideoElement): Element {
+  for (const selector of TIKTOK_ITEM_SELECTORS) {
+    const item = video.closest(selector);
+    if (item) return item;
+  }
+
+  return video;
+}
+
+function getTikTokItems(document: Document): Element[] {
+  const items: Element[] = [];
   const seen = new Set<Element>();
 
-  for (const selector of TIKTOK_CONTAINER_SELECTORS) {
-    for (const element of document.querySelectorAll(selector)) {
-      if (seen.has(element)) {
-        continue;
-      }
-
-      seen.add(element);
-      containers.push(element);
+  for (const video of document.querySelectorAll<HTMLVideoElement>("video")) {
+    const item = getTikTokItem(video);
+    if (!seen.has(item)) {
+      seen.add(item);
+      items.push(item);
     }
   }
 
-  return containers;
+  return items;
 }
 
 function findNextTikTokContainer(
   document: Document,
   currentVideo: HTMLVideoElement,
 ): Element | null {
-  const containers = getTikTokContainers(document);
-  const currentContainer = currentVideo.closest(
-    TIKTOK_CONTAINER_SELECTORS.join(", "),
-  );
-
-  if (currentContainer) {
-    const currentIndex = containers.indexOf(currentContainer);
-
-    if (currentIndex >= 0) {
-      return containers[currentIndex + 1] ?? null;
-    }
-  }
-
-  return containers[1] ?? null;
+  const items = getTikTokItems(document);
+  const currentIndex = items.indexOf(getTikTokItem(currentVideo));
+  return currentIndex >= 0 ? items[currentIndex + 1] ?? null : null;
 }
 
 function scrollTikTokFeedForward(
@@ -176,17 +181,17 @@ export const tiktokSiteAdapter: FeedSiteAdapter = {
   siteKey: "tiktok",
   matches(location: Location): boolean {
     return (
-      location.hostname.endsWith("tiktok.com") &&
+      matchesSiteHostname(location.hostname, "tiktok.com") &&
       isTikTokPathname(location.pathname)
     );
   },
-  findActiveVideo(document: Document): HTMLVideoElement | null {
-    return findActiveTikTokVideo(document);
+  findActiveItem(document: Document): ActiveFeedItem | null {
+    const video = findActiveTikTokVideo(document);
+    return video ? { video, key: getTikTokItem(video) } : null;
   },
   advancePlayback(
     document: Document,
     currentVideo: HTMLVideoElement,
-    _options?: AdvanceOptions,
   ): { method: string; selector?: string } {
     const nextButton = findClickableMatch(
       document,

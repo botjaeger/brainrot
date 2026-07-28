@@ -10,7 +10,7 @@ const chromiumDir = resolve(rootDir, "dist/chromium");
 const outFile = resolve(rootDir, "brainrot-chrome.zip");
 
 if (!existsSync(chromiumDir)) {
-  console.error("dist/chromium/ not found — run `npm run build` first.");
+  console.error("dist/chromium/ not found — run `pnpm build` first.");
   process.exit(1);
 }
 

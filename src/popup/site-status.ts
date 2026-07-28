@@ -15,6 +15,7 @@ export interface SupportedSiteStatus {
 }
 
 type TabsQueryTab = {
+  id?: number;
   url?: string | null;
 };
 
@@ -23,21 +24,22 @@ type TabsQueryOptions = {
   currentWindow: boolean;
 };
 
-type TabsQueryApi = {
+type TabsApi = {
   query: (
     queryInfo: TabsQueryOptions,
     callback?: (tabs: TabsQueryTab[]) => void,
   ) => unknown;
+  reload?: (tabId?: number) => unknown;
 };
 
 function isPromiseLike<T>(value: unknown): value is Promise<T> {
   return Boolean(value) && typeof (value as { then?: unknown }).then === "function";
 }
 
-function getTabsApi(): TabsQueryApi | null {
+function getTabsApi(): TabsApi | null {
   const globalScope = globalThis as typeof globalThis & {
-    browser?: { tabs?: TabsQueryApi };
-    chrome?: { tabs?: TabsQueryApi };
+    browser?: { tabs?: TabsApi };
+    chrome?: { tabs?: TabsApi };
   };
 
   return globalScope.browser?.tabs ?? globalScope.chrome?.tabs ?? null;
@@ -99,12 +101,19 @@ function isTikTokPathname(pathname: string): boolean {
   );
 }
 
+function matchesHostname(hostname: string, domain: string): boolean {
+  return hostname === domain || hostname.endsWith(`.${domain}`);
+}
+
 export function describeSupportedSiteFromUrl(
   urlInput: string | URL,
 ): SupportedSiteStatus {
   const url = typeof urlInput === "string" ? new URL(urlInput) : urlInput;
 
-  if (url.hostname.endsWith("youtube.com") && isYouTubeShortsPathname(url.pathname)) {
+  if (
+    matchesHostname(url.hostname, "youtube.com") &&
+    isYouTubeShortsPathname(url.pathname)
+  ) {
     return {
       kind: "youtube-shorts",
       supported: true,
@@ -114,7 +123,7 @@ export function describeSupportedSiteFromUrl(
   }
 
   if (
-    url.hostname.endsWith("facebook.com") &&
+    matchesHostname(url.hostname, "facebook.com") &&
     isFacebookReelsPathname(url.pathname)
   ) {
     return {
@@ -125,7 +134,10 @@ export function describeSupportedSiteFromUrl(
     };
   }
 
-  if (url.hostname.endsWith("tiktok.com") && isTikTokPathname(url.pathname)) {
+  if (
+    matchesHostname(url.hostname, "tiktok.com") &&
+    isTikTokPathname(url.pathname)
+  ) {
     return {
       kind: "tiktok",
       supported: true,
@@ -135,7 +147,7 @@ export function describeSupportedSiteFromUrl(
   }
 
   if (
-    url.hostname.endsWith("instagram.com") &&
+    matchesHostname(url.hostname, "instagram.com") &&
     (url.pathname === "/reels" || url.pathname.startsWith("/reels/") ||
      url.pathname === "/reel" || url.pathname.startsWith("/reel/"))
   ) {
@@ -162,10 +174,15 @@ async function queryActiveTabs(): Promise<TabsQueryTab[]> {
     return [];
   }
 
-  const maybeTabs = tabs.query({
-    active: true,
-    currentWindow: true,
-  });
+  let maybeTabs: unknown;
+  try {
+    maybeTabs = tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+  } catch {
+    maybeTabs = undefined;
+  }
 
   if (isPromiseLike<TabsQueryTab[]>(maybeTabs)) {
     return await maybeTabs;
@@ -196,5 +213,18 @@ export async function readActiveSupportedSite(): Promise<SupportedSiteStatus | n
     return describeSupportedSiteFromUrl(url);
   } catch {
     return null;
+  }
+}
+
+export async function reloadActiveTab(): Promise<void> {
+  const tabs = getTabsApi();
+  if (!tabs?.reload) return;
+
+  const [activeTab] = await queryActiveTabs();
+  if (activeTab?.id == null) return;
+
+  const maybeReload = tabs.reload(activeTab.id);
+  if (isPromiseLike<void>(maybeReload)) {
+    await maybeReload;
   }
 }

@@ -5,6 +5,7 @@ import {
   facebookReelsSiteAdapter,
   isFacebookReelsPathname,
 } from "../src/sites/facebook-reels.js";
+import { instagramReelsSiteAdapter } from "../src/sites/instagram-reels.js";
 import { isTikTokPathname, tiktokSiteAdapter } from "../src/sites/tiktok.js";
 
 function loadFixture(name: string, url: string) {
@@ -60,17 +61,6 @@ function mockScrollIntoView(element: Element) {
   return scrollIntoView;
 }
 
-function getScrollTarget(document: Document): HTMLElement {
-  const scrollTarget =
-    document.scrollingElement ?? document.documentElement ?? document.body;
-
-  if (!scrollTarget || !("scrollTop" in scrollTarget)) {
-    throw new Error("Missing scroll target");
-  }
-
-  return scrollTarget as HTMLElement;
-}
-
 afterEach(() => {
   vi.useRealTimers();
   vi.restoreAllMocks();
@@ -98,6 +88,10 @@ describe("facebookReelsSiteAdapter", () => {
       "facebook-reels.fixture.html",
       "https://www.facebook.com/watch?v=123",
     );
+    const lookalikeHostDom = loadFixture(
+      "facebook-reels.fixture.html",
+      "https://evilfacebook.com/reels/123",
+    );
 
     expect(isFacebookReelsPathname(reelsDom.window.location.pathname)).toBe(
       true,
@@ -122,6 +116,9 @@ describe("facebookReelsSiteAdapter", () => {
     expect(
       facebookReelsSiteAdapter.matches(unsupportedDom.window.location),
     ).toBe(false);
+    expect(
+      facebookReelsSiteAdapter.matches(lookalikeHostDom.window.location),
+    ).toBe(false);
   });
 
   it("clicks the next reel control and falls back to scroll when button is absent", async () => {
@@ -134,7 +131,12 @@ describe("facebookReelsSiteAdapter", () => {
     const { document } = dom.window;
     const video = getVideoById(document, "#facebook-reel-video");
     const button = getButtonById(document, "#facebook-next-reel");
+    const nextItem = getElementById<HTMLElement>(
+      document,
+      "#facebook-next-reel-item",
+    );
     const onClick = vi.fn();
+    const scrollIntoView = mockScrollIntoView(nextItem);
 
     button.addEventListener("click", onClick);
 
@@ -148,20 +150,17 @@ describe("facebookReelsSiteAdapter", () => {
 
     button.remove();
 
-    // No second video in fixture → skips next-video-scroll, falls back to
-    // scroll-forward (scrollDocumentForward uses a setTimeout internally).
     const scrollResult = facebookReelsSiteAdapter.advancePlayback(
       document,
       video,
     );
 
-    expect(scrollResult.method).toBe("scroll-forward");
-
-    await vi.runAllTimersAsync();
-
-    const scrollTarget =
-      document.scrollingElement ?? document.documentElement ?? document.body;
-    expect((scrollTarget as HTMLElement).scrollTop).toBeGreaterThan(0);
+    expect(scrollResult.method).toBe("next-reel-scroll");
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+    });
   });
 });
 
@@ -179,12 +178,19 @@ describe("tiktokSiteAdapter", () => {
       "tiktok-feed.fixture.html",
       "https://www.tiktok.com/en/about",
     );
+    const lookalikeHostDom = loadFixture(
+      "tiktok-feed.fixture.html",
+      "https://eviltiktok.com/en/",
+    );
 
     expect(isTikTokPathname(feedDom.window.location.pathname)).toBe(true);
     expect(isTikTokPathname(videoDom.window.location.pathname)).toBe(true);
     expect(tiktokSiteAdapter.matches(feedDom.window.location)).toBe(true);
     expect(tiktokSiteAdapter.matches(videoDom.window.location)).toBe(true);
     expect(tiktokSiteAdapter.matches(unsupportedDom.window.location)).toBe(
+      false,
+    );
+    expect(tiktokSiteAdapter.matches(lookalikeHostDom.window.location)).toBe(
       false,
     );
   });
@@ -195,7 +201,7 @@ describe("tiktokSiteAdapter", () => {
       "https://www.tiktok.com/en/@creator/video/123",
     );
     const { document } = dom.window;
-    const activeVideo = tiktokSiteAdapter.findActiveVideo(document);
+    const activeVideo = tiktokSiteAdapter.findActiveItem(document)?.video;
     const video = getVideoById(document, "#tiktok-video");
     const nextContainer = getElementById<HTMLElement>(
       document,
@@ -233,5 +239,52 @@ describe("tiktokSiteAdapter", () => {
       block: "nearest",
       inline: "nearest",
     });
+  });
+});
+
+describe("instagramReelsSiteAdapter", () => {
+  it("targets the next reel item and ignores unrelated Next controls", () => {
+    const dom = loadFixture(
+      "instagram-reels.fixture.html",
+      "https://www.instagram.com/reels/123",
+    );
+    const { document } = dom.window;
+    const activeVideo = getVideoById(document, "#instagram-active-video");
+    const nextItem = getElementById<HTMLElement>(
+      document,
+      "#instagram-next-item",
+    );
+    const unrelatedNext = getButtonById(
+      document,
+      "#instagram-unrelated-next",
+    );
+    const unrelatedClick = vi.fn();
+    const scrollIntoView = mockScrollIntoView(nextItem);
+
+    Object.defineProperty(activeVideo, "paused", {
+      configurable: true,
+      get: () => false,
+    });
+    unrelatedNext.addEventListener("click", unrelatedClick);
+
+    const activeItem = instagramReelsSiteAdapter.findActiveItem(document);
+    expect(activeItem?.video).toBe(activeVideo);
+    expect(activeItem?.key).toBe(
+      document.querySelector("#instagram-active-item"),
+    );
+
+    const result = instagramReelsSiteAdapter.advancePlayback(
+      document,
+      activeVideo,
+    );
+
+    expect(result.method).toBe("next-reel-scroll");
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: "smooth",
+      block: "center",
+      inline: "nearest",
+    });
+    expect(unrelatedClick).not.toHaveBeenCalled();
   });
 });

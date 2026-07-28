@@ -89,6 +89,39 @@ describe("startFeedEngine", () => {
 
     engine.stop();
   });
+
+  it("does not retry a failed advance within the same playback generation", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const firstRenderer = getRendererById(document, "#short-1");
+    const advancePlayback = vi.fn(() => {
+      throw new Error("advance failed");
+    });
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+      adapters: [
+        {
+          name: "test",
+          siteKey: "test",
+          matches: () => true,
+          findActiveItem: () => ({
+            video: firstVideo,
+            key: firstRenderer,
+          }),
+          advancePlayback,
+        },
+      ],
+    });
+
+    firstVideo.dispatchEvent(new Event("ended"));
+    firstVideo.dispatchEvent(new Event("ended"));
+
+    expect(advancePlayback).toHaveBeenCalledTimes(1);
+    engine.stop();
+  });
 });
 
 describe("getRealHidden spoof bypass", () => {
@@ -445,7 +478,12 @@ describe("background-aware behavior", () => {
         name: "test",
         siteKey: "test",
         matches: () => true,
-        findActiveVideo: () => activeVideoForAdapter,
+        findActiveItem: () => ({
+          video: activeVideoForAdapter,
+          key:
+            activeVideoForAdapter.closest("ytd-reel-video-renderer") ??
+            activeVideoForAdapter,
+        }),
         advancePlayback: () => ({ method: "scroll" }),
       };
 
@@ -658,6 +696,57 @@ describe("background-aware behavior", () => {
       expect(scrollIntoView).toHaveBeenCalledTimes(1);
 
       vi.useRealTimers();
+      engine.stop();
+    });
+
+    it("drops a deferred advance when the active item changes first", () => {
+      const dom = loadShortsDom();
+      const { document, Event } = dom.window;
+      const firstVideo = getVideoById(document, "#video-1");
+      const firstRenderer = getRendererById(document, "#short-1");
+      const secondVideo = getVideoById(document, "#video-2");
+      const secondRenderer = getRendererById(document, "#short-2");
+      const onAdvance = vi.fn();
+      vi.useFakeTimers();
+
+      let hidden = false;
+      let firstEnded = false;
+      Object.defineProperty(Object.getPrototypeOf(document), "hidden", {
+        configurable: true,
+        get: () => hidden,
+      });
+      Object.defineProperty(firstVideo, "ended", {
+        configurable: true,
+        get: () => firstEnded,
+      });
+      Object.defineProperty(firstVideo, "paused", {
+        configurable: true,
+        get: () => false,
+      });
+
+      const engine = startFeedEngine({
+        document,
+        window: dom.window,
+        onAdvance,
+      });
+
+      hidden = true;
+      document.dispatchEvent(new Event("visibilitychange"));
+      firstEnded = true;
+      firstVideo.dispatchEvent(new Event("ended"));
+      hidden = false;
+      document.dispatchEvent(new Event("visibilitychange"));
+
+      firstRenderer.removeAttribute("is-active");
+      secondRenderer.setAttribute("is-active", "");
+      Object.defineProperty(secondVideo, "paused", {
+        configurable: true,
+        get: () => false,
+      });
+      engine.rebind();
+      vi.runAllTimers();
+
+      expect(onAdvance).not.toHaveBeenCalled();
       engine.stop();
     });
   });

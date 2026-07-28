@@ -3,25 +3,27 @@
   <body>
     <main>
       <video id="tiktok-preload-video" playsinline muted aria-hidden="true"></video>
-      <section data-e2e="feed-active-video">
-        <video id="tiktok-video" playsinline muted></video>
-        <div class="xgplayer-playswitch">
-          <div
-            id="tiktok-xgplayer-next"
-            class="xgplayer-playswitch-next"
-            role="button"
+      <section data-e2e="recommend-list-item-container" id="tiktok-current-container">
+        <div data-e2e="feed-active-video">
+          <video id="tiktok-video" playsinline muted></video>
+          <div class="xgplayer-playswitch">
+            <div
+              id="tiktok-xgplayer-next"
+              class="xgplayer-playswitch-next"
+              role="button"
+              aria-label="Next video"
+              data-e2e="xgplayer-next"
+            ></div>
+          </div>
+          <button
+            type="button"
+            id="tiktok-arrow-right"
+            data-e2e="arrow-right"
             aria-label="Next video"
-            data-e2e="xgplayer-next"
-          ></div>
+          >
+            Next
+          </button>
         </div>
-        <button
-          type="button"
-          id="tiktok-arrow-right"
-          data-e2e="arrow-right"
-          aria-label="Next video"
-        >
-          Next
-        </button>
       </section>
       <section data-e2e="recommend-list-item-container" id="tiktok-next-container">
         <video id="tiktok-next-video" playsinline muted></video>

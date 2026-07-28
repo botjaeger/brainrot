@@ -211,7 +211,9 @@ async function initializeContentScript(): Promise<void> {
   if (abort.signal.aborted) return;
 
   startEngineIfNeeded();
-  setupScrollCounting(abort.signal);
+  if (getSiteKey(window.location)) {
+    setupScrollCounting(abort.signal);
+  }
 
   const unwatchSettings = watchExtensionSettings((nextSettings) => {
     if (abort.signal.aborted) return;

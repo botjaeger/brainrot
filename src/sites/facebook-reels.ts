@@ -1,8 +1,13 @@
-import type { AdvanceOptions, FeedSiteAdapter } from "../core/feed-engine.js";
+import type {
+  ActiveFeedItem,
+  FeedSiteAdapter,
+} from "../core/feed-engine.js";
 import {
   findClickableMatch,
+  getViewportOverlapRatio,
   scrollDocumentForward,
 } from "../shared/dom.js";
+import { matchesSiteHostname } from "../shared/site-host.js";
 
 const FACEBOOK_REELS_VIDEO_SELECTORS = [
   "[data-pagelet*='Reels'] video",
@@ -39,25 +44,54 @@ function isClickableElementActive(element: HTMLElement): boolean {
   return maybeDisabled.disabled !== true && element.getAttribute("aria-disabled") !== "true";
 }
 
+function getFacebookReelItem(video: HTMLVideoElement): Element {
+  return (
+    video.closest(
+      "[data-pagelet*='ReelUnit'], article, [aria-label*='Reel' i], [role='dialog']",
+    ) ?? video
+  );
+}
+
 function findActiveReelVideo(document: Document): HTMLVideoElement | null {
-  // Prefer a video that is actively playing
+  const candidates: HTMLVideoElement[] = [];
+  const seen = new Set<HTMLVideoElement>();
+
   for (const selector of FACEBOOK_REELS_VIDEO_SELECTORS) {
     for (const el of document.querySelectorAll<HTMLVideoElement>(selector)) {
-      if (el.tagName.toLowerCase() === "video" && !el.paused && !el.ended) {
-        return el;
+      if (el.tagName.toLowerCase() === "video" && !seen.has(el)) {
+        seen.add(el);
+        candidates.push(el);
       }
     }
   }
 
-  // Fall back to first found
-  for (const selector of FACEBOOK_REELS_VIDEO_SELECTORS) {
-    const element = document.querySelector<HTMLVideoElement>(selector);
-    if (element?.tagName.toLowerCase() === "video") {
-      return element;
+  return (
+    candidates.find(
+      (video) =>
+        !video.paused &&
+        !video.ended &&
+        getViewportOverlapRatio(video) >= 0.5,
+    ) ??
+    candidates.find((video) => !video.paused && !video.ended) ??
+    candidates.find((video) => getViewportOverlapRatio(video) >= 0.5) ??
+    candidates[0] ??
+    null
+  );
+}
+
+function getFacebookReelItems(document: Document): Element[] {
+  const items: Element[] = [];
+  const seen = new Set<Element>();
+
+  for (const video of document.querySelectorAll<HTMLVideoElement>("video")) {
+    const item = getFacebookReelItem(video);
+    if (!seen.has(item)) {
+      seen.add(item);
+      items.push(item);
     }
   }
 
-  return null;
+  return items;
 }
 
 export function isFacebookReelsPathname(pathname: string): boolean {
@@ -74,17 +108,17 @@ export const facebookReelsSiteAdapter: FeedSiteAdapter = {
   siteKey: "facebook-reels",
   matches(location: Location): boolean {
     return (
-      location.hostname.endsWith("facebook.com") &&
+      matchesSiteHostname(location.hostname, "facebook.com") &&
       isFacebookReelsPathname(location.pathname)
     );
   },
-  findActiveVideo(document: Document): HTMLVideoElement | null {
-    return findActiveReelVideo(document);
+  findActiveItem(document: Document): ActiveFeedItem | null {
+    const video = findActiveReelVideo(document);
+    return video ? { video, key: getFacebookReelItem(video) } : null;
   },
   advancePlayback(
     document: Document,
     currentVideo: HTMLVideoElement,
-    _options?: AdvanceOptions,
   ): { method: string; selector?: string } {
     const nextButton = findClickableMatch(
       document,
@@ -103,17 +137,12 @@ export const facebookReelsSiteAdapter: FeedSiteAdapter = {
       };
     }
 
-    // Fallback: if the next reel video is already in the DOM (Facebook
-    // pre-loads them), scroll it into view directly. Otherwise fall back to
-    // generic document-forward scroll.
-    const allVideos = Array.from(
-      document.querySelectorAll<HTMLVideoElement>("video"),
-    );
-    const currentIndex = allVideos.indexOf(currentVideo);
-    if (currentIndex >= 0 && currentIndex + 1 < allVideos.length) {
-      const nextVideo = allVideos[currentIndex + 1];
-      nextVideo.scrollIntoView({ behavior: "smooth", block: "center" });
-      return { method: "next-video-scroll" };
+    const items = getFacebookReelItems(document);
+    const currentIndex = items.indexOf(getFacebookReelItem(currentVideo));
+    const nextItem = currentIndex >= 0 ? items[currentIndex + 1] : null;
+    if (nextItem && typeof nextItem.scrollIntoView === "function") {
+      nextItem.scrollIntoView({ behavior: "smooth", block: "center" });
+      return { method: "next-reel-scroll" };
     }
 
     scrollDocumentForward(document, currentVideo);

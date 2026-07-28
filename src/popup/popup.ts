@@ -1,6 +1,6 @@
 import { DEFAULT_EXTENSION_SETTINGS, type ExtensionSettings, type ExtensionSettingsStore } from "../shared/extension-settings.js";
 import type { SupportedSiteStatus } from "./site-status.js";
-import { readActiveSupportedSite } from "./site-status.js";
+import { readActiveSupportedSite, reloadActiveTab } from "./site-status.js";
 
 export interface PopupMountEnvironment {
   document: Document;
@@ -208,18 +208,7 @@ export async function mountPopup({
 
   const reloadBtn = document.querySelector<HTMLElement>("#reload-tab");
   reloadBtn?.addEventListener("click", () => {
-    const g = globalThis as typeof globalThis & {
-      chrome?: { tabs?: { reload?: (tabId?: number) => void; query?: (...args: unknown[]) => unknown } };
-      browser?: { tabs?: { reload?: (tabId?: number) => void; query?: (...args: unknown[]) => unknown } };
-    };
-    const tabs = g.chrome?.tabs ?? g.browser?.tabs;
-    if (!tabs?.query || !tabs?.reload) return;
-    const maybeResult = tabs.query({ active: true, currentWindow: true });
-    if (maybeResult && typeof (maybeResult as { then?: unknown }).then === "function") {
-      void (maybeResult as Promise<Array<{ id?: number }>>).then((t) => {
-        if (t[0]?.id != null) tabs.reload!(t[0].id);
-      });
-    }
+    void reloadActiveTab().catch(() => undefined);
   });
 
   const resetBtn = document.querySelector<HTMLElement>("#reset-stats");

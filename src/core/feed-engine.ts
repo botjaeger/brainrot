@@ -8,19 +8,20 @@ export interface FeedAdvanceResult {
   selector?: string;
 }
 
-export interface AdvanceOptions {
-  useKeyboard?: boolean;
+export interface ActiveFeedItem {
+  video: HTMLVideoElement;
+  key: Element;
 }
 
 export interface FeedSiteAdapter {
   name: string;
   siteKey: string;
+  nativeTransitionGraceMs?: number;
   matches(location: Location): boolean;
-  findActiveVideo(document: Document): HTMLVideoElement | null;
+  findActiveItem(document: Document): ActiveFeedItem | null;
   advancePlayback(
     document: Document,
     currentVideo: HTMLVideoElement,
-    options?: AdvanceOptions,
   ): FeedAdvanceResult;
 }
 
@@ -54,6 +55,7 @@ const noopController: FeedEngineController = {
 };
 
 const LOG_PREFIX = "[Brainrot]";
+const END_FALLBACK_DELAY_MS = 350;
 
 /**
  * Returns the real visibility state of the document, bypassing any instance-level
@@ -140,7 +142,12 @@ export function startFeedEngine({
   let observer: MutationObserver | null = null;
   let stopped = false;
   let rebindTimer: ReturnType<typeof setTimeout> | null = null;
-  let playbackAdvanced = false;
+  let endFallbackTimer: ReturnType<typeof setTimeout> | null = null;
+  let visibilityAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
+  let activeItemKey: Element | null = null;
+  let activeSource = "";
+  let playbackGeneration = 0;
+  let advancedGeneration: number | null = null;
   let removePlayListener: (() => void) | null = null;
   const mutationObserverCtor = window.MutationObserver;
   const log = createDiagnosticLogger(debugEnabled);
@@ -164,14 +171,8 @@ export function startFeedEngine({
     );
   };
 
-  const resetPlaybackAdvanceState = (): void => {
-    if (!activeVideo) {
-      return;
-    }
-
-    if (activeVideo.currentTime < 1) {
-      playbackAdvanced = false;
-    }
+  const getVideoSource = (video: HTMLVideoElement): string => {
+    return video.currentSrc || video.src || "";
   };
 
   const clearScheduledRebind = (): void => {
@@ -192,6 +193,43 @@ export function startFeedEngine({
       rebindTimer = null;
       rebind();
     }, 0);
+  };
+
+  const clearEndFallback = (): void => {
+    if (endFallbackTimer === null) return;
+    clearTimeout(endFallbackTimer);
+    endFallbackTimer = null;
+  };
+
+  const clearVisibilityAdvance = (): void => {
+    if (visibilityAdvanceTimer === null) return;
+    clearTimeout(visibilityAdvanceTimer);
+    visibilityAdvanceTimer = null;
+  };
+
+  const isCurrentIdentity = (
+    generation: number,
+    video: HTMLVideoElement,
+    itemKey: Element,
+    source: string,
+  ): boolean => {
+    if (
+      !(
+        playbackGeneration === generation &&
+        activeVideo === video &&
+        activeItemKey === itemKey &&
+        getVideoSource(video) === source
+      )
+    ) {
+      return false;
+    }
+
+    const detectedItem = adapter.findActiveItem(document);
+    return (
+      detectedItem?.video === video &&
+      detectedItem.key === itemKey &&
+      getVideoSource(detectedItem.video) === source
+    );
   };
 
   const clearBackgroundPoll = (): void => {
@@ -226,25 +264,31 @@ export function startFeedEngine({
     }, 500);
   };
 
-  const advanceFeed = (trigger: "ended" | "timeupdate" | "visibility-return", { useKeyboard = false }: { useKeyboard?: boolean } = {}): void => {
-    if (!activeVideo || playbackAdvanced) {
+  const advanceFeed = (
+    trigger: "ended" | "timeupdate" | "visibility-return",
+  ): void => {
+    if (
+      !activeVideo ||
+      !activeItemKey ||
+      advancedGeneration === playbackGeneration
+    ) {
       return;
     }
 
-    // When hidden, only proceed if using keyboard (which may work while hidden)
-    const isHidden = getRealHidden(document);
-    if (isHidden && !useKeyboard) {
+    if (getRealHidden(document)) {
       return;
     }
 
-    playbackAdvanced = true;
+    clearEndFallback();
+    advancedGeneration = playbackGeneration;
     let result: FeedAdvanceResult;
     try {
-      // Pass useKeyboard option to adapter if it supports it
-      result = adapter.advancePlayback(document, activeVideo, { useKeyboard });
+      result = adapter.advancePlayback(document, activeVideo);
     } catch (err) {
-      playbackAdvanced = false; // allow retry on next trigger
-      log?.("advance-error", { error: String(err) });
+      log?.("advance-error", {
+        error: String(err),
+        generation: playbackGeneration,
+      });
       return;
     }
     onAdvance?.(adapter.siteKey);
@@ -252,34 +296,88 @@ export function startFeedEngine({
     log?.("advance", {
       site: adapter.name,
       trigger,
+      generation: playbackGeneration,
       method: result.method,
       selector: result.selector || null,
     });
   };
 
-  const onEnded = (): void => {
-    if (getRealHidden(document)) {
-      // Try keyboard advance while hidden - may work where clicks don't
-      log?.("ended-while-hidden: trying keyboard advance");
-      advanceFeed("ended", { useKeyboard: true });
-      // If advance didn't happen (playbackAdvanced still false), defer to visibility-return
-      if (!playbackAdvanced) {
-        videoEndedWhileHidden = true;
-        log?.("keyboard-advance-failed: deferring to visibility-return");
+  const scheduleIdentityBoundAdvance = (
+    trigger: "ended" | "timeupdate",
+    delayMs: number,
+    requireNearEnd: boolean,
+  ): void => {
+    if (
+      !activeVideo ||
+      !activeItemKey ||
+      advancedGeneration === playbackGeneration ||
+      endFallbackTimer !== null
+    ) {
+      return;
+    }
+
+    const generation = playbackGeneration;
+    const video = activeVideo;
+    const itemKey = activeItemKey;
+    const source = activeSource;
+    if (delayMs <= 0) {
+      if (isCurrentIdentity(generation, video, itemKey, source)) {
+        advanceFeed(trigger);
+      } else {
+        scheduleRebind();
       }
       return;
     }
-    advanceFeed("ended");
+
+    endFallbackTimer = setTimeout(() => {
+      endFallbackTimer = null;
+      if (
+        stopped ||
+        !isCurrentIdentity(generation, video, itemKey, source) ||
+        (requireNearEnd && !isPlaybackNearEnd(video))
+      ) {
+        scheduleRebind();
+        return;
+      }
+
+      advanceFeed(trigger);
+    }, delayMs);
+  };
+
+  const onEnded = (): void => {
+    clearEndFallback();
+    if (getRealHidden(document)) {
+      videoEndedWhileHidden = true;
+      log?.("ended-while-hidden: deferring to visibility-return");
+      return;
+    }
+    scheduleIdentityBoundAdvance(
+      "ended",
+      adapter.nativeTransitionGraceMs ?? 0,
+      false,
+    );
   };
 
   const onPlaybackProgress = (): void => {
-    resetPlaybackAdvanceState();
+    if (!activeVideo) return;
 
-    if (!activeVideo || playbackAdvanced || !isPlaybackNearEnd(activeVideo)) {
+    if (activeVideo.currentTime > maxTimeReached) {
+      maxTimeReached = activeVideo.currentTime;
+    }
+
+    if (
+      advancedGeneration === playbackGeneration ||
+      !isPlaybackNearEnd(activeVideo) ||
+      getRealHidden(document)
+    ) {
       return;
     }
 
-    advanceFeed("timeupdate");
+    scheduleIdentityBoundAdvance(
+      "timeupdate",
+      END_FALLBACK_DELAY_MS,
+      true,
+    );
   };
 
   // Detect player-managed loops: the video seeks from near-end back to start
@@ -288,37 +386,31 @@ export function startFeedEngine({
   // that the video was near the end.
   let maxTimeReached = 0;
   const onSeeked = (): void => {
-    if (!activeVideo || playbackAdvanced) return;
+    if (!activeVideo || advancedGeneration === playbackGeneration) return;
     const duration = activeVideo.duration;
     if (
       Number.isFinite(duration) && duration > 0 &&
       maxTimeReached >= duration - 0.25 &&
       activeVideo.currentTime < 1
     ) {
-      // If hidden, try keyboard advance first
+      clearEndFallback();
       if (getRealHidden(document)) {
-        log?.("loop-seek-while-hidden: trying keyboard advance");
-        advanceFeed("ended", { useKeyboard: true });
-        if (!playbackAdvanced) {
-          videoEndedWhileHidden = true;
-          log?.("keyboard-advance-failed: deferring to visibility-return");
-        }
+        videoEndedWhileHidden = true;
+        log?.("loop-seek-while-hidden: deferring to visibility-return");
         return;
       }
-      advanceFeed("ended");
-    }
-  };
-
-  const trackTime = (): void => {
-    if (activeVideo && activeVideo.currentTime > maxTimeReached) {
-      maxTimeReached = activeVideo.currentTime;
+      scheduleIdentityBoundAdvance(
+        "ended",
+        adapter.nativeTransitionGraceMs ?? 0,
+        false,
+      );
     }
   };
 
   // Pause handler: distinguish user-initiated pause (foreground) from site-driven
   // pause (while hidden). Only resume site-driven pauses.
   const onPause = (): void => {
-    if (!activeVideo || playbackAdvanced) return;
+    if (!activeVideo || advancedGeneration === playbackGeneration) return;
     if (!getRealHidden(document)) {
       // Foreground pause = user-initiated
       userPaused = true;
@@ -341,6 +433,7 @@ export function startFeedEngine({
     if (stopped) return;
 
     if (getRealHidden(document)) {
+      clearVisibilityAdvance();
       // Tab going to background — snapshot current state
       if (activeVideo) {
         wasPlayingBeforeHidden = !activeVideo.paused;
@@ -379,8 +472,20 @@ export function startFeedEngine({
 
       if (shouldAdvance) {
         // Defer one tick so document.hidden is reliably false when advanceFeed checks it
-        setTimeout(() => {
-          if (!stopped) advanceFeed("visibility-return");
+        clearVisibilityAdvance();
+        if (!activeVideo || !activeItemKey) return;
+        const generation = playbackGeneration;
+        const video = activeVideo;
+        const itemKey = activeItemKey;
+        const source = activeSource;
+        visibilityAdvanceTimer = setTimeout(() => {
+          visibilityAdvanceTimer = null;
+          if (
+            !stopped &&
+            isCurrentIdentity(generation, video, itemKey, source)
+          ) {
+            advanceFeed("visibility-return");
+          }
         }, 0);
       } else if (activeVideo && wasPlayingBeforeHidden && activeVideo.paused && !activeVideo.ended && !userPaused) {
         activeVideo.play().catch(() => { /* best effort */ });
@@ -435,29 +540,52 @@ export function startFeedEngine({
     }
 
     clearBackgroundPoll();
+    clearEndFallback();
+    clearVisibilityAdvance();
     unlockLoop();
     activeVideo.removeEventListener("ended", onEnded);
     activeVideo.removeEventListener("timeupdate", onPlaybackProgress);
-    activeVideo.removeEventListener("timeupdate", trackTime);
     activeVideo.removeEventListener("seeked", onSeeked);
     activeVideo.removeEventListener("pause", onPause);
     activeVideo.removeEventListener("play", onPlay);
     activeVideo = null;
-    playbackAdvanced = false;
+    activeItemKey = null;
+    activeSource = "";
+    advancedGeneration = null;
     maxTimeReached = 0;
     userPaused = false;
   };
 
-  const attachActiveVideo = (video: HTMLVideoElement | null): void => {
-    if (video === activeVideo) {
-      // Already tracking this video — nothing to do.
+  const beginPlaybackGeneration = (source: string): void => {
+    clearEndFallback();
+    clearVisibilityAdvance();
+    clearBackgroundPoll();
+    playbackGeneration += 1;
+    advancedGeneration = null;
+    activeSource = source;
+    maxTimeReached = activeVideo?.currentTime ?? 0;
+    videoEndedWhileHidden = false;
+  };
+
+  const attachActiveItem = (item: ActiveFeedItem | null): void => {
+    if (!item) {
+      detachActiveVideo();
+      return;
+    }
+
+    const source = getVideoSource(item.video);
+    if (item.video === activeVideo && item.key === activeItemKey) {
+      if (source !== activeSource) {
+        beginPlaybackGeneration(source);
+      }
       return;
     }
 
     detachActiveVideo();
 
-    activeVideo = video;
-    playbackAdvanced = false;
+    activeVideo = item.video;
+    activeItemKey = item.key;
+    beginPlaybackGeneration(source);
 
     if (activeVideo) {
       lockLoop(activeVideo);
@@ -465,7 +593,6 @@ export function startFeedEngine({
       maxTimeReached = activeVideo.currentTime;
       activeVideo.addEventListener("ended", onEnded);
       activeVideo.addEventListener("timeupdate", onPlaybackProgress);
-      activeVideo.addEventListener("timeupdate", trackTime);
       activeVideo.addEventListener("seeked", onSeeked);
       activeVideo.addEventListener("pause", onPause);
       activeVideo.addEventListener("play", onPlay);
@@ -480,6 +607,8 @@ export function startFeedEngine({
     stopped = true;
     clearScheduledRebind();
     clearBackgroundPoll();
+    clearEndFallback();
+    clearVisibilityAdvance();
     document.removeEventListener("visibilitychange", onVisibilityChange);
     observer?.disconnect();
     observer = null;
@@ -498,7 +627,7 @@ export function startFeedEngine({
       return;
     }
 
-    attachActiveVideo(adapter.findActiveVideo(document));
+    attachActiveItem(adapter.findActiveItem(document));
   };
 
   // Register visibility change listener for background handling
@@ -526,7 +655,8 @@ export function startFeedEngine({
   // Rebind when any video starts playing — catches cases where the site
   // swaps the active video without mutating the DOM (e.g. TikTok scroll).
   const onDocumentPlay = (event: Event): void => {
-    if (event.target instanceof HTMLVideoElement) {
+    const VideoElement = document.defaultView?.HTMLVideoElement;
+    if (VideoElement && event.target instanceof VideoElement) {
       scheduleRebind();
     }
   };
