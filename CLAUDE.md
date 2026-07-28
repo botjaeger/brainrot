@@ -86,7 +86,7 @@ Two version schemes coexist:
 
 | Context | Format | Example | Where |
 |---------|--------|---------|-------|
-| Git tags / manifest | semver | `0.1.2` | `manifest.json`, `git tag` |
+| Git tags / manifest | semver | `0.1.3` | `manifest.json`, `git tag` |
 | GSD milestones | vX.Y | `v1.2` | `.planning/MILESTONES.md` |
 
 Git tags match the extension version in `manifest.json`. GSD milestones are internal planning labels unrelated to semver.
