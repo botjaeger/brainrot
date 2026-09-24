@@ -49,12 +49,11 @@ describe("extension settings storage", () => {
     expect(settings).toEqual({
       enabled: false,
       debugLogging: DEFAULT_EXTENSION_SETTINGS.debugLogging,
-      loopVideo: DEFAULT_EXTENSION_SETTINGS.loopVideo,
-      pauseOnHover: DEFAULT_EXTENSION_SETTINGS.pauseOnHover,
       scrollStats: DEFAULT_EXTENSION_SETTINGS.scrollStats,
       todayDate: DEFAULT_EXTENSION_SETTINGS.todayDate,
       todayStats: DEFAULT_EXTENSION_SETTINGS.todayStats,
       theme: DEFAULT_EXTENSION_SETTINGS.theme,
+      changelogSeenVersion: DEFAULT_EXTENSION_SETTINGS.changelogSeenVersion,
     });
     expect(get).toHaveBeenCalledTimes(2);
     expect(set).not.toHaveBeenCalled();
@@ -85,19 +84,16 @@ describe("extension settings storage", () => {
     expect(settings).toEqual({
       enabled: true,
       debugLogging: true,
-      loopVideo: DEFAULT_EXTENSION_SETTINGS.loopVideo,
-      pauseOnHover: DEFAULT_EXTENSION_SETTINGS.pauseOnHover,
       scrollStats: DEFAULT_EXTENSION_SETTINGS.scrollStats,
       todayDate: DEFAULT_EXTENSION_SETTINGS.todayDate,
       todayStats: DEFAULT_EXTENSION_SETTINGS.todayStats,
       theme: DEFAULT_EXTENSION_SETTINGS.theme,
+      changelogSeenVersion: DEFAULT_EXTENSION_SETTINGS.changelogSeenVersion,
     });
 
     await saveExtensionSettings({
       enabled: false,
       debugLogging: true,
-      loopVideo: false,
-      pauseOnHover: true,
       scrollStats: {},
       todayDate: "",
       todayStats: {},
@@ -108,8 +104,6 @@ describe("extension settings storage", () => {
     expect(set).toHaveBeenCalledWith({
       enabled: false,
       debugLogging: true,
-      loopVideo: false,
-      pauseOnHover: true,
       scrollStats: {},
       todayDate: "",
       todayStats: {},

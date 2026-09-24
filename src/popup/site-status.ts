@@ -30,6 +30,7 @@ type TabsApi = {
     callback?: (tabs: TabsQueryTab[]) => void,
   ) => unknown;
   reload?: (tabId?: number) => unknown;
+  create?: (createProperties: { url: string }) => unknown;
 };
 
 function isPromiseLike<T>(value: unknown): value is Promise<T> {
@@ -213,6 +214,22 @@ export async function readActiveSupportedSite(): Promise<SupportedSiteStatus | n
     return describeSupportedSiteFromUrl(url);
   } catch {
     return null;
+  }
+}
+
+// Opens an extension page in a new tab. The URL is resolved against the
+// popup's own location because browsers disagree on relative tabs.create URLs.
+export async function openExtensionPage(path: string, base: string): Promise<void> {
+  const url = new URL(path, base).href;
+  const tabs = getTabsApi();
+  if (!tabs?.create) {
+    globalThis.open?.(url, "_blank");
+    return;
+  }
+
+  const maybeCreate = tabs.create({ url });
+  if (isPromiseLike<unknown>(maybeCreate)) {
+    await maybeCreate;
   }
 }
 

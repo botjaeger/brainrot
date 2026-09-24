@@ -71,7 +71,23 @@ async function registerMainWorldSpoofFallback(): Promise<void> {
   }
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+// A fresh install has nothing new to announce: mark the installed version's
+// changelog as seen so the popup's "What's new" dot appears only after updates.
+// Key shared with `changelogSeenVersion` in src/shared/extension-settings.ts,
+// which this classic worker cannot import without a shared chunk.
+async function markChangelogSeenOnInstall(reason: string): Promise<void> {
+  if (reason !== "install") return;
+  try {
+    await chrome.storage.local.set({
+      changelogSeenVersion: chrome.runtime.getManifest().version,
+    });
+  } catch {
+    // Storage unavailable: the dot shows once, which is harmless.
+  }
+}
+
+chrome.runtime.onInstalled.addListener((details) => {
   void reloadSupportedTabs();
   void registerMainWorldSpoofFallback();
+  void markChangelogSeenOnInstall(details.reason);
 });

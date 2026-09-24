@@ -1,6 +1,7 @@
 import {
   APP_NAME,
 } from "../shared/brand.js";
+import { escapeHtml, THEME_TOKENS_CSS } from "../shared/page-html.js";
 
 const iconSunSvg = `
   <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -69,70 +70,14 @@ const iconRefreshSvg = `
   </svg>
 `.trim();
 
-const iconTrashSvg = `
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 6h18"/>
-    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-  </svg>
-`.trim();
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
 export function createPopupHtml({ version }: { version: string }): string {
   return `<!doctype html>
-<html lang="en" data-enabled="true" data-theme="light" data-stats-open="false">
+<html lang="en" data-enabled="true" data-theme="light" data-stats-open="false" data-version="${escapeHtml(version)}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>${escapeHtml(APP_NAME)}</title>
-    <style>
-      :root {
-        --bg: #fcfcf9;
-        --card-bg: #f5f5f2;
-        --hero-bg: #ffc107;
-        --hero-text: #2b2100;
-        --ink: #1a1a1a;
-        --muted: #6e6e6e;
-        --accent-brown: #5c4b18;
-        --hero-subtext: #3a2d00;
-        --switch-track: #1a1a1a;
-        --switch-thumb: #ffffff;
-        --status-pill-bg: rgba(0, 0, 0, 0.05);
-        --stats-row-bg: var(--card-bg);
-        --stats-row-active-bg: #fefcf3;
-        --stats-row-active-border: rgba(255, 193, 7, 0.5);
-        --stats-glow: none;
-        
-        --font-main: "Segoe UI", "Segoe UI Variable", system-ui, -apple-system, sans-serif;
-        --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      }
-
-      :root[data-theme="dark"] {
-        --bg: #121212;
-        --card-bg: #1a1a1a;
-        --hero-bg: #ffc20a;
-        --hero-text: #1a1a1a;
-        --ink: #f0f0f0;
-        --muted: #949494;
-        --accent-brown: #d1b86e;
-        --hero-subtext: #3a2d00;
-        --switch-track: #2a2a2a;
-        --switch-thumb: #f0f0f0;
-        --status-pill-bg: rgba(0, 0, 0, 0.1);
-        --stats-row-bg: #1a1a1a;
-        --stats-row-active-bg: #1a1a1a;
-        --stats-row-active-border: rgba(255, 194, 10, 0.4);
-        --stats-glow: 0 0 15px rgba(255, 194, 10, 0.25);
-        --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-      }
+    <style>${THEME_TOKENS_CSS}
 
       * {
         box-sizing: border-box;
@@ -174,12 +119,41 @@ export function createPopupHtml({ version }: { version: string }): string {
         height: 56px;
       }
 
+      /* Version doubles as the changelog link. */
       .version {
+        position: relative;
+        font-family: inherit;
         font-size: 11px;
         font-weight: 500;
         color: var(--muted);
-        margin-left: 4px;
-        margin-top: 4px;
+        margin: 4px 0 0 4px;
+        padding: 3px 8px;
+        background: none;
+        border: none;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s;
+      }
+
+      .version:hover {
+        background: var(--card-bg);
+        color: var(--ink);
+      }
+
+      .new-dot {
+        display: none;
+        position: absolute;
+        top: 1px;
+        right: 1px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--hero-bg);
+        box-shadow: 0 0 0 2px var(--bg);
+      }
+
+      [data-changelog-unseen="true"] .new-dot {
+        display: block;
       }
 
       .theme-toggle {
@@ -446,7 +420,7 @@ export function createPopupHtml({ version }: { version: string }): string {
       }
 
       .stats-today [data-today-count] {
-        color: var(--hero-bg);
+        color: var(--accent-ink);
         font-size: 20px;
         font-weight: 800;
       }
@@ -497,14 +471,14 @@ export function createPopupHtml({ version }: { version: string }): string {
       }
 
       .stats-row.active .stats-right {
-        color: var(--hero-bg);
+        color: var(--accent-ink);
       }
 
       .active-badge {
         display: none;
         font-size: 11px;
         font-weight: 600;
-        color: var(--hero-bg);
+        color: var(--accent-ink);
         opacity: 0.8;
       }
 
@@ -537,36 +511,9 @@ export function createPopupHtml({ version }: { version: string }): string {
         display: none;
       }
 
-      /* Settings Rows */
-      .setting-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background: var(--card-bg);
-        border-radius: 20px;
-        padding: 16px 20px;
-        margin-bottom: 16px;
-      }
-
-      .setting-label {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-
-      .setting-title {
-        font-size: 14px;
-        font-weight: 700;
-      }
-
-      .setting-desc {
-        font-size: 12px;
-        color: var(--muted);
-      }
-
       /* Focus */
       :focus-visible {
-        outline: 2px solid var(--hero-bg);
+        outline: 2px solid var(--accent-ink);
         outline-offset: 3px;
         border-radius: 4px;
       }
@@ -591,7 +538,7 @@ export function createPopupHtml({ version }: { version: string }): string {
       <div class="logo">
         <img class="logo-mascot" src="../assets/mascot.png" alt="" />
         <span>${APP_NAME}</span>
-        <span class="version">v${escapeHtml(version)}</span>
+        <button class="version" id="changelog-link" type="button" title="What's new" aria-label="What's new in v${escapeHtml(version)}">v${escapeHtml(version)}<span class="new-dot"></span></button>
       </div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" type="button">
         ${iconSunSvg}

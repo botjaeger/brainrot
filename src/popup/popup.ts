@@ -1,11 +1,12 @@
 import { DEFAULT_EXTENSION_SETTINGS, type ExtensionSettings, type ExtensionSettingsStore } from "../shared/extension-settings.js";
 import type { SupportedSiteStatus } from "./site-status.js";
-import { readActiveSupportedSite, reloadActiveTab } from "./site-status.js";
+import { openExtensionPage, readActiveSupportedSite, reloadActiveTab } from "./site-status.js";
 
 export interface PopupMountEnvironment {
   document: Document;
   store: ExtensionSettingsStore;
   readActiveSite?: () => Promise<SupportedSiteStatus | null>;
+  openPage?: (path: string, base: string) => Promise<void>;
 }
 
 function getRequiredElement<T extends Element>(
@@ -30,6 +31,14 @@ function renderExtensionState(
 ): void {
   document.documentElement.dataset.enabled = String(settings.enabled);
   document.documentElement.dataset.theme = settings.theme;
+  const version = document.documentElement.dataset.version;
+  const changelogUnseen = settings.changelogSeenVersion !== version;
+  document.documentElement.dataset.changelogUnseen = String(changelogUnseen);
+  // The dot is visual only; say it to screen readers too.
+  document.querySelector("#changelog-link")?.setAttribute(
+    "aria-label",
+    `What's new in v${version}${changelogUnseen ? " (unread)" : ""}`,
+  );
 
   if (!siteState) {
     statusChip.textContent = "Checking active tab";
@@ -52,8 +61,7 @@ function renderExtensionState(
   }
 
   // Update today total
-  const today = new Date().toISOString().slice(0, 10);
-  const todayStats = settings.todayDate === today ? settings.todayStats ?? {} : {};
+  const todayStats = settings.todayDate === new Date().toLocaleDateString("en-CA") ? settings.todayStats ?? {} : {};
   const todayTotal = Object.values(todayStats).reduce((sum, n) => sum + n, 0);
   const todaySpan = document.querySelector("[data-today-count]");
   const todayCopy = document.querySelector("[data-today-copy]");
@@ -92,40 +100,11 @@ function renderSiteState(
   }
 }
 
-async function writeNextSettings(
-  store: ExtensionSettingsStore,
-  document: Document,
-  nextSettings: ExtensionSettings,
-  previousSettings: ExtensionSettings,
-  siteState: SupportedSiteStatus | null,
-  statusChip: HTMLElement,
-  statusCopy: HTMLElement,
-): Promise<void> {
-  renderExtensionState(
-    document,
-    nextSettings,
-    siteState,
-    statusChip,
-    statusCopy,
-  );
-
-  try {
-    await store.write(nextSettings);
-  } catch {
-    renderExtensionState(
-      document,
-      previousSettings,
-      siteState,
-      statusChip,
-      statusCopy,
-    );
-  }
-}
-
 export async function mountPopup({
   document,
   store,
   readActiveSite = readActiveSupportedSite,
+  openPage = openExtensionPage,
 }: PopupMountEnvironment): Promise<void> {
   const enabledToggle = getRequiredElement<HTMLInputElement>(
     document,
@@ -161,49 +140,59 @@ export async function mountPopup({
   ]);
 
   let currentSettings = initialSettings;
-  let currentSiteState = activeSite;
+  const currentSiteState = activeSite;
 
-  const commitSettings = async (
-    nextSettings: ExtensionSettings,
-  ): Promise<void> => {
-    const previousSettings = currentSettings;
-    currentSettings = nextSettings;
-
-    await writeNextSettings(
-      store,
+  const render = (settings: ExtensionSettings): void => {
+    enabledToggle.checked = settings.enabled;
+    renderExtensionState(
       document,
-      nextSettings,
-      previousSettings,
+      settings,
       currentSiteState,
       statusChip,
       statusCopy,
     );
   };
 
-  enabledToggle.checked = currentSettings.enabled;
+  // Render optimistically, persist only the changed keys, roll back on failure.
+  const commitSettings = async (
+    patch: Partial<ExtensionSettings>,
+  ): Promise<void> => {
+    const previousSettings = currentSettings;
+    currentSettings = { ...currentSettings, ...patch };
+    render(currentSettings);
+
+    try {
+      await store.write(patch);
+    } catch {
+      currentSettings = previousSettings;
+      render(currentSettings);
+    }
+  };
+
   enabledToggle.addEventListener("change", () => {
-    void commitSettings({
-      ...currentSettings,
-      enabled: enabledToggle.checked,
-    });
+    void commitSettings({ enabled: enabledToggle.checked });
   });
 
   const hero = getRequiredElement<HTMLElement>(document, ".hero");
   hero.addEventListener("click", (e) => {
     const target = e.target as HTMLElement;
     if (target.closest("#reload-tab") || target.closest(".switch")) return;
-    enabledToggle.checked = !enabledToggle.checked;
-    void commitSettings({
-      ...currentSettings,
-      enabled: enabledToggle.checked,
-    });
+    void commitSettings({ enabled: !currentSettings.enabled });
   });
 
   themeToggle.addEventListener("click", () => {
     void commitSettings({
-      ...currentSettings,
       theme: currentSettings.theme === "light" ? "dark" : "light",
     });
+  });
+
+  const changelogLink = document.querySelector<HTMLElement>("#changelog-link");
+  changelogLink?.addEventListener("click", () => {
+    const version = document.documentElement.dataset.version ?? "";
+    if (currentSettings.changelogSeenVersion !== version) {
+      void commitSettings({ changelogSeenVersion: version });
+    }
+    void openPage("../changelog/index.html", document.baseURI).catch(() => undefined);
   });
 
   const reloadBtn = document.querySelector<HTMLElement>("#reload-tab");
@@ -214,44 +203,20 @@ export async function mountPopup({
   const resetBtn = document.querySelector<HTMLElement>("#reset-stats");
   resetBtn?.addEventListener("click", () => {
     void commitSettings({
-      ...currentSettings,
-      scrollStats: {
-        "facebook-reels": 0,
-        "instagram-reels": 0,
-        "tiktok": 0,
-        "youtube-shorts": 0,
-      },
-      todayDate: "",
-      todayStats: {
-        "facebook-reels": 0,
-        "instagram-reels": 0,
-        "tiktok": 0,
-        "youtube-shorts": 0,
-      },
+      scrollStats: DEFAULT_EXTENSION_SETTINGS.scrollStats,
+      todayDate: DEFAULT_EXTENSION_SETTINGS.todayDate,
+      todayStats: DEFAULT_EXTENSION_SETTINGS.todayStats,
     });
   });
 
-  renderExtensionState(
-    document,
-    currentSettings,
-    currentSiteState,
-    statusChip,
-    statusCopy,
-  );
+  render(currentSettings);
   renderSiteState(currentSiteState, statsRows);
 
   // Keep counts live — content script increments scrollStats in storage
   // while the popup is open; re-render whenever storage changes.
   store.watch?.((freshSettings) => {
     currentSettings = freshSettings;
-    renderExtensionState(
-      document,
-      freshSettings,
-      currentSiteState,
-      statusChip,
-      statusCopy,
-    );
-    renderSiteState(currentSiteState, statsRows);
+    render(currentSettings);
   });
 
   document.documentElement.classList.add("is-ready");

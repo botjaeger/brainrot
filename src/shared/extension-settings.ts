@@ -1,19 +1,18 @@
 export interface ExtensionSettings {
   enabled: boolean;
   debugLogging: boolean;
-  loopVideo: boolean;
-  pauseOnHover: boolean;
   scrollStats: Record<string, number>;
   todayDate: string;
   todayStats: Record<string, number>;
   theme: "light" | "dark";
+  /** Version whose changelog the user has seen; the popup flags newer ones.
+   *  Also written by src/background/index.ts on install. */
+  changelogSeenVersion: string;
 }
 
 export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   enabled: true,
   debugLogging: false,
-  loopVideo: false,
-  pauseOnHover: true,
   scrollStats: {
     "facebook-reels": 0,
     "instagram-reels": 0,
@@ -28,11 +27,12 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
     "youtube-shorts": 0,
   },
   theme: "light",
+  changelogSeenVersion: "",
 };
 
 export interface ExtensionSettingsStore {
   read(): Promise<ExtensionSettings>;
-  write(settings: ExtensionSettings): Promise<void>;
+  write(settings: Partial<ExtensionSettings>): Promise<void>;
   watch?(callback: (settings: ExtensionSettings) => void): () => void;
 }
 
@@ -64,12 +64,11 @@ type StorageApi = {
 const STORAGE_KEYS: Array<keyof ExtensionSettings> = [
   "enabled",
   "debugLogging",
-  "loopVideo",
-  "pauseOnHover",
   "scrollStats",
   "todayDate",
   "todayStats",
   "theme",
+  "changelogSeenVersion",
 ];
 
 function getStorageApi(): StorageApi | null {
@@ -95,14 +94,6 @@ function normalizeSettings(snapshot: StorageSnapshot): ExtensionSettings {
       typeof snapshot.debugLogging === "boolean"
         ? snapshot.debugLogging
         : DEFAULT_EXTENSION_SETTINGS.debugLogging,
-    loopVideo:
-      typeof snapshot.loopVideo === "boolean"
-        ? snapshot.loopVideo
-        : DEFAULT_EXTENSION_SETTINGS.loopVideo,
-    pauseOnHover:
-      typeof snapshot.pauseOnHover === "boolean"
-        ? snapshot.pauseOnHover
-        : DEFAULT_EXTENSION_SETTINGS.pauseOnHover,
     scrollStats:
       snapshot.scrollStats && typeof snapshot.scrollStats === "object"
         ? (snapshot.scrollStats as Record<string, number>)
@@ -119,6 +110,10 @@ function normalizeSettings(snapshot: StorageSnapshot): ExtensionSettings {
       snapshot.theme === "light" || snapshot.theme === "dark"
         ? snapshot.theme
         : DEFAULT_EXTENSION_SETTINGS.theme,
+    changelogSeenVersion:
+      typeof snapshot.changelogSeenVersion === "string"
+        ? snapshot.changelogSeenVersion
+        : DEFAULT_EXTENSION_SETTINGS.changelogSeenVersion,
   };
 }
 
@@ -142,25 +137,16 @@ async function readStorageSnapshot(): Promise<StorageSnapshot> {
   });
 }
 
+// Writes only the given keys, so a popup toggle never overwrites stats the
+// content script incremented after the popup last read them.
 async function writeStorageSnapshot(
-  settings: ExtensionSettings,
+  snapshot: Partial<ExtensionSettings>,
 ): Promise<void> {
   const storage = getStorageApi();
 
   if (!storage) {
     return;
   }
-
-  const snapshot: StorageSnapshot = {
-    enabled: settings.enabled,
-    debugLogging: settings.debugLogging,
-    loopVideo: settings.loopVideo,
-    pauseOnHover: settings.pauseOnHover,
-    scrollStats: settings.scrollStats,
-    todayDate: settings.todayDate,
-    todayStats: settings.todayStats,
-    theme: settings.theme,
-  };
 
   const maybeWrite = storage.local.set(snapshot);
 
@@ -181,7 +167,7 @@ export async function readExtensionSettings(): Promise<ExtensionSettings> {
 }
 
 export async function saveExtensionSettings(
-  settings: ExtensionSettings,
+  settings: Partial<ExtensionSettings>,
 ): Promise<void> {
   await writeStorageSnapshot(settings);
 }
@@ -200,16 +186,7 @@ export function watchExtensionSettings(
       return;
     }
 
-    if (
-      !("enabled" in changes) &&
-      !("debugLogging" in changes) &&
-      !("loopVideo" in changes) &&
-      !("pauseOnHover" in changes) &&
-      !("scrollStats" in changes) &&
-      !("todayDate" in changes) &&
-      !("todayStats" in changes) &&
-      !("theme" in changes)
-    ) {
+    if (!STORAGE_KEYS.some((key) => key in changes)) {
       return;
     }
 

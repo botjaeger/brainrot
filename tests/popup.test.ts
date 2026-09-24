@@ -15,12 +15,11 @@ function makeSettings(overrides: Partial<ExtensionSettings> = {}): ExtensionSett
   return {
     enabled: true,
     debugLogging: false,
-    loopVideo: false,
-    pauseOnHover: true,
     scrollStats: { "youtube-shorts": 0, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
     todayDate: "",
     todayStats: { "youtube-shorts": 0, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
     theme: "light",
+    changelogSeenVersion: "",
     ...overrides,
   };
 }
@@ -86,8 +85,30 @@ describe("mountPopup", () => {
     enabledToggle.checked = true;
     enabledToggle.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
 
-    expect(write).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
+    expect(write).toHaveBeenCalledWith({ enabled: true });
     expect(doc.querySelector<HTMLElement>("[data-status-copy]")?.textContent).toBe("No taps. No swipes. Just watch.");
+  });
+
+  it("rolls the toggle back when the write fails", async () => {
+    const dom = loadPopupDom();
+    const store: ExtensionSettingsStore = {
+      read: async () => makeSettings({ enabled: false }),
+      write: vi.fn(async () => {
+        throw new Error("storage unavailable");
+      }),
+    };
+
+    await mountPopup({ document: dom.window.document, store });
+
+    const doc = dom.window.document;
+    const enabledToggle = doc.querySelector<HTMLInputElement>("#enabled-toggle")!;
+    enabledToggle.checked = true;
+    enabledToggle.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(enabledToggle.checked).toBe(false);
+    expect(doc.documentElement.dataset.enabled).toBe("false");
+    expect(doc.querySelector<HTMLElement>("[data-status-copy]")?.textContent).toBe("Auto scroll paused.");
   });
 
   it("cycles theme on theme-toggle click and writes to store", async () => {
@@ -103,7 +124,7 @@ describe("mountPopup", () => {
     dom.window.document.querySelector<HTMLElement>("#theme-toggle")?.click();
 
     expect(dom.window.document.documentElement.dataset.theme).toBe("dark");
-    expect(write).toHaveBeenCalledWith(expect.objectContaining({ theme: "dark" }));
+    expect(write).toHaveBeenCalledWith({ theme: "dark" });
   });
 
   it("clicking hero card toggles enabled state", async () => {
@@ -126,12 +147,12 @@ describe("mountPopup", () => {
     hero.click();
 
     expect(enabledToggle.checked).toBe(true);
-    expect(write).toHaveBeenCalledWith(expect.objectContaining({ enabled: true }));
+    expect(write).toHaveBeenCalledWith({ enabled: true });
   });
 
   it("renders today total from todayStats when date matches", async () => {
     const dom = loadPopupDom();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString("en-CA");
     const store: ExtensionSettingsStore = {
       read: async () => makeSettings({
         todayDate: today,
@@ -148,7 +169,7 @@ describe("mountPopup", () => {
 
   it("shows personality copy at 50+ videos", async () => {
     const dom = loadPopupDom();
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toLocaleDateString("en-CA");
     const store: ExtensionSettingsStore = {
       read: async () => makeSettings({
         todayDate: today,
@@ -236,4 +257,38 @@ describe("mountPopup", () => {
       });
     },
   );
+
+  it("flags an unseen changelog, then opens it and marks it seen", async () => {
+    const dom = loadPopupDom();
+    const write = vi.fn(async () => undefined);
+    const openPage = vi.fn(async () => undefined);
+    const store: ExtensionSettingsStore = {
+      read: async () => makeSettings({ changelogSeenVersion: "0.0.0-old" }),
+      write,
+    };
+
+    await mountPopup({ document: dom.window.document, store, readActiveSite: async () => null, openPage });
+
+    const root = dom.window.document.documentElement;
+    expect(root.dataset.changelogUnseen).toBe("true");
+    expect(dom.window.document.querySelector("#changelog-link")?.getAttribute("aria-label")).toBe("What's new in v0.0.0-test (unread)");
+
+    dom.window.document.querySelector<HTMLElement>("#changelog-link")?.click();
+
+    expect(write).toHaveBeenCalledWith({ changelogSeenVersion: "0.0.0-test" });
+    expect(openPage).toHaveBeenCalledWith("../changelog/index.html", "https://brainrot.test/");
+    expect(root.dataset.changelogUnseen).toBe("false");
+  });
+
+  it("shows no changelog dot once the installed version was seen", async () => {
+    const dom = loadPopupDom();
+    const store: ExtensionSettingsStore = {
+      read: async () => makeSettings({ changelogSeenVersion: "0.0.0-test" }),
+      write: vi.fn(async () => undefined),
+    };
+
+    await mountPopup({ document: dom.window.document, store, readActiveSite: async () => null });
+
+    expect(dom.window.document.documentElement.dataset.changelogUnseen).toBe("false");
+  });
 });
