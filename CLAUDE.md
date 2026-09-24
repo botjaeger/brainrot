@@ -1,102 +1,83 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Brainrot: MV3 browser extension that auto-advances short-form feeds (YouTube Shorts, Facebook Reels, TikTok, Instagram Reels) when a video ends. Targets Chromium, Firefox, and desktop Safari. No backend.
 
 ## Commands
 
 ```bash
-pnpm build              # Full build → Chromium + Firefox + Safari
-pnpm build:base         # Vite only (dist/ root, no browser packages)
-pnpm test               # Run all tests once
-pnpm test:watch         # Watch mode
-pnpm typecheck          # Type-check without emitting
-pnpm firefox:run        # Load extension in Firefox via web-ext
-
-# Run a single test file
-pnpm exec vitest run tests/popup.test.ts
-
-# Run tests matching a name pattern
-pnpm exec vitest run -t "theme toggle"
-
-# Safari (requires macOS + Xcode)
-pnpm safari:run
+pnpm check              # Gate: typecheck + all tests (tests/global-setup.ts builds dist/ once first)
+pnpm release 0.1.4      # Bump, check, commit, tag, push; CI publishes to stores
+pnpm test               # vitest run
+pnpm exec vitest run tests/popup.test.ts   # one file
+pnpm exec vitest run -t "theme toggle"     # by test name
+pnpm typecheck          # tsc --noEmit
+pnpm build              # dist/ + dist/chromium + dist/firefox + dist/safari
+pnpm build:base         # Vite only (dist/ root)
+pnpm build:firefox      # Also build:chromium, build:safari
+pnpm firefox:run        # web-ext on dist/firefox
+pnpm safari:run         # macOS + Xcode; app builds to /tmp/brainrot-safari
+pnpm dev:site           # Marketing site (site/, vite.site.config.ts, deployed by Vercel)
 ```
 
 ## Architecture
 
-### Two entry points, two bundles
+### Entry points (`vite.config.ts`)
 
-Vite compiles two independent entry points defined in `vite.config.ts`:
+The input key is the output filename. The manifest and popup HTML reference these paths; renaming a key silently breaks the extension.
 
-| Key | Source | Output |
-|-----|--------|--------|
-| `content/index` | `src/content/index.ts` | `dist/content/index.js` |
-| `popup/index` | `src/popup/index.ts` | `dist/popup/index.js` |
+| Key | Role |
+|-----|------|
+| `background/index` | Service worker (Firefox: `background.scripts`). On install, reloads supported tabs and registers the MAIN-world spoof dynamically (Safari fallback). |
+| `content/index` | Isolated content script. Starts the feed engine, counts scroll stats, follows SPA navigation. |
+| `content-main/spoof` | MAIN-world script. Overrides `document.hidden`/`visibilityState` on supported feeds so playback continues in background tabs. Dormant until enabled. |
+| `content-main/control` | Isolated bridge. Reads `enabled` from storage and toggles the spoof through `brainrot:visibility-spoof-*` DOM events. |
+| `popup/index` | Popup UI. The version number opens the changelog; a dot flags an unseen one (`changelogSeenVersion`). |
+| `changelog/index` | "What's new" page. Only applies the stored theme; the content is static HTML. |
 
-The output key name becomes the filename — if these ever diverge from the `src=` references in the popup HTML, the popup silently breaks (this was the theme-toggle bug).
+`manifestPlugin` in `vite.config.ts` also emits `manifest.json`, the icons, `popup/index.html` from `createPopupHtml({ version })` in `src/popup/popup-template.ts`, and `changelog/index.html` from `createChangelogHtml({ version })` in `src/changelog/changelog-template.ts`. No static HTML exists; tests render the same functions. Both pages share colour tokens and `escapeHtml` from `src/shared/page-html.ts`.
 
-### Popup HTML is code-generated
-
-`src/popup/popup-template.ts` exports `createPopupHtml()`. Vite calls it at build time (via the `manifestPlugin` in `vite.config.ts`) to emit `dist/popup/index.html` as a build artifact — there is no static HTML file. The same function is imported in `tests/popup.test.ts` so tests run against the live template.
-
-### Two separate settings modules
-
-The content script uses a **lean** settings module that only contains what it needs:
-
-- `src/content/runtime-settings.ts` — `{ enabled, debugLogging }` only. Used exclusively by the content script.
-- `src/shared/extension-settings.ts` — full settings including `theme`, `scrollStats`, etc. Used by the popup.
-
-Do not import from `extension-settings.ts` in content-script code; it pulls in fields the background storage doesn't need and is a separate module boundary.
-
-Both modules implement the same browser API compatibility shim: they check `globalThis.browser?.storage` then fall back to `globalThis.chrome?.storage`, and handle both promise-returning and callback-based `storage.local.get/set`.
+Release notes live in `src/shared/changelog.ts`, newest first. The page lists only versions up to the installed one, so notes for the next version can be written ahead. The popup and changelog pages are ES modules and share the `extension-settings.js` chunk at the dist root.
 
 ### Feed engine and site adapters
 
-`src/core/feed-engine.ts` exports `startFeedEngine()`. It:
-1. Selects the right `FeedSiteAdapter` for the current URL.
-2. Attaches `ended` / `timeupdate` listeners to the active video element.
-3. Watches for DOM mutations to rebind when the active video changes.
-4. Calls `adapter.advancePlayback()` when the video ends or nears its end (within 0.25 s).
+`startFeedEngine()` in `src/core/feed-engine.ts` picks a `FeedSiteAdapter` by URL, binds to the active video, rebinds on DOM mutation, and calls `adapter.advancePlayback()` on `ended` or within 0.25 s of the end. It reads the real visibility through the prototype chain (`getRealHidden`) because the spoof masks `document.hidden`.
 
-**To add a new site:** implement `FeedSiteAdapter` in `src/sites/`, export a named adapter, and add it to `DEFAULT_FEED_SITES` in `feed-engine.ts`.
+The content script runs in an isolated world: property overrides on DOM objects (e.g. `Object.defineProperty(video, "loop", …)`) are invisible to the page. To affect the page, act on the DOM itself: the engine keeps sites from looping the active video by observing and stripping its `loop` attribute. A looping video never fires `ended`, which caused the "works only after reload" reports. `src/core/shorts-engine.ts` is a YouTube-only wrapper used by tests.
 
-The advance strategy tries, in order: click a "next" button → scroll a site-specific container → fall back to window scroll. YouTube Shorts uses `src/shared/dom.ts` helpers; TikTok and Facebook have their own selector lists in their respective `src/sites/` files.
+Each adapter in `src/sites/` owns its advance strategy: usually a "next" button, then a site container scroll, then `scrollDocumentForward()` from `src/shared/dom.ts`.
 
-### Build pipeline
+Supported-site knowledge is duplicated. A new site touches all of these:
 
-```
-vite build
-  → dist/manifest.json       (copied from manifest.json)
-  → dist/popup/index.html    (generated by createPopupHtml())
-  → dist/popup/index.js
-  → dist/content/index.js
+- `src/sites/<site>.ts` adapter, added to `DEFAULT_FEED_SITES` in `feed-engine.ts`
+- `manifest.json`: all three `content_scripts` `matches` arrays
+- `SUPPORTED_URL_PATTERNS` in `src/background/index.ts`
+- `isSupportedFeed()` in `src/content-main/spoof.ts` (self-contained; cannot import)
+- `src/content/site-key.ts`, `src/popup/site-status.ts`
+- `SUPPORTED_SITE_LABELS` in `src/shared/brand.ts`
+- `scrollStats`/`todayStats` defaults in `src/shared/extension-settings.ts`
 
-scripts/package-browser-builds.mjs all
-  → dist/chromium/           (base manifest)
-  → dist/firefox/            (manifest.json deep-merged with manifest.firefox.json)
-```
+### Settings
 
-Firefox differences live entirely in `manifest.firefox.json` (overlay). The merge is a deep merge that replaces arrays wholesale.
+- `src/shared/extension-settings.ts`: full settings (`theme`, `loopVideo`, `pauseOnHover`, stats, …). Popup only.
+- `src/content/runtime-settings.ts`: `{ enabled, debugLogging }` only. Content script only. Never import `extension-settings.ts` into content code.
 
-Safari packaging is a separate flow: `build:safari` produces `dist/safari/`, then `scripts/build-safari-app.mjs` invokes `xcodebuild` to wrap it in the Xcode project under `safari/`.
+Every storage reader (these two, `src/content/scroll-counter.ts`, `src/content-main/control.ts`) uses the same shim: `globalThis.browser?.storage`, then `globalThis.chrome?.storage`, handling both promise and callback `storage.local.get/set`.
 
-### Versioning
+### Packaging
 
-Two version schemes coexist:
+`vite build` writes `dist/`. Then:
 
-| Context | Format | Example | Where |
-|---------|--------|---------|-------|
-| Git tags / manifest | semver | `0.1.3` | `manifest.json`, `git tag` |
-| GSD milestones | vX.Y | `v1.2` | `.planning/MILESTONES.md` |
+- `scripts/package-browser-builds.mjs` copies it to `dist/chromium/` (base manifest) and `dist/firefox/` (deep-merged with `manifest.firefox.json`).
+- `scripts/package-safari-builds.mjs` writes `dist/safari/` (merged with `manifest.safari.json`); `scripts/build-safari-app.mjs` runs `xcodebuild` on `safari/`.
 
-Git tags match the extension version in `manifest.json`. GSD milestones are internal planning labels unrelated to semver.
+Background, content and content-main bundles must stay self-contained (classic scripts, no `import`). Rollup splits any module imported by two entries into a shared chunk, so never import a module into those bundles that a page (popup, changelog) also imports; `tests/browser-packaging.test.ts` fails if a bundle starts with `import`.
 
-### Testing
+Overlay merge: arrays replace wholesale. A `null` value deletes the key in the Firefox merge only; the Safari merge does not handle `null`.
 
-Tests run in `vitest` with `environment: "node"`. Browser DOM is provided by `jsdom` — tests instantiate it directly:
+## Versioning
 
-```ts
-const dom = new JSDOM(createPopupHtml(), { url: "https://brainrot.test/" });
-```
+Git tags are `v<semver>` and match the extension version. `pnpm release <version>` (`scripts/release.mjs`, `--dry-run` to preview) bumps all version fields (`manifest.json`, `package.json`, `APP_VERSION` in `src/shared/brand.ts`, both `safari/*/Info.plist`, `SOURCE_BUILD.md`), refuses to run without a `src/shared/changelog.ts` entry for the version and dates it, runs `pnpm check`, commits, tags, and pushes. The tag triggers `.github/workflows/release.yml`: it publishes to the Chrome Web Store and addons.mozilla.org (with a `git archive` source upload for AMO review) and creates a GitHub release. A store is skipped with a warning when its secrets (`CHROME_*`, `AMO_JWT_*`) are missing. Safari is not automated. GSD milestones (`vX.Y` in `.planning/MILESTONES.md`) are planning labels, unrelated to semver.
 
-`restoreMocks: true` and `clearMocks: true` are set globally, so mocks reset between tests automatically.
+## Testing
+
+Vitest, `environment: "node"`, `globals: true`, `restoreMocks` and `clearMocks` on. Tests build DOMs with `new JSDOM(...)` directly; site fixtures live in `tests/fixtures/*.fixture.html`.
