@@ -1,20 +1,10 @@
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const distDir = resolve(repoRoot, "dist");
-const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-
-function buildBrowserPackages() {
-  execFileSync(pnpmCommand, ["run", "build:all"], {
-    cwd: repoRoot,
-    stdio: "inherit",
-  });
-}
-
 function readManifest(packageName: "chromium" | "firefox") {
   const manifestPath = join(distDir, packageName, "manifest.json");
   return JSON.parse(readFileSync(manifestPath, "utf8")) as {
@@ -54,10 +44,6 @@ function readVisibilityScript(
 function readPopupHtml(packageName: "chromium" | "firefox") {
   return readFileSync(join(distDir, packageName, "popup", "index.html"), "utf8");
 }
-
-beforeAll(() => {
-  buildBrowserPackages();
-});
 
 describe("browser packaging", () => {
   it("writes self-contained Chromium and Firefox package roots", () => {

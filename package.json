@@ -23,6 +23,7 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "check": "pnpm run typecheck && pnpm test",
+    "release": "node scripts/release.mjs",
     "dev:site": "vite --config vite.site.config.ts",
     "build:site": "vite build --config vite.site.config.ts"
   },

@@ -5,7 +5,7 @@ import {
   SAFARI_DERIVED_DATA_PATH,
   SAFARI_PROJECT_PATH,
   SAFARI_SCHEME,
-} from "../scripts/safari-build-command.js";
+} from "../scripts/safari-build-command.mjs";
 
 describe("buildSafariXcodebuildArgs", () => {
   it("builds the unsigned debug command by default", () => {

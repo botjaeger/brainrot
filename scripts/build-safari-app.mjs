@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { buildSafariXcodebuildArgs } from "./safari-build-command.js";
+import { buildSafariXcodebuildArgs } from "./safari-build-command.mjs";
 
 function parseArgs(argv) {
   return {

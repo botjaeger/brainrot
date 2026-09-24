@@ -1,8 +1,7 @@
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
 const repoRoot = fileURLToPath(new URL("..", import.meta.url));
 const distDir = resolve(repoRoot, "dist");
@@ -14,15 +13,6 @@ const safariExtensionInfoPlist = resolve(
   repoRoot,
   "safari/AutoYouTubeShortsScrollerExtension/Info.plist",
 );
-const pnpmCommand = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
-
-function buildSafariPackage() {
-  execFileSync(pnpmCommand, ["run", "build:safari"], {
-    cwd: repoRoot,
-    stdio: "inherit",
-  });
-}
-
 function readSafariManifest() {
   const manifestPath = join(distDir, "safari", "manifest.json");
   return JSON.parse(readFileSync(manifestPath, "utf8")) as {
@@ -55,10 +45,6 @@ function readSafariContentScript() {
 function readSafariPopupHtml() {
   return readFileSync(join(distDir, "safari", "popup", "index.html"), "utf8");
 }
-
-beforeAll(() => {
-  buildSafariPackage();
-});
 
 describe("safari packaging", () => {
   it("writes the staged Safari bundle", () => {
