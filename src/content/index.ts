@@ -133,16 +133,32 @@ function setupScrollCounting(signal: AbortSignal): void {
     { threshold: [0.8] },
   );
 
+  // Feeds mutate constantly, so batch the video scan instead of running it
+  // per mutation, and release videos the feed removed so they can be collected.
+  const observedVideos = new Set<HTMLVideoElement>();
+  let observeTimer: ReturnType<typeof setTimeout> | null = null;
+
   function observeAllVideos(): void {
+    observeTimer = null;
     if (signal.aborted) return;
+    for (const video of observedVideos) {
+      if (!video.isConnected) {
+        intersectionObserver.unobserve(video);
+        observedVideos.delete(video);
+      }
+    }
     for (const video of document.querySelectorAll<HTMLVideoElement>("video")) {
+      if (observedVideos.has(video)) continue;
+      observedVideos.add(video);
       intersectionObserver.observe(video);
     }
   }
 
   observeAllVideos();
 
-  const mutationObserver = new MutationObserver(observeAllVideos);
+  const mutationObserver = new MutationObserver(() => {
+    observeTimer ??= setTimeout(observeAllVideos, 100);
+  });
   mutationObserver.observe(
     document.body ?? document.documentElement,
     { childList: true, subtree: true },
@@ -176,6 +192,8 @@ function setupScrollCounting(signal: AbortSignal): void {
   signal.addEventListener("abort", () => {
     intersectionObserver.disconnect();
     mutationObserver.disconnect();
+    observedVideos.clear();
+    if (observeTimer !== null) clearTimeout(observeTimer);
     if (scrollDebounce !== null) clearTimeout(scrollDebounce);
   });
 }

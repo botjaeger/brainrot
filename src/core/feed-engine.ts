@@ -56,6 +56,7 @@ const noopController: FeedEngineController = {
 
 const LOG_PREFIX = "[Brainrot]";
 const END_FALLBACK_DELAY_MS = 350;
+const LOOP_WRAP_WINDOW_S = 1;
 
 /**
  * Returns the real visibility state of the document, bypassing any instance-level
@@ -383,14 +384,16 @@ export function startFeedEngine({
   // Detect player-managed loops: the video seeks from near-end back to start
   // without firing "ended" (common in TikTok's xgplayer and YouTube Shorts).
   // Track the max time reached so a loop-seek doesn't erase our knowledge
-  // that the video was near the end.
+  // that the video was near the end. The window is wider than the near-end
+  // threshold because timeupdate fires only every ~250 ms (slower in the
+  // background), so the last sample before a wrap can land outside 0.25 s.
   let maxTimeReached = 0;
   const onSeeked = (): void => {
     if (!activeVideo || advancedGeneration === playbackGeneration) return;
     const duration = activeVideo.duration;
     if (
       Number.isFinite(duration) && duration > 0 &&
-      maxTimeReached >= duration - 0.25 &&
+      maxTimeReached >= duration - LOOP_WRAP_WINDOW_S &&
       activeVideo.currentTime < 1
     ) {
       clearEndFallback();
@@ -493,45 +496,24 @@ export function startFeedEngine({
     }
   };
 
-  // Lock the video's loop property so the site's player can't re-enable it.
-  // Store the original descriptor so we can restore it on detach.
-  let loopDescriptor: PropertyDescriptor | undefined;
-  let loopLockedVideo: HTMLVideoElement | null = null;
+  // Keep the site's player from looping the active video, so it fires "ended".
+  // A property override would only exist in the content script's isolated
+  // world; the page sets `loop` through its own wrapper, which reflects to the
+  // `loop` attribute. Watching that attribute works across worlds.
+  let loopObserver: MutationObserver | null = null;
 
   const lockLoop = (video: HTMLVideoElement): void => {
-    let proto: object | null = Object.getPrototypeOf(video);
-    while (proto && !Object.getOwnPropertyDescriptor(proto, "loop")) {
-      proto = Object.getPrototypeOf(proto);
-    }
-    loopDescriptor = proto
-      ? Object.getOwnPropertyDescriptor(proto, "loop")
-      : undefined;
     video.loop = false;
-    video.removeAttribute("loop");
-    Object.defineProperty(video, "loop", {
-      get() { return false; },
-      set() { /* blocked */ },
-      configurable: true,
+    if (!mutationObserverCtor) return;
+    loopObserver = new mutationObserverCtor(() => {
+      if (video.hasAttribute("loop")) video.loop = false;
     });
-    loopLockedVideo = video;
+    loopObserver.observe(video, { attributes: true, attributeFilter: ["loop"] });
   };
 
   const unlockLoop = (): void => {
-    if (loopLockedVideo) {
-      if (loopDescriptor) {
-        Object.defineProperty(loopLockedVideo, "loop", loopDescriptor);
-      } else {
-        // No prototype descriptor was saved; remove the per-instance override
-        // to restore prototype-chain lookup (prevents permanent lock on reused elements).
-        try {
-          delete (loopLockedVideo as unknown as Record<string, unknown>)["loop"];
-        } catch {
-          // Property is non-configurable — nothing to do.
-        }
-      }
-    }
-    loopLockedVideo = null;
-    loopDescriptor = undefined;
+    loopObserver?.disconnect();
+    loopObserver = null;
   };
 
   const detachActiveVideo = (): void => {
@@ -622,8 +604,11 @@ export function startFeedEngine({
       return;
     }
 
+    // Sites rewrite the URL while hydrating, so a mismatch may be transient.
+    // Detach instead of stopping; the content script stops the engine when
+    // SPA navigation really leaves the feed.
     if (!adapter.matches(window.location)) {
-      stop();
+      detachActiveVideo();
       return;
     }
 

@@ -7,16 +7,8 @@ const SHORTS_NEXT_BUTTON_SELECTORS = [
   "button[aria-label*='next' i]",
   "button[title*='next' i]",
 ];
-const ACTIVE_SHORTS_VIDEO_SELECTORS = [
-  "ytd-reel-video-renderer[is-active] video.video-stream.html5-main-video",
-  "ytd-reel-video-renderer.is-active video.video-stream.html5-main-video",
-  "ytd-reel-video-renderer[is-active] video",
-  "ytd-reel-video-renderer.is-active video",
-  "ytd-reel-video-renderer video.video-stream.html5-main-video",
-  "ytd-reel-video-renderer video",
-  "video.video-stream.html5-main-video",
-  "video",
-];
+const SHORTS_VIDEO_SELECTOR = `${SHORTS_RENDERER_SELECTOR} video`;
+const SHORTS_MAIN_VIDEO_SELECTOR = "video.video-stream.html5-main-video";
 
 function isRendererContainer(element: Element | null): element is Element {
   return element?.tagName.toLowerCase() === SHORTS_RENDERER_SELECTOR;
@@ -28,10 +20,6 @@ function isVideoElement(element: Element | null): element is HTMLVideoElement {
 
 function isButtonElement(element: Element | null): element is HTMLButtonElement {
   return element?.tagName.toLowerCase() === "button";
-}
-
-function isInsideShortsUi(element: Element): boolean {
-  return element.closest("ytd-shorts, #shorts-container") !== null;
 }
 
 function isInsideAnyScope(element: Element, selectors: readonly string[]): boolean {
@@ -180,39 +168,30 @@ export function isShortsPathname(pathname: string): boolean {
 }
 
 export function findActiveShortsVideo(document: Document): HTMLVideoElement | null {
-  const candidates: HTMLVideoElement[] = [];
-  const seen = new Set<HTMLVideoElement>();
+  // Runs on every feed mutation: one query, and each candidate scored once
+  // (the viewport check forces layout).
+  let best: HTMLVideoElement | null = null;
+  let bestScore = -1;
 
-  for (const selector of ACTIVE_SHORTS_VIDEO_SELECTORS) {
-    for (const element of document.querySelectorAll(selector)) {
-      if (
-        isVideoElement(element) &&
-        element.closest(SHORTS_RENDERER_SELECTOR) &&
-        !seen.has(element)
-      ) {
-        seen.add(element);
-        candidates.push(element);
-      }
+  for (const element of document.querySelectorAll(SHORTS_VIDEO_SELECTOR)) {
+    if (!isVideoElement(element)) continue;
+    const renderer = element.closest(SHORTS_RENDERER_SELECTOR);
+    const active =
+      renderer?.hasAttribute("is-active") ||
+      renderer?.classList.contains("is-active");
+    const score =
+      (active ? 8 : 0) +
+      (!element.paused && !element.ended ? 4 : 0) +
+      (getViewportOverlapRatio(element) >= 0.5 ? 2 : 0) +
+      (element.matches(SHORTS_MAIN_VIDEO_SELECTOR) ? 1 : 0);
+
+    if (score > bestScore) {
+      best = element;
+      bestScore = score;
     }
   }
 
-  candidates.sort((left, right) => {
-    const score = (video: HTMLVideoElement): number => {
-      const renderer = video.closest(SHORTS_RENDERER_SELECTOR);
-      const active =
-        renderer?.hasAttribute("is-active") ||
-        renderer?.classList.contains("is-active");
-      return (
-        (active ? 8 : 0) +
-        (!video.paused && !video.ended ? 4 : 0) +
-        (getViewportOverlapRatio(video) >= 0.5 ? 2 : 0)
-      );
-    };
-
-    return score(right) - score(left);
-  });
-
-  return candidates[0] ?? null;
+  return best;
 }
 
 export function findShortsContainer(document: Document): HTMLElement | null {

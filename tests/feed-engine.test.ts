@@ -122,6 +122,49 @@ describe("startFeedEngine", () => {
     expect(advancePlayback).toHaveBeenCalledTimes(1);
     engine.stop();
   });
+
+  it("strips a loop attribute the site re-adds after attach", async () => {
+    const dom = loadShortsDom();
+    const { document } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+
+    const engine = startFeedEngine({ document, window: dom.window });
+    expect(firstVideo.hasAttribute("loop")).toBe(false);
+
+    // The page's own world sets the reflected attribute, not our wrapper.
+    firstVideo.setAttribute("loop", "");
+    await Promise.resolve();
+
+    expect(firstVideo.hasAttribute("loop")).toBe(false);
+    engine.stop();
+
+    firstVideo.setAttribute("loop", "");
+    await Promise.resolve();
+    expect(firstVideo.hasAttribute("loop")).toBe(true);
+  });
+
+  it("advances on a loop wrap whose last timeupdate sampled outside the 0.25 s window", () => {
+    const dom = loadShortsDom();
+    const { document, Event } = dom.window;
+    const firstVideo = getVideoById(document, "#video-1");
+    const scrollIntoView = mockScrollIntoView(getRendererById(document, "#short-2"));
+    let currentTime = 0;
+    Object.defineProperty(firstVideo, "duration", { configurable: true, value: 30 });
+    Object.defineProperty(firstVideo, "currentTime", {
+      configurable: true,
+      get: () => currentTime,
+    });
+
+    const engine = startFeedEngine({ document, window: dom.window });
+
+    currentTime = 29.6;
+    firstVideo.dispatchEvent(new Event("timeupdate"));
+    currentTime = 0.05;
+    firstVideo.dispatchEvent(new Event("seeked"));
+
+    expect(scrollIntoView).toHaveBeenCalledTimes(1);
+    engine.stop();
+  });
 });
 
 describe("getRealHidden spoof bypass", () => {

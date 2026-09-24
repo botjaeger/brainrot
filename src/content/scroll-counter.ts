@@ -61,13 +61,10 @@ async function writeScrollStorage(data: ScrollStorage): Promise<void> {
   });
 }
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export async function incrementScrollStat(siteKey: string): Promise<void> {
   const data = await readScrollStorage();
-  const today = todayIso();
+  // en-CA formats as YYYY-MM-DD in local time, so "today" rolls over at local midnight.
+  const today = new Date().toLocaleDateString("en-CA");
 
   // Reset daily stats on date rollover
   const daily = data.todayDate === today ? { ...data.todayStats } : {};
