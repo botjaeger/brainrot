@@ -24,6 +24,7 @@ export function compareVersions(left: string, right: string): number {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: "0.1.4",
+    date: "2026-10-12",
     changes: [
       { kind: "new", text: "This changelog. Open it from the version number in the popup." },
       { kind: "fixed", text: "Auto-scroll works on the first page load. YouTube could keep looping the first video, so it never ended until you reloaded." },
