@@ -92,7 +92,7 @@ Static Vite site: `index.html`, `privacy.html`, `terms.html` (all inputs in `vit
 
 - Fonts are self-hosted through `@fontsource-variable/*`; the site makes no third-party requests on GitHub Pages.
 - Vercel Web Analytics loads only on `*.vercel.app` (and in dev); GitHub Pages would 404 its script.
-- Hosts: `.github/workflows/site.yml` deploys every green `main` push to the public repo `botjaeger/brainrot` (GitHub Pages, `https://botjaeger.github.io/brainrot/`, built with `--base /brainrot/`). `vercel.json` builds the same site for Vercel.
+- Hosts: `.github/workflows/site.yml` deploys every green `main` push to the public repo `botjaeger/brainrot` (GitHub Pages, `https://botjaeger.github.io/brainrot/`, built with `--base /brainrot/`); each deploy replaces that repo's files and adds `.github/site-repo/README.md` as its README. `vercel.json` builds the same site for Vercel.
 - The privacy and terms pages are the store listings' and Google OAuth branding's policy URLs. Keep their facts (permissions, stored values, hosts) true when the code changes.
 
 ## Releases and CI

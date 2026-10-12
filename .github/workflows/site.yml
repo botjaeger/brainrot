@@ -60,6 +60,13 @@ jobs:
           name: site
           path: site
 
+      # The public repo's README; not part of the served site.
+      - uses: actions/checkout@v4
+        with:
+          path: src
+          sparse-checkout: .github/site-repo
+          sparse-checkout-cone-mode: false
+
       - name: Publish to botjaeger/brainrot
         run: |
           mkdir -p ~/.ssh
@@ -70,6 +77,7 @@ jobs:
           git clone --depth 1 git@github.com:botjaeger/brainrot.git out
           find out -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -R site/. out/
+          cp src/.github/site-repo/README.md out/README.md
           find out -name '*.map' -delete
           touch out/.nojekyll
 
