@@ -1,6 +1,9 @@
 name: Release
 
 # Runs when `pnpm release <version>` pushes a v<version> tag.
+# One gate job builds the packages; Chrome, Firefox and the GitHub release then
+# run as separate jobs, so one store's rejection never blocks the other. A
+# failed store job can be re-run alone from the Actions page.
 on:
   push:
     tags: ["v*.*.*"]
@@ -13,18 +16,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
-    env:
-      # Chrome Web Store API (https://github.com/fregante/chrome-webstore-upload-keys)
-      EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-      PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
-      CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-      CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-      REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
-      # addons.mozilla.org API key (https://addons.mozilla.org/developers/addon/api/key/)
-      WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
-      WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
     steps:
       - uses: actions/checkout@v4
 
@@ -56,24 +49,83 @@ jobs:
           # AMO reviewers rebuild from this archive (see SOURCE_BUILD.md).
           git archive --format=zip -o brainrot-source.zip HEAD
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: |
+            brainrot-chrome.zip
+            brainrot-firefox.zip
+            brainrot-source.zip
+          if-no-files-found: error
+
+  chrome:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      # Chrome Web Store API (https://github.com/fregante/chrome-webstore-upload-keys)
+      EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+      PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
+      CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+      CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+      REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+    steps:
+      - name: Warn about missing secrets
+        if: env.EXTENSION_ID == '' || env.REFRESH_TOKEN == ''
+        run: echo "::warning::Chrome Web Store secrets not set; Chrome was NOT published"
+
+      - uses: actions/download-artifact@v4
+        if: env.EXTENSION_ID != '' && env.REFRESH_TOKEN != ''
+        with:
+          name: packages
+
+      - uses: actions/setup-node@v4
+        if: env.EXTENSION_ID != '' && env.REFRESH_TOKEN != ''
+        with:
+          node-version: 22
+
       - name: Publish to Chrome Web Store
         if: env.EXTENSION_ID != '' && env.REFRESH_TOKEN != ''
-        run: pnpm dlx chrome-webstore-upload-cli@4 --source brainrot-chrome.zip
+        run: npx --yes chrome-webstore-upload-cli@4 --source brainrot-chrome.zip
+
+  firefox:
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      # addons.mozilla.org API key (https://addons.mozilla.org/developers/addon/api/key/)
+      WEB_EXT_API_KEY: ${{ secrets.AMO_JWT_ISSUER }}
+      WEB_EXT_API_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+    steps:
+      - name: Warn about missing secrets
+        if: env.WEB_EXT_API_KEY == '' || env.WEB_EXT_API_SECRET == ''
+        run: echo "::warning::AMO secrets not set; Firefox was NOT published"
+
+      - uses: actions/download-artifact@v4
+        if: env.WEB_EXT_API_KEY != '' && env.WEB_EXT_API_SECRET != ''
+        with:
+          name: packages
+
+      - uses: actions/setup-node@v4
+        if: env.WEB_EXT_API_KEY != '' && env.WEB_EXT_API_SECRET != ''
+        with:
+          node-version: 22
 
       - name: Publish to Firefox Add-ons
         if: env.WEB_EXT_API_KEY != '' && env.WEB_EXT_API_SECRET != ''
-        run: >-
-          pnpm exec web-ext sign
-          --source-dir dist/firefox
-          --channel listed
-          --upload-source-code brainrot-source.zip
-          --approval-timeout 0
-
-      - name: Warn about skipped stores
-        if: env.REFRESH_TOKEN == '' || env.WEB_EXT_API_SECRET == ''
         run: |
-          [ -n "$REFRESH_TOKEN" ] || echo "::warning::Chrome Web Store secrets not set; Chrome was NOT published"
-          [ -n "$WEB_EXT_API_SECRET" ] || echo "::warning::AMO secrets not set; Firefox was NOT published"
+          unzip -q brainrot-firefox.zip -d firefox
+          npx --yes web-ext@10.5.0 sign \
+            --source-dir firefox \
+            --channel listed \
+            --upload-source-code brainrot-source.zip \
+            --approval-timeout 0
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: packages
 
       - name: Create GitHub release
         env:
@@ -81,5 +133,6 @@ jobs:
         run: >-
           gh release create "$GITHUB_REF_NAME"
           brainrot-chrome.zip brainrot-firefox.zip
+          --repo "$GITHUB_REPOSITORY"
           --title "$GITHUB_REF_NAME"
           --generate-notes
