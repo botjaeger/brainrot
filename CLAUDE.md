@@ -16,7 +16,7 @@ pnpm build:base         # Vite only (dist/ root)
 pnpm build:firefox      # Also build:chromium, build:safari
 pnpm firefox:run        # web-ext on dist/firefox
 pnpm safari:run         # macOS + Xcode; app builds to /tmp/brainrot-safari
-pnpm dev:site           # Marketing site (site/, vite.site.config.ts, deployed by Vercel)
+pnpm dev:site           # Marketing site (site/, vite.site.config.ts; .github/workflows/site.yml deploys it to botjaeger.github.io/brainrot)
 ```
 
 ## Architecture

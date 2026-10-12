@@ -2,7 +2,7 @@ name: Site
 
 # Every push to main runs the gate (typecheck, tests, site build). Only when it
 # is green does the deploy job publish the website to GitHub Pages, served from
-# the public botjaeger/brainrot-site repo (this repo is private).
+# the public botjaeger/brainrot repo (this repo is private).
 on:
   push:
     branches: [main]
@@ -34,7 +34,7 @@ jobs:
         run: pnpm check
 
       - name: Build site
-        run: pnpm exec vite build -c vite.site.config.ts --base /brainrot-site/
+        run: pnpm exec vite build -c vite.site.config.ts --base /brainrot/
 
       - uses: actions/upload-artifact@v4
         with:
@@ -46,7 +46,7 @@ jobs:
     needs: gate
     runs-on: ubuntu-latest
     env:
-      # Write deploy key for botjaeger/brainrot-site (private half).
+      # Write deploy key for botjaeger/brainrot (private half).
       SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
     steps:
       - name: Require the deploy key
@@ -60,14 +60,14 @@ jobs:
           name: site
           path: site
 
-      - name: Publish to botjaeger/brainrot-site
+      - name: Publish to botjaeger/brainrot
         run: |
           mkdir -p ~/.ssh
           printf '%s\n' "$SITE_DEPLOY_KEY" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
 
-          git clone --depth 1 git@github.com:botjaeger/brainrot-site.git out
+          git clone --depth 1 git@github.com:botjaeger/brainrot.git out
           find out -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
           cp -R site/. out/
           find out -name '*.map' -delete
