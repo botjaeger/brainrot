@@ -11,6 +11,7 @@ export const THEME_TOKENS_CSS = `
         /* Accent as text or outline: gold fails contrast on the light ground. */
         --accent-ink: #5c4b18;
         --hero-subtext: #3a2d00;
+        --danger-ink: #c62828;
         --switch-track: #1a1a1a;
         --switch-thumb: #ffffff;
         --status-pill-bg: rgba(0, 0, 0, 0.05);
@@ -32,6 +33,7 @@ export const THEME_TOKENS_CSS = `
         --muted: #949494;
         --accent-ink: #ffc20a;
         --hero-subtext: #3a2d00;
+        --danger-ink: #ff7a75;
         --switch-track: #2a2a2a;
         --switch-thumb: #f0f0f0;
         --status-pill-bg: rgba(0, 0, 0, 0.1);

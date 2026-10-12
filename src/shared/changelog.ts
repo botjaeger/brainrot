@@ -30,6 +30,10 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
       { kind: "fixed", text: "Changing a setting no longer overwrites the videos counted while the popup was open." },
       { kind: "fixed", text: "“Today” stats reset at your local midnight instead of midnight UTC." },
       { kind: "improved", text: "Less work on busy feeds: fewer page scans while videos load and scroll." },
+      { kind: "improved", text: "Reset stats asks for a second click before wiping your counts." },
+      { kind: "improved", text: "TikTok and Facebook Reels move on with their own next-video arrows instead of scrolling the page." },
+      { kind: "fixed", text: "Updating Brainrot reloads only open Shorts, Reels and TikTok feeds, not every YouTube, Facebook, Instagram or TikTok tab." },
+      { kind: "fixed", text: "Keyboard users no longer tab onto the hidden stats when the list is collapsed." },
     ],
   },
   {
@@ -46,9 +50,9 @@ export const CHANGELOG: readonly ChangelogEntry[] = [
     version: "0.1.2",
     date: "2026-04-18",
     changes: [
-      { kind: "new", text: "Background playback: videos keep playing and advancing while the tab is in the background." },
+      { kind: "new", text: "Background playback: the video keeps playing while the tab is in the background, and the feed moves on when you come back." },
       { kind: "improved", text: "A video you pause stays paused." },
-      { kind: "fixed", text: "Videos that loop on their own now advance while the tab is hidden." },
+      { kind: "fixed", text: "Videos that loop on their own while the tab is hidden now advance when you return." },
     ],
   },
   {

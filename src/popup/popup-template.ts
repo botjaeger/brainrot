@@ -291,7 +291,11 @@ export function createPopupHtml({ version }: { version: string }): string {
         color: var(--hero-bg);
         border-radius: 50%;
       }
-      
+
+      [data-site-supported="false"] .check-icon {
+        display: none;
+      }
+
       .check-icon svg {
         width: 10px;
         height: 10px;
@@ -344,8 +348,9 @@ export function createPopupHtml({ version }: { version: string }): string {
         transition: color 0.2s, text-shadow 0.2s;
       }
 
-      .reset-btn:hover {
-        color: #e53935;
+      .reset-btn:hover,
+      .reset-btn[data-confirming="true"] {
+        color: var(--danger-ink);
         text-shadow: 0 0 12px rgba(229, 57, 53, 0.4);
       }
 
@@ -540,7 +545,7 @@ export function createPopupHtml({ version }: { version: string }): string {
         <span>${APP_NAME}</span>
         <button class="version" id="changelog-link" type="button" title="What's new" aria-label="What's new in v${escapeHtml(version)}">v${escapeHtml(version)}<span class="new-dot"></span></button>
       </div>
-      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" type="button">
+      <button class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme" type="button">
         ${iconSunSvg}
         ${iconMoonSvg}
       </button>
@@ -564,12 +569,13 @@ export function createPopupHtml({ version }: { version: string }): string {
       </div>
     </div>
 
-    <button class="stats-header" id="stats-toggle" type="button" aria-expanded="false">
+    <button class="stats-header" id="stats-toggle" type="button" aria-expanded="false" aria-controls="stats-list">
       <span>STATS</span>
       <span class="stats-chevron">${iconArrowUpSvg}</span>
     </button>
 
-    <div class="stats-list">
+    <!-- Collapsed rows stay out of the tab order: no invisible Reset button. -->
+    <div class="stats-list" id="stats-list" inert>
       <div class="stats-list-inner">
       <div class="stats-today">
         <span data-today-count>0</span> <span data-today-copy>videos today</span>
@@ -611,8 +617,8 @@ export function createPopupHtml({ version }: { version: string }): string {
     </div>
 
     <div class="first-run-hint" id="first-run-hint">
-      Try it:<br>
-      Open YouTube Shorts → enable Brainrot mode
+      Try it: open YouTube Shorts<br>
+      and let a video play to the end.
     </div>
 
     <script type="module" src="./index.js"></script>

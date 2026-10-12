@@ -50,7 +50,7 @@ Supported-site knowledge is duplicated. A new site touches all of these:
 
 - `src/sites/<site>.ts` adapter, added to `DEFAULT_FEED_SITES` in `feed-engine.ts`
 - `manifest.json`: all three `content_scripts` `matches` arrays
-- `SUPPORTED_URL_PATTERNS` in `src/background/index.ts`
+- `SUPPORTED_URL_PATTERNS` and `isFeedUrl()` in `src/background/index.ts` (self-contained; the update reloads only feed tabs)
 - `isSupportedFeed()` in `src/content-main/spoof.ts` (self-contained; cannot import)
 - `src/content/site-key.ts`, `src/popup/site-status.ts`
 - `SUPPORTED_SITE_LABELS` in `src/shared/brand.ts`

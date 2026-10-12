@@ -55,6 +55,7 @@ describe("mountPopup", () => {
 
     expect(enabledToggle?.checked).toBe(false);
     expect(statusChip?.textContent).toBe("Facebook Reels detected");
+    expect(doc.documentElement.dataset.siteSupported).toBe("true");
     expect(statusCopy?.textContent).toBe("Auto scroll paused.");
     expect(doc.documentElement.dataset.theme).toBe("light");
     expect(doc.querySelector("[data-count='youtube-shorts']")?.textContent).toBe("10");
@@ -215,6 +216,87 @@ describe("mountPopup", () => {
 
     dom.window.document.querySelector<HTMLElement>("#stats-toggle")?.click();
     expect(html.dataset.statsOpen).toBe("false");
+  });
+
+  it("keeps collapsed stats out of the tab order", async () => {
+    const dom = loadPopupDom();
+    const store: ExtensionSettingsStore = {
+      read: async () => makeSettings(),
+      write: vi.fn(async () => undefined),
+    };
+
+    await mountPopup({ document: dom.window.document, store });
+
+    const doc = dom.window.document;
+    const list = doc.querySelector<HTMLElement>("#stats-list");
+    expect(list?.hasAttribute("inert")).toBe(true);
+
+    doc.querySelector<HTMLElement>("#stats-toggle")?.click();
+    expect(list?.hasAttribute("inert")).toBe(false);
+
+    doc.querySelector<HTMLElement>("#stats-toggle")?.click();
+    expect(list?.hasAttribute("inert")).toBe(true);
+  });
+
+  it("resets stats only on a second click", async () => {
+    vi.useFakeTimers();
+    try {
+      const dom = loadPopupDom();
+      const write = vi.fn(async () => undefined);
+      const store: ExtensionSettingsStore = {
+        read: async () => makeSettings({ scrollStats: { tiktok: 7 } }),
+        write,
+      };
+
+      await mountPopup({ document: dom.window.document, store });
+
+      const doc = dom.window.document;
+      const reset = doc.querySelector<HTMLElement>("#reset-stats");
+      reset?.click();
+      expect(write).not.toHaveBeenCalled();
+      expect(reset?.textContent).toBe("Click again to reset all stats");
+      expect(doc.querySelector("[data-count='tiktok']")?.textContent).toBe("7");
+
+      // The armed state expires on its own.
+      vi.advanceTimersByTime(4000);
+      expect(reset?.textContent).toBe("Reset stats");
+      reset?.click();
+      expect(write).not.toHaveBeenCalled();
+
+      reset?.click();
+      expect(write).toHaveBeenCalledWith(
+        expect.objectContaining({ todayDate: "" }),
+      );
+      expect(doc.querySelector("[data-count='tiktok']")?.textContent).toBe("0");
+      expect(reset?.textContent).toBe("Reset stats");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("drops the check mark and the 'Checking' copy away from a supported feed", async () => {
+    const dom = loadPopupDom();
+    const store: ExtensionSettingsStore = {
+      read: async () => makeSettings({ theme: "dark" }),
+      write: vi.fn(async () => undefined),
+    };
+
+    await mountPopup({
+      document: dom.window.document,
+      store,
+      readActiveSite: async () => {
+        throw new Error("tabs API unavailable");
+      },
+    });
+
+    const doc = dom.window.document;
+    expect(doc.documentElement.dataset.siteSupported).toBe("false");
+    expect(doc.querySelector("[data-status-chip]")?.textContent).toBe(
+      "Go to a supported feed to activate Brainrot mode",
+    );
+    expect(doc.querySelector("#theme-toggle")?.getAttribute("aria-label")).toBe(
+      "Switch to light theme",
+    );
   });
 
   it.each(["promise", "callback"] as const)(

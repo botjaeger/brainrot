@@ -3,11 +3,13 @@ import type {
   FeedSiteAdapter,
 } from "../core/feed-engine.js";
 import {
+  collectFeedItems,
+  findActiveFeedVideo,
   findClickableMatch,
-  getViewportOverlapRatio,
+  isClickableElementActive,
   scrollDocumentForward,
 } from "../shared/dom.js";
-import { matchesSiteHostname } from "../shared/site-host.js";
+import { isReelsPathname, matchesSiteHostname } from "../shared/site-host.js";
 
 const FACEBOOK_REELS_VIDEO_SELECTORS = [
   "[data-pagelet*='Reels'] video",
@@ -25,6 +27,9 @@ const FACEBOOK_REELS_SCOPE_SELECTORS = [
 ];
 
 const FACEBOOK_REELS_NEXT_BUTTON_SELECTORS = [
+  // Feed's down arrow beside the reel (checked live 2026-10-12). The broad
+  // "next" selectors below first hit an unrelated "Next items" carousel.
+  "[role='button'][aria-label='Next Card']",
   "[data-pagelet*='Reels'] [aria-label*='Next' i]",
   "[data-pagelet*='Reels'] [role='button'][aria-label*='Next' i]",
   "[aria-label='Next reel']",
@@ -36,14 +41,6 @@ const FACEBOOK_REELS_NEXT_BUTTON_SELECTORS = [
   "[role='button'][aria-label*='Next' i]",
 ];
 
-function isClickableElementActive(element: HTMLElement): boolean {
-  const maybeDisabled = element as HTMLButtonElement & {
-    disabled?: boolean;
-  };
-
-  return maybeDisabled.disabled !== true && element.getAttribute("aria-disabled") !== "true";
-}
-
 function getFacebookReelItem(video: HTMLVideoElement): Element {
   return (
     video.closest(
@@ -52,56 +49,7 @@ function getFacebookReelItem(video: HTMLVideoElement): Element {
   );
 }
 
-function findActiveReelVideo(document: Document): HTMLVideoElement | null {
-  const candidates: HTMLVideoElement[] = [];
-  const seen = new Set<HTMLVideoElement>();
-
-  for (const selector of FACEBOOK_REELS_VIDEO_SELECTORS) {
-    for (const el of document.querySelectorAll<HTMLVideoElement>(selector)) {
-      if (el.tagName.toLowerCase() === "video" && !seen.has(el)) {
-        seen.add(el);
-        candidates.push(el);
-      }
-    }
-  }
-
-  return (
-    candidates.find(
-      (video) =>
-        !video.paused &&
-        !video.ended &&
-        getViewportOverlapRatio(video) >= 0.5,
-    ) ??
-    candidates.find((video) => !video.paused && !video.ended) ??
-    candidates.find((video) => getViewportOverlapRatio(video) >= 0.5) ??
-    candidates[0] ??
-    null
-  );
-}
-
-function getFacebookReelItems(document: Document): Element[] {
-  const items: Element[] = [];
-  const seen = new Set<Element>();
-
-  for (const video of document.querySelectorAll<HTMLVideoElement>("video")) {
-    const item = getFacebookReelItem(video);
-    if (!seen.has(item)) {
-      seen.add(item);
-      items.push(item);
-    }
-  }
-
-  return items;
-}
-
-export function isFacebookReelsPathname(pathname: string): boolean {
-  return (
-    pathname === "/reels" ||
-    pathname.startsWith("/reels/") ||
-    pathname === "/reel" ||
-    pathname.startsWith("/reel/")
-  );
-}
+export const isFacebookReelsPathname = isReelsPathname;
 
 export const facebookReelsSiteAdapter: FeedSiteAdapter = {
   name: "Facebook Reels",
@@ -113,7 +61,7 @@ export const facebookReelsSiteAdapter: FeedSiteAdapter = {
     );
   },
   findActiveItem(document: Document): ActiveFeedItem | null {
-    const video = findActiveReelVideo(document);
+    const video = findActiveFeedVideo(document, FACEBOOK_REELS_VIDEO_SELECTORS);
     return video ? { video, key: getFacebookReelItem(video) } : null;
   },
   advancePlayback(
@@ -137,7 +85,7 @@ export const facebookReelsSiteAdapter: FeedSiteAdapter = {
       };
     }
 
-    const items = getFacebookReelItems(document);
+    const items = collectFeedItems(document, getFacebookReelItem);
     const currentIndex = items.indexOf(getFacebookReelItem(currentVideo));
     const nextItem = currentIndex >= 0 ? items[currentIndex + 1] : null;
     if (nextItem && typeof nextItem.scrollIntoView === "function") {

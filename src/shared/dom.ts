@@ -112,6 +112,68 @@ export function findClickableMatch(
   return null;
 }
 
+export function isClickableElementActive(element: HTMLElement): boolean {
+  const maybeDisabled = element as HTMLButtonElement & {
+    disabled?: boolean;
+  };
+
+  return maybeDisabled.disabled !== true && element.getAttribute("aria-disabled") !== "true";
+}
+
+/**
+ * Picks the feed's active video from every match of `selectors`, in selector
+ * order: playing and mostly on screen, then playing, then on screen, then the
+ * first match.
+ */
+export function findActiveFeedVideo(
+  document: Document,
+  selectors: readonly string[],
+): HTMLVideoElement | null {
+  const candidates: HTMLVideoElement[] = [];
+  const seen = new Set<HTMLVideoElement>();
+
+  for (const selector of selectors) {
+    for (const el of document.querySelectorAll<HTMLVideoElement>(selector)) {
+      if (el.tagName.toLowerCase() === "video" && !seen.has(el)) {
+        seen.add(el);
+        candidates.push(el);
+      }
+    }
+  }
+
+  return (
+    candidates.find(
+      (video) =>
+        !video.paused &&
+        !video.ended &&
+        getViewportOverlapRatio(video) >= 0.5,
+    ) ??
+    candidates.find((video) => !video.paused && !video.ended) ??
+    candidates.find((video) => getViewportOverlapRatio(video) >= 0.5) ??
+    candidates[0] ??
+    null
+  );
+}
+
+/** The distinct feed items holding the page's videos, in document order. */
+export function collectFeedItems(
+  document: Document,
+  getItem: (video: HTMLVideoElement) => Element,
+): Element[] {
+  const items: Element[] = [];
+  const seen = new Set<Element>();
+
+  for (const video of document.querySelectorAll<HTMLVideoElement>("video")) {
+    const item = getItem(video);
+    if (!seen.has(item)) {
+      seen.add(item);
+      items.push(item);
+    }
+  }
+
+  return items;
+}
+
 export function scrollDocumentForward(
   document: Document,
   startElement?: Element | null,

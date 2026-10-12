@@ -162,6 +162,28 @@ describe("facebookReelsSiteAdapter", () => {
       block: "center",
     });
   });
+
+  it("clicks the feed's own Next Card arrow past an unrelated Next control", () => {
+    const dom = loadFixture(
+      "facebook-reels-live.fixture.html",
+      "https://www.facebook.com/reel/123",
+    );
+    const { document } = dom.window;
+    const video = getVideoById(document, "#facebook-live-video");
+    const nextCard = getElementById<HTMLElement>(document, "#facebook-next-card");
+    const nextItems = getElementById<HTMLElement>(document, "#facebook-next-items");
+    const nextCardClick = vi.fn();
+    const nextItemsClick = vi.fn();
+    nextCard.addEventListener("click", nextCardClick);
+    nextItems.addEventListener("click", nextItemsClick);
+
+    expect(facebookReelsSiteAdapter.advancePlayback(document, video)).toEqual({
+      method: "next-button",
+      selector: "[role='button'][aria-label='Next Card']",
+    });
+    expect(nextCardClick).toHaveBeenCalledTimes(1);
+    expect(nextItemsClick).not.toHaveBeenCalled();
+  });
 });
 
 describe("tiktokSiteAdapter", () => {
@@ -195,12 +217,44 @@ describe("tiktokSiteAdapter", () => {
     );
   });
 
+  it("clicks the feed's own next arrow, skipping it once disabled", () => {
+    const dom = loadFixture(
+      "tiktok-feed.fixture.html",
+      "https://www.tiktok.com/foryou",
+    );
+    const { document } = dom.window;
+    const video = getVideoById(document, "#tiktok-video");
+    const feedNext = getButtonById(document, "#tiktok-feed-navigation-next");
+    const xgplayerNext = getElementById<HTMLElement>(
+      document,
+      "#tiktok-xgplayer-next",
+    );
+    const feedNextClick = vi.fn();
+    const xgplayerClick = vi.fn();
+    feedNext.addEventListener("click", feedNextClick);
+    xgplayerNext.addEventListener("click", xgplayerClick);
+
+    expect(tiktokSiteAdapter.advancePlayback(document, video)).toEqual({
+      method: "next-button",
+      selector: "button[data-e2e='feed-navigation-next']",
+    });
+    expect(feedNextClick).toHaveBeenCalledTimes(1);
+    expect(xgplayerClick).not.toHaveBeenCalled();
+
+    // End of the feed: TikTok disables the arrow.
+    feedNext.disabled = true;
+    tiktokSiteAdapter.advancePlayback(document, video);
+    expect(feedNextClick).toHaveBeenCalledTimes(1);
+    expect(xgplayerClick).toHaveBeenCalledTimes(1);
+  });
+
   it("clicks the next video control and delays fallback scroll", async () => {
     const dom = loadFixture(
       "tiktok-feed.fixture.html",
       "https://www.tiktok.com/en/@creator/video/123",
     );
     const { document } = dom.window;
+    document.querySelector("#tiktok-feed-navigation")?.remove();
     const activeVideo = tiktokSiteAdapter.findActiveItem(document)?.video;
     const video = getVideoById(document, "#tiktok-video");
     const nextContainer = getElementById<HTMLElement>(

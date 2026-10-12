@@ -67,11 +67,13 @@ function formatSiteList(items: readonly string[]): string {
   return `${items.slice(0, -1).join(", ")}, or ${items[items.length - 1]}`;
 }
 
+// Copies of the predicates in src/sites/ and src/shared/site-host.ts: importing
+// those here would split them into a chunk the content bundle then `import`s.
 function isYouTubeShortsPathname(pathname: string): boolean {
   return pathname === "/shorts" || pathname.startsWith("/shorts/");
 }
 
-function isFacebookReelsPathname(pathname: string): boolean {
+function isReelsPathname(pathname: string): boolean {
   return (
     pathname === "/reels" ||
     pathname.startsWith("/reels/") ||
@@ -125,7 +127,7 @@ export function describeSupportedSiteFromUrl(
 
   if (
     matchesHostname(url.hostname, "facebook.com") &&
-    isFacebookReelsPathname(url.pathname)
+    isReelsPathname(url.pathname)
   ) {
     return {
       kind: "facebook-reels",
@@ -149,8 +151,7 @@ export function describeSupportedSiteFromUrl(
 
   if (
     matchesHostname(url.hostname, "instagram.com") &&
-    (url.pathname === "/reels" || url.pathname.startsWith("/reels/") ||
-     url.pathname === "/reel" || url.pathname.startsWith("/reel/"))
+    isReelsPathname(url.pathname)
   ) {
     return {
       kind: "instagram-reels",

@@ -70,7 +70,7 @@ const cases: DuplicateCase[] = [
     activeVideoSelector: "#tiktok-video",
     prepareAdvanceSpy(document) {
       const spy = vi.fn();
-      document.querySelector("#tiktok-xgplayer-next")?.addEventListener("click", spy);
+      document.querySelector("#tiktok-feed-navigation-next")?.addEventListener("click", spy);
       return spy;
     },
   },

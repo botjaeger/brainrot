@@ -2,6 +2,8 @@ import { DEFAULT_EXTENSION_SETTINGS, type ExtensionSettings, type ExtensionSetti
 import type { SupportedSiteStatus } from "./site-status.js";
 import { openExtensionPage, readActiveSupportedSite, reloadActiveTab } from "./site-status.js";
 
+const RESET_CONFIRM_MS = 4000;
+
 export interface PopupMountEnvironment {
   document: Document;
   store: ExtensionSettingsStore;
@@ -40,13 +42,18 @@ function renderExtensionState(
     `What's new in v${version}${changelogUnseen ? " (unread)" : ""}`,
   );
 
-  if (!siteState) {
-    statusChip.textContent = "Checking active tab";
-  } else {
-    statusChip.textContent = siteState.supported
-      ? `${siteState.label} detected`
-      : "Go to a supported feed to activate Brainrot mode";
-  }
+  document.querySelector("#theme-toggle")?.setAttribute(
+    "aria-label",
+    settings.theme === "dark" ? "Switch to light theme" : "Switch to dark theme",
+  );
+
+  // Rendered only after the tab lookup settled, so null means it failed:
+  // say what to do rather than "Checking" forever.
+  const supported = siteState?.supported === true;
+  document.documentElement.dataset.siteSupported = String(supported);
+  statusChip.textContent = supported
+    ? `${siteState.label} detected`
+    : "Go to a supported feed to activate Brainrot mode";
 
   statusCopy.textContent = settings.enabled
     ? "No taps. No swipes. Just watch."
@@ -127,11 +134,13 @@ export async function mountPopup({
     document.querySelectorAll<HTMLElement>("[data-site-stats]"),
   );
   const statsToggle = getRequiredElement<HTMLElement>(document, "#stats-toggle");
+  const statsList = getRequiredElement<HTMLElement>(document, "#stats-list");
   statsToggle.addEventListener("click", () => {
     const isOpen = document.documentElement.dataset.statsOpen === "true";
     const nextOpen = !isOpen;
     document.documentElement.dataset.statsOpen = String(nextOpen);
     statsToggle.setAttribute("aria-expanded", String(nextOpen));
+    statsList.toggleAttribute("inert", !nextOpen);
   });
 
   const [initialSettings, activeSite] = await Promise.all([
@@ -200,8 +209,27 @@ export async function mountPopup({
     void reloadActiveTab().catch(() => undefined);
   });
 
+  // Wiping every count is not undoable, so the first click only arms it.
   const resetBtn = document.querySelector<HTMLElement>("#reset-stats");
+  const resetLabel = resetBtn?.textContent ?? "";
+  let resetDisarmTimer: ReturnType<typeof setTimeout> | null = null;
+  const disarmReset = (): void => {
+    if (resetDisarmTimer !== null) clearTimeout(resetDisarmTimer);
+    resetDisarmTimer = null;
+    if (!resetBtn) return;
+    delete resetBtn.dataset.confirming;
+    resetBtn.textContent = resetLabel;
+  };
+  resetBtn?.addEventListener("blur", disarmReset);
   resetBtn?.addEventListener("click", () => {
+    if (resetBtn.dataset.confirming !== "true") {
+      resetBtn.dataset.confirming = "true";
+      resetBtn.textContent = "Click again to reset all stats";
+      resetDisarmTimer = setTimeout(disarmReset, RESET_CONFIRM_MS);
+      return;
+    }
+
+    disarmReset();
     void commitSettings({
       scrollStats: DEFAULT_EXTENSION_SETTINGS.scrollStats,
       todayDate: DEFAULT_EXTENSION_SETTINGS.todayDate,

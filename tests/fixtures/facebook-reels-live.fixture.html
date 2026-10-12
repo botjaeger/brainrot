@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <!-- Reels page as captured live on 2026-10-12: an unrelated "Next items"
+       carousel control outside the feed comes first in document order, and
+       the feed's own down arrow is a div labelled "Next Card". -->
+  <body>
+    <div id="facebook-carousel">
+      <div role="button" aria-label="Next items" id="facebook-next-items" tabindex="0"></div>
+    </div>
+    <div role="main">
+      <div id="facebook-live-current">
+        <video id="facebook-live-video" playsinline muted></video>
+      </div>
+      <div id="facebook-live-next">
+        <video id="facebook-live-next-video" playsinline muted></video>
+      </div>
+      <div role="button" aria-label="Previous Card" tabindex="0"></div>
+      <div role="button" aria-label="Next Card" id="facebook-next-card" tabindex="0"></div>
+    </div>
+  </body>
+</html>

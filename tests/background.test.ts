@@ -1,41 +1,117 @@
-import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+type InstalledListener = (details: { reason: string }) => void;
+
+const OPEN_TABS = [
+  { id: 1, url: "https://www.youtube.com/shorts/abc123" },
+  { id: 2, url: "https://www.youtube.com/watch?v=abc123" },
+  { id: 3, url: "https://www.facebook.com/reel/987" },
+  { id: 4, url: "https://www.facebook.com/messages/t/1" },
+  { id: 5, url: "https://www.instagram.com/reels/xyz/" },
+  { id: 6, url: "https://www.instagram.com/direct/inbox/" },
+  { id: 7, url: "https://www.tiktok.com/" },
+  { id: 8, url: "https://www.tiktok.com/en/foryou" },
+  { id: 9, url: "https://www.tiktok.com/@someone/video/42" },
+  { id: 10, url: "https://www.tiktok.com/upload" },
+  { id: 11 },
+];
+
+async function loadBackground(
+  registerContentScripts = vi.fn().mockResolvedValue(undefined),
+) {
+  let onInstalled: InstalledListener | undefined;
+  const chromeStub = {
+    tabs: {
+      query: vi.fn().mockResolvedValue(OPEN_TABS),
+      reload: vi.fn(),
+    },
+    scripting: {
+      registerContentScripts,
+      unregisterContentScripts: vi.fn().mockResolvedValue(undefined),
+    },
+    storage: { local: { set: vi.fn().mockResolvedValue(undefined) } },
+    runtime: {
+      getManifest: () => ({ version: "9.9.9" }),
+      onInstalled: {
+        addListener: (listener: InstalledListener) => {
+          onInstalled = listener;
+        },
+      },
+    },
+  };
+  vi.stubGlobal("chrome", chromeStub);
+  vi.resetModules();
+  await import("../src/background/index.js");
+
+  const install = async (reason: string) => {
+    onInstalled?.({ reason });
+    // Every stub settles immediately; one macrotask flushes the handlers.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  };
+
+  return { chromeStub, install };
+}
+
+const reloadedIds = (reload: ReturnType<typeof vi.fn>) =>
+  reload.mock.calls.map(([id]) => id as number).sort((a, b) => a - b);
 
 describe("background/index.ts", () => {
-  describe("registerMainWorldSpoofFallback", () => {
-    // Testing the error handling requires importing the module and mocking
-    // chrome.scripting, which is only available in browser extension contexts.
-    // This test verifies the error-distinguishing pattern is present in source.
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
 
-    it("logs unexpected registration errors but not 'not supported' errors", () => {
-      const sourceCode = readFileSync("src/background/index.ts", "utf8");
+  it("reloads only feed tabs on install, never other pages of the same sites", async () => {
+    const { chromeStub, install } = await loadBackground();
 
-      // Verify the warn message is present for unexpected errors
-      expect(sourceCode).toContain(
-        '[Brainrot] registerContentScripts failed:',
-      );
+    await install("install");
 
-      // Verify it suppresses "not supported" errors (Safari)
-      expect(sourceCode).toContain("not supported");
+    expect(reloadedIds(chromeStub.tabs.reload)).toEqual([1, 3, 5, 7, 8, 9]);
+  });
 
-      // Verify it suppresses "not implemented" errors (older browsers)
-      expect(sourceCode).toContain("not implemented");
+  it("reloads feed tabs on an extension update", async () => {
+    const { chromeStub, install } = await loadBackground();
+
+    await install("update");
+
+    expect(reloadedIds(chromeStub.tabs.reload)).toEqual([1, 3, 5, 7, 8, 9]);
+  });
+
+  it("reloads nothing on a browser update", async () => {
+    const { chromeStub, install } = await loadBackground();
+
+    await install("chrome_update");
+
+    expect(chromeStub.tabs.reload).not.toHaveBeenCalled();
+  });
+
+  it("marks the installed changelog as seen on install only", async () => {
+    const { chromeStub, install } = await loadBackground();
+
+    await install("update");
+    expect(chromeStub.storage.local.set).not.toHaveBeenCalled();
+
+    await install("install");
+    expect(chromeStub.storage.local.set).toHaveBeenCalledWith({
+      changelogSeenVersion: "9.9.9",
     });
+  });
 
-    it("uses console.warn (not console.error) for registration failures", () => {
-      const sourceCode = readFileSync("src/background/index.ts", "utf8");
+  it("warns on unexpected spoof registration errors and stays quiet when unsupported", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
-      expect(sourceCode).toContain(
-        'console.warn("[Brainrot] registerContentScripts failed:"',
-      );
-    });
+    const unsupported = await loadBackground(
+      vi.fn().mockRejectedValue(new Error("world MAIN is not supported")),
+    );
+    await unsupported.install("install");
+    expect(warn).not.toHaveBeenCalled();
 
-    it("calls both reloadSupportedTabs and registerMainWorldSpoofFallback on install", () => {
-      const sourceCode = readFileSync("src/background/index.ts", "utf8");
-
-      expect(sourceCode).toContain("reloadSupportedTabs");
-      expect(sourceCode).toContain("registerMainWorldSpoofFallback");
-      expect(sourceCode).toContain("onInstalled");
-    });
+    const broken = await loadBackground(
+      vi.fn().mockRejectedValue(new Error("Duplicate script ID")),
+    );
+    await broken.install("install");
+    expect(warn).toHaveBeenCalledWith(
+      "[Brainrot] registerContentScripts failed:",
+      "Duplicate script ID",
+    );
   });
 });

@@ -5,11 +5,44 @@ const SUPPORTED_URL_PATTERNS = [
   "https://www.instagram.com/*",
 ];
 
+const TIKTOK_LOCALE_PREFIX = /^\/[a-z]{2}(?:[-_][a-zA-Z0-9]{2,8})?(?=\/|$)/;
+
+// Same feed pages as getSiteKey() in src/content/site-key.ts, which this
+// classic worker cannot import: the content bundle imports it too, and a
+// module shared by two entries becomes an `import`ed chunk.
+function isFeedUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  const { hostname, pathname } = parsed;
+  const isReels = /^\/reels?(\/|$)/.test(pathname);
+
+  if (hostname === "www.youtube.com") return /^\/shorts(\/|$)/.test(pathname);
+  if (hostname === "www.facebook.com" || hostname === "www.instagram.com") {
+    return isReels;
+  }
+  if (hostname === "www.tiktok.com") {
+    const path = pathname.replace(TIKTOK_LOCALE_PREFIX, "") || "/";
+    return (
+      path === "/" ||
+      /^\/(foryou|following)(\/|$)/.test(path) ||
+      (path.startsWith("/@") && path.includes("/video/"))
+    );
+  }
+  return false;
+}
+
 // After extension reload/update the old content script world's chrome.storage
 // is invalidated and cannot be restored by executeScript. The only reliable
 // way to get a working content script is a page reload, which creates a fresh
-// content script world with valid API bindings.
-async function reloadSupportedTabs(): Promise<void> {
+// content script world with valid API bindings. Only feed tabs are reloaded:
+// a Chrome auto-update must not reload a video or a half-written post elsewhere
+// on these sites; those tabs pick the new script up on their next page load.
+async function reloadFeedTabs(): Promise<void> {
   let tabs: chrome.tabs.Tab[];
   try {
     tabs = await chrome.tabs.query({ url: SUPPORTED_URL_PATTERNS });
@@ -19,7 +52,7 @@ async function reloadSupportedTabs(): Promise<void> {
   }
 
   for (const tab of tabs) {
-    if (tab.id != null) {
+    if (tab.id != null && isFeedUrl(tab.url)) {
       chrome.tabs.reload(tab.id);
     }
   }
@@ -87,7 +120,13 @@ async function markChangelogSeenOnInstall(reason: string): Promise<void> {
 }
 
 chrome.runtime.onInstalled.addListener((details) => {
-  void reloadSupportedTabs();
+  // A browser update restarts the browser, so every tab already has a live
+  // content script.
+  if (details.reason === "install" || details.reason === "update") {
+    void reloadFeedTabs();
+  }
   void registerMainWorldSpoofFallback();
   void markChangelogSeenOnInstall(details.reason);
 });
+
+export {};
