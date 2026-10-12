@@ -1,12 +1,16 @@
 <p align="center">
-  <img src="assets/headliner.png" alt="Brainrot — Just watch. No swipes." width="300" />
+  <img src="assets/mascot.png" alt="Brainrot mascot: a yellow brain holding a phone" width="200" />
 </p>
 
 # Brainrot - Auto Scroll for Shorts & Reels
 
-Brainrot automatically scrolls short-form videos so you can watch hands-free.
+Brainrot moves short-form feeds to the next video when the current one ends, so you can watch hands-free.
 
 No tapping. No swiping. Just watch.
+
+- Website: https://botjaeger.github.io/brainrot/
+- Chrome Web Store: https://chromewebstore.google.com/detail/brainrot-auto-scroll-for/epnminblfookppcemedaonmnanembgik
+- Firefox Add-ons: https://addons.mozilla.org/en-US/firefox/addon/brainrot-auto-scroll/
 
 ## Supported sites
 
@@ -15,97 +19,77 @@ No tapping. No swiping. Just watch.
 - Facebook Reels
 - Instagram Reels
 
-## Screenshots
-
-<p align="center">
-  <img src="assets/screenshots/screenshot-1.png" alt="Brainrot popup with one-click toggle and site detection" width="600" />
-</p>
-
-<p align="center">
-  <img src="assets/screenshots/screenshot-2.png" alt="Per-site scroll stats tracking" width="600" />
-</p>
-
-## How it works
-
-Brainrot detects when a video is about to end and automatically moves to the next one. It works seamlessly inside each platform -- no interruptions, no setup.
-
-Just open a supported feed and turn on Brainrot mode.
-
 ## Features
 
-- **Auto-advance** -- moves to the next video when the current one finishes
-- **Smart timing** -- triggers at end of playback (within 0.25s)
-- **Per-platform stats** -- tracks how many videos you've watched on each site
-- **One-click toggle** -- enable/disable Brainrot mode from the popup
-- **Dark mode** -- light/dark theme toggle
-- **SPA-aware** -- survives in-app navigation on single-page sites
-- **Cross-browser** -- Chrome, Edge, Brave, Firefox, and Safari
+- **Auto-advance**: moves to the next video when the current one ends, using the site's own "next" button where it has one.
+- **Background playback**: the video keeps playing while the tab is in the background, and the feed moves on when you come back.
+- **Stats**: videos watched per site, all-time and today (resets at your local midnight).
+- **One switch**: turn Brainrot on or off from the popup; it acts only on feed pages.
+- **Light and dark themes**.
+- **What's new**: click the version number in the popup to see the changelog.
+- **Cross-browser**: Chrome, Edge, Brave, Firefox and desktop Safari.
 
 ## Getting started
 
-1. Open YouTube Shorts, TikTok, or Reels
-2. Click the Brainrot extension
-3. Turn on Brainrot mode
-4. Sit back and watch
+1. Install from the Chrome Web Store or Firefox Add-ons.
+2. Open YouTube Shorts, TikTok, or Instagram or Facebook Reels.
+3. Make sure Brainrot is switched on in the popup.
+4. Sit back and watch.
 
-## Install
+## Privacy
 
-### Chrome / Edge / Brave
-
-1. `pnpm install && pnpm build`
-2. Open `chrome://extensions`, enable **Developer mode**
-3. Click **Load unpacked** and select `dist/chromium/`
-
-### Firefox
-
-1. `pnpm install && pnpm build`
-2. `pnpm firefox:run` -- or load `dist/firefox/` as a temporary add-on in `about:debugging`
-
-### Safari (macOS)
-
-Requires Xcode.
-
-```bash
-pnpm install
-pnpm safari:run
-```
+Brainrot collects no personal data and makes no network requests. Settings and counts stay in your browser. Full policy: https://botjaeger.github.io/brainrot/privacy.html. Terms: https://botjaeger.github.io/brainrot/terms.html.
 
 ## Development
 
+Requires Node 22 and pnpm 11.7.0.
+
 ```bash
 pnpm install
-pnpm build              # Full build (Chromium + Firefox + Safari)
-pnpm build:base         # Vite only (no browser packaging)
-pnpm test               # Run all tests
-pnpm test:watch         # Watch mode
-pnpm typecheck          # Type-check without emitting
+pnpm check              # Typecheck + all tests (the gate CI runs)
+pnpm build              # dist/chromium, dist/firefox, dist/safari
+pnpm test:watch         # Tests in watch mode
+pnpm dev:site           # Marketing site dev server
 ```
 
-## Adding a new site
+### Load an unpacked build
 
-1. Create a `FeedSiteAdapter` in `src/sites/`
-2. Export a named adapter
-3. Register it in `DEFAULT_FEED_SITES` in `src/core/feed-engine.ts`
-4. Add match patterns to `manifest.json` (and `manifest.firefox.json` if needed)
+- **Chrome / Edge / Brave**: `pnpm build`, open `chrome://extensions`, enable **Developer mode**, **Load unpacked**, pick `dist/chromium/`.
+- **Firefox**: `pnpm build`, then `pnpm firefox:run`, or load `dist/firefox/manifest.json` as a temporary add-on in `about:debugging`.
+- **Safari (macOS, Xcode)**: `pnpm safari:run`.
+
+### Release
+
+1. Add the version's notes to `src/shared/changelog.ts`.
+2. `pnpm release 0.1.5` bumps every version field, runs `pnpm check`, commits, tags `v0.1.5` and pushes.
+3. The tag runs `.github/workflows/release.yml`: one gate job, then Chrome Web Store, Firefox Add-ons and the GitHub release as separate jobs.
+
+Pushing to `main` deploys the website only; it never publishes the extension.
 
 ## Project structure
 
 ```
 src/
-  content/        Content script entry point + runtime settings
-  core/           Feed engine (site-agnostic auto-advance logic)
+  background/     Service worker: reloads feed tabs on install/update
+  content/        Content script: feed engine startup, stats, SPA navigation
+  content-main/   MAIN-world visibility spoof (background playback) and its bridge
+  core/           Feed engine (site-agnostic auto-advance)
   sites/          Per-site adapters (YouTube, TikTok, Facebook, Instagram)
-  popup/          Extension popup UI (code-generated HTML)
-  background/     Service worker
-  shared/         Shared utilities, settings, DOM helpers
-scripts/          Build & packaging scripts
-tests/            Vitest test suite
+  popup/          Popup UI (HTML generated at build time)
+  changelog/      "What's new" page (HTML generated at build time)
+  shared/         Settings, changelog data, DOM helpers, brand, store links
+site/             Marketing website, privacy policy and terms
+safari/           Xcode project for the Safari app
+scripts/          Packaging, zips and release
+tests/            Vitest suite and live-site fixtures
 ```
 
-## Privacy
+## Documentation
 
-Brainrot does not collect personal data. All settings are stored locally in your browser.
+- `AGENTS.md`: architecture, conventions, release and CI (also loaded by `CLAUDE.md`).
+- `DESIGN.md`: colours, type and component rules for the extension pages and the website.
+- `SOURCE_BUILD.md`: reproducible build for Firefox Add-ons review.
 
 ## License
 
-Apache 2.0
+Apache 2.0. See `LICENSE`.
