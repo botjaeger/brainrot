@@ -463,3 +463,40 @@ a:hover { color: #7a5c00; }
   .demos .wrap, .faq-band .wrap { padding-block: 72px; }
   .final-card > img { width: 180px; }
 }
+
+/* Legal pages (privacy.html, terms.html) */
+.doc {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 24px 112px;
+}
+.doc h1 { font-size: clamp(40px, 6vw, 64px); line-height: 1; letter-spacing: -0.035em; }
+.doc .updated { margin: 16px 0 40px; color: var(--muted); font-size: 15px; }
+.doc .summary {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  padding: 24px 28px;
+  margin-bottom: 48px;
+}
+.doc .summary p { margin: 0; font-size: 18px; }
+.doc h2 {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  margin: 48px 0 12px;
+}
+.doc p, .doc li { color: var(--ink-2); }
+.doc ul { padding-left: 22px; }
+.doc li { margin-bottom: 8px; }
+.doc code {
+  font-size: 0.9em;
+  background: var(--sand);
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+.doc-nav { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 15px; font-weight: 500; }
+.doc-nav a { color: var(--ink-2); text-decoration: none; display: inline-flex; align-items: center; min-height: 44px; }
+.doc-nav a:hover, .doc-nav a[aria-current="page"] { color: var(--ink); text-decoration: underline; }
