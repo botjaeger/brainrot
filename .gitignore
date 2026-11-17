@@ -16,5 +16,5 @@ scripts/*.d.ts
 .claude/
 .impeccable.md
 
-# Transient planning files
-.planning/debug/
+# Local planning files (GSD)
+.planning/

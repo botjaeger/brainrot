@@ -1,8 +1,8 @@
 name: Site
 
 # Every push to main runs the gate (typecheck, tests, site build). Only when it
-# is green does the deploy job publish the website to GitHub Pages, served from
-# the public botjaeger/brainrot repo (this repo is private).
+# is green does the deploy job publish the website to this repo's GitHub Pages
+# (https://botjaeger.github.io/brainrot/). Pages source: "GitHub Actions".
 on:
   push:
     branches: [main]
@@ -34,60 +34,23 @@ jobs:
         run: pnpm check
 
       - name: Build site
-        run: pnpm exec vite build -c vite.site.config.ts --base /brainrot/
+        run: |
+          pnpm exec vite build -c vite.site.config.ts --base /brainrot/
+          find dist/site -name '*.map' -delete
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-pages-artifact@v3
         with:
-          name: site
           path: dist/site
-          retention-days: 1
 
   deploy:
     needs: gate
     runs-on: ubuntu-latest
-    env:
-      # Write deploy key for botjaeger/brainrot (private half).
-      SITE_DEPLOY_KEY: ${{ secrets.SITE_DEPLOY_KEY }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Require the deploy key
-        if: env.SITE_DEPLOY_KEY == ''
-        run: |
-          echo "::error::SITE_DEPLOY_KEY is not set; the site was NOT deployed"
-          exit 1
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: site
-          path: site
-
-      # The public repo's README; not part of the served site.
-      - uses: actions/checkout@v4
-        with:
-          path: src
-          sparse-checkout: .github/site-repo
-          sparse-checkout-cone-mode: false
-
-      - name: Publish to botjaeger/brainrot
-        run: |
-          mkdir -p ~/.ssh
-          printf '%s\n' "$SITE_DEPLOY_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
-
-          git clone --depth 1 git@github.com:botjaeger/brainrot.git out
-          find out -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
-          cp -R site/. out/
-          cp src/.github/site-repo/README.md out/README.md
-          find out -name '*.map' -delete
-          touch out/.nojekyll
-
-          cd out
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          if git diff --cached --quiet; then
-            echo "Site unchanged; nothing to deploy."
-            exit 0
-          fi
-          git commit -q -m "Deploy ${GITHUB_SHA::7} from ${GITHUB_REPOSITORY}"
-          git push origin HEAD:main
+      - id: deployment
+        uses: actions/deploy-pages@v4
