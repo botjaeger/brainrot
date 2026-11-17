@@ -1,0 +1,9 @@
+#!/bin/sh
+# Pre-commit gate: ESLint + typecheck + all tests (pnpm check, the same gate CI runs).
+# Installed by `pnpm install` (the "prepare" script sets core.hooksPath to .githooks). Skip once: git commit --no-verify.
+set -e
+pnpm run --silent check
+# The website is built only when a staged change touches it.
+if git diff --cached --name-only | grep -q '^site/'; then
+  pnpm run --silent build:site
+fi

@@ -1,12 +1,5 @@
-import type {
-  ActiveFeedItem,
-  FeedSiteAdapter,
-} from "../core/feed-engine.js";
-import {
-  collectFeedItems,
-  findActiveFeedVideo,
-  scrollDocumentForward,
-} from "../shared/dom.js";
+import type { ActiveFeedItem, FeedSiteAdapter } from "../core/feed-engine.js";
+import { collectFeedItems, findActiveFeedVideo, scrollDocumentForward } from "../shared/dom.js";
 import { isReelsPathname, matchesSiteHostname } from "../shared/site-host.js";
 
 const INSTAGRAM_VIDEO_SELECTORS = [

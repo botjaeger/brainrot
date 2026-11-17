@@ -15,10 +15,7 @@ type StorageChange = {
   newValue?: unknown;
 };
 
-type StorageChangeListener = (
-  changes: Record<string, StorageChange>,
-  areaName: string,
-) => void;
+type StorageChangeListener = (changes: Record<string, StorageChange>, areaName: string) => void;
 
 type StorageArea = {
   get(...args: unknown[]): unknown;
@@ -32,10 +29,7 @@ type StorageApi = {
   };
 };
 
-const STORAGE_KEYS: Array<keyof ExtensionSettings> = [
-  "enabled",
-  "debugLogging",
-];
+const STORAGE_KEYS: Array<keyof ExtensionSettings> = ["enabled", "debugLogging"];
 
 function getStorageApi(): StorageApi | null {
   const globalScope = globalThis as typeof globalThis & {
@@ -53,9 +47,7 @@ function isPromiseLike<T>(value: unknown): value is Promise<T> {
 function normalizeSettings(snapshot: StorageSnapshot): ExtensionSettings {
   return {
     enabled:
-      typeof snapshot.enabled === "boolean"
-        ? snapshot.enabled
-        : DEFAULT_EXTENSION_SETTINGS.enabled,
+      typeof snapshot.enabled === "boolean" ? snapshot.enabled : DEFAULT_EXTENSION_SETTINGS.enabled,
     debugLogging:
       typeof snapshot.debugLogging === "boolean"
         ? snapshot.debugLogging

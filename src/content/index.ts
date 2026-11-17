@@ -122,10 +122,7 @@ function setupScrollCounting(signal: AbortSignal): void {
   const intersectionObserver = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
-        if (
-          entry.intersectionRatio >= 0.8 &&
-          entry.target instanceof HTMLVideoElement
-        ) {
+        if (entry.intersectionRatio >= 0.8 && entry.target instanceof HTMLVideoElement) {
           record(entry.target);
         }
       }
@@ -159,10 +156,10 @@ function setupScrollCounting(signal: AbortSignal): void {
   const mutationObserver = new MutationObserver(() => {
     observeTimer ??= setTimeout(observeAllVideos, 100);
   });
-  mutationObserver.observe(
-    document.body ?? document.documentElement,
-    { childList: true, subtree: true },
-  );
+  mutationObserver.observe(document.body ?? document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
 
   // Strategy 3: scroll event — catches manual scroll on sites where play
   // events don't re-fire (video preloaded) and IntersectionObserver may not
@@ -175,9 +172,7 @@ function setupScrollCounting(signal: AbortSignal): void {
       scrollDebounce = setTimeout(() => {
         scrollDebounce = null;
         if (signal.aborted) return;
-        for (const video of document.querySelectorAll<HTMLVideoElement>(
-          "video",
-        )) {
+        for (const video of document.querySelectorAll<HTMLVideoElement>("video")) {
           if (!video.paused && isVideoInViewport(video)) {
             record(video);
             break;

@@ -37,8 +37,8 @@ describe("changelog data", () => {
 describe("createChangelogHtml", () => {
   it("lists only versions up to the installed one and marks it installed", () => {
     const doc = render("0.1.3");
-    const versions = [...doc.querySelectorAll("[data-release]")].map(
-      (el) => el.getAttribute("data-release"),
+    const versions = [...doc.querySelectorAll("[data-release]")].map((el) =>
+      el.getAttribute("data-release"),
     );
 
     expect(versions).toEqual(["0.1.3", "0.1.2", "0.1.1"]);

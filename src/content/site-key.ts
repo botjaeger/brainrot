@@ -4,37 +4,22 @@ import { isInstagramReelsPathname } from "../sites/instagram-reels.js";
 import { isTikTokPathname } from "../sites/tiktok.js";
 import { isYouTubeShortsPathname } from "../sites/youtube-shorts.js";
 
-export function getSiteKey(location: {
-  hostname: string;
-  pathname: string;
-}): string | null {
+export function getSiteKey(location: { hostname: string; pathname: string }): string | null {
   const { hostname, pathname } = location;
 
-  if (
-    matchesSiteHostname(hostname, "youtube.com") &&
-    isYouTubeShortsPathname(pathname)
-  ) {
+  if (matchesSiteHostname(hostname, "youtube.com") && isYouTubeShortsPathname(pathname)) {
     return "youtube-shorts";
   }
 
-  if (
-    matchesSiteHostname(hostname, "facebook.com") &&
-    isFacebookReelsPathname(pathname)
-  ) {
+  if (matchesSiteHostname(hostname, "facebook.com") && isFacebookReelsPathname(pathname)) {
     return "facebook-reels";
   }
 
-  if (
-    matchesSiteHostname(hostname, "tiktok.com") &&
-    isTikTokPathname(pathname)
-  ) {
+  if (matchesSiteHostname(hostname, "tiktok.com") && isTikTokPathname(pathname)) {
     return "tiktok";
   }
 
-  if (
-    matchesSiteHostname(hostname, "instagram.com") &&
-    isInstagramReelsPathname(pathname)
-  ) {
+  if (matchesSiteHostname(hostname, "instagram.com") && isInstagramReelsPathname(pathname)) {
     return "instagram-reels";
   }
 

@@ -1,6 +1,4 @@
-import {
-  APP_NAME,
-} from "../shared/brand.js";
+import { APP_NAME } from "../shared/brand.js";
 import { escapeHtml, THEME_TOKENS_CSS } from "../shared/page-html.js";
 
 const iconSunSvg = `

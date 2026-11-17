@@ -1,12 +1,5 @@
-import type {
-  ActiveFeedItem,
-  FeedSiteAdapter,
-} from "../core/feed-engine.js";
-import {
-  advanceShortsPlayback,
-  findActiveShortsVideo,
-  isShortsPathname,
-} from "../shared/dom.js";
+import type { ActiveFeedItem, FeedSiteAdapter } from "../core/feed-engine.js";
+import { advanceShortsPlayback, findActiveShortsVideo, isShortsPathname } from "../shared/dom.js";
 import { matchesSiteHostname } from "../shared/site-host.js";
 
 export function isYouTubeShortsPathname(pathname: string): boolean {

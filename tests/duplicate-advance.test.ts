@@ -1,10 +1,7 @@
 import { readFileSync } from "node:fs";
 import { JSDOM } from "jsdom";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  startFeedEngine,
-  type FeedSiteAdapter,
-} from "../src/core/feed-engine.js";
+import { startFeedEngine, type FeedSiteAdapter } from "../src/core/feed-engine.js";
 import { facebookReelsSiteAdapter } from "../src/sites/facebook-reels.js";
 import { instagramReelsSiteAdapter } from "../src/sites/instagram-reels.js";
 import { tiktokSiteAdapter } from "../src/sites/tiktok.js";
@@ -20,10 +17,7 @@ interface DuplicateCase {
 }
 
 function loadFixture(testCase: DuplicateCase): JSDOM {
-  const html = readFileSync(
-    new URL(`./fixtures/${testCase.fixture}`, import.meta.url),
-    "utf8",
-  );
+  const html = readFileSync(new URL(`./fixtures/${testCase.fixture}`, import.meta.url), "utf8");
   return new JSDOM(html, {
     pretendToBeVisual: true,
     url: testCase.url,
@@ -96,9 +90,7 @@ describe.each(cases)("$name duplicate prevention", (testCase) => {
     vi.useFakeTimers();
     const dom = loadFixture(testCase);
     const { document, Event } = dom.window;
-    const video = document.querySelector<HTMLVideoElement>(
-      testCase.activeVideoSelector,
-    )!;
+    const video = document.querySelector<HTMLVideoElement>(testCase.activeVideoSelector)!;
     const advanceSpy = testCase.prepareAdvanceSpy(document);
 
     Object.defineProperty(video, "paused", {

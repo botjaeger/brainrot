@@ -1,7 +1,4 @@
-import type {
-  ActiveFeedItem,
-  FeedSiteAdapter,
-} from "../core/feed-engine.js";
+import type { ActiveFeedItem, FeedSiteAdapter } from "../core/feed-engine.js";
 import {
   collectFeedItems,
   findActiveFeedVideo,
@@ -83,8 +80,7 @@ export function isTikTokPathname(pathname: string): boolean {
     normalizedPathname.startsWith("/foryou/") ||
     normalizedPathname === "/following" ||
     normalizedPathname.startsWith("/following/") ||
-    (normalizedPathname.startsWith("/@") &&
-      normalizedPathname.includes("/video/"))
+    (normalizedPathname.startsWith("/@") && normalizedPathname.includes("/video/"))
   );
 }
 
@@ -103,7 +99,7 @@ function findNextTikTokContainer(
 ): Element | null {
   const items = collectFeedItems(document, getTikTokItem);
   const currentIndex = items.indexOf(getTikTokItem(currentVideo));
-  return currentIndex >= 0 ? items[currentIndex + 1] ?? null : null;
+  return currentIndex >= 0 ? (items[currentIndex + 1] ?? null) : null;
 }
 
 function scrollTikTokFeedForward(
@@ -135,8 +131,7 @@ export const tiktokSiteAdapter: FeedSiteAdapter = {
   siteKey: "tiktok",
   matches(location: Location): boolean {
     return (
-      matchesSiteHostname(location.hostname, "tiktok.com") &&
-      isTikTokPathname(location.pathname)
+      matchesSiteHostname(location.hostname, "tiktok.com") && isTikTokPathname(location.pathname)
     );
   },
   findActiveItem(document: Document): ActiveFeedItem | null {
@@ -147,14 +142,10 @@ export const tiktokSiteAdapter: FeedSiteAdapter = {
     document: Document,
     currentVideo: HTMLVideoElement,
   ): { method: string; selector?: string } {
-    const nextButton = findClickableMatch(
-      document,
-      TIKTOK_NEXT_BUTTON_SELECTORS,
-      {
-        scopeSelectors: TIKTOK_BUTTON_SCOPE_SELECTORS,
-        isAllowed: isClickableElementActive,
-      },
-    );
+    const nextButton = findClickableMatch(document, TIKTOK_NEXT_BUTTON_SELECTORS, {
+      scopeSelectors: TIKTOK_BUTTON_SCOPE_SELECTORS,
+      isAllowed: isClickableElementActive,
+    });
 
     if (nextButton) {
       nextButton.element.click();

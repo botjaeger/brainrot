@@ -16,21 +16,18 @@
 
   win[MARKER] = true;
 
-  const ownVisibilityState = Object.getOwnPropertyDescriptor(
-    document,
-    "visibilityState",
-  );
+  const ownVisibilityState = Object.getOwnPropertyDescriptor(document, "visibilityState");
   const ownHidden = Object.getOwnPropertyDescriptor(document, "hidden");
 
   function findPrototypeDescriptor(
     property: "visibilityState" | "hidden",
   ): PropertyDescriptor | undefined {
-    let prototype: object | null = Object.getPrototypeOf(document);
+    let prototype = Object.getPrototypeOf(document) as object | null;
 
     while (prototype) {
       const descriptor = Object.getOwnPropertyDescriptor(prototype, property);
       if (descriptor) return descriptor;
-      prototype = Object.getPrototypeOf(prototype);
+      prototype = Object.getPrototypeOf(prototype) as object | null;
     }
 
     return undefined;
@@ -39,10 +36,7 @@
   const nativeVisibilityState = findPrototypeDescriptor("visibilityState");
   const nativeHidden = findPrototypeDescriptor("hidden");
 
-  function readDescriptor<T>(
-    descriptor: PropertyDescriptor | undefined,
-    fallback: T,
-  ): T {
+  function readDescriptor<T>(descriptor: PropertyDescriptor | undefined, fallback: T): T {
     if (!descriptor) return fallback;
     if (descriptor.get) return descriptor.get.call(document) as T;
     return ("value" in descriptor ? descriptor.value : fallback) as T;
@@ -65,10 +59,7 @@
       return pathname === "/shorts" || pathname.startsWith("/shorts/");
     }
 
-    if (
-      matchesHostname(hostname, "facebook.com") ||
-      matchesHostname(hostname, "instagram.com")
-    ) {
+    if (matchesHostname(hostname, "facebook.com") || matchesHostname(hostname, "instagram.com")) {
       return (
         pathname === "/reels" ||
         pathname.startsWith("/reels/") ||
@@ -113,10 +104,7 @@
         get: () =>
           isSupportedFeed()
             ? "visible"
-            : readDescriptor(
-                ownVisibilityState ?? nativeVisibilityState,
-                "visible",
-              ),
+            : readDescriptor(ownVisibilityState ?? nativeVisibilityState, "visible"),
         configurable: true,
       });
     } catch {
@@ -125,10 +113,7 @@
 
     try {
       Object.defineProperty(document, "hidden", {
-        get: () =>
-          isSupportedFeed()
-            ? false
-            : readDescriptor(ownHidden ?? nativeHidden, false),
+        get: () => (isSupportedFeed() ? false : readDescriptor(ownHidden ?? nativeHidden, false)),
         configurable: true,
       });
     } catch {

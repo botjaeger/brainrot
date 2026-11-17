@@ -49,20 +49,13 @@ function readSafariPopupHtml() {
 describe("safari packaging", () => {
   it("writes the staged Safari bundle", () => {
     const contentBundle = readSafariContentScript();
-    const sharedContentBundle = readFileSync(
-      join(distDir, "content", "index.js"),
-      "utf8",
-    );
+    const sharedContentBundle = readFileSync(join(distDir, "content", "index.js"), "utf8");
     const popupHtml = readSafariPopupHtml();
 
     expect(existsSync(join(distDir, "safari", "manifest.json"))).toBe(true);
-    expect(existsSync(join(distDir, "safari", "content", "index.js"))).toBe(
-      true,
-    );
+    expect(existsSync(join(distDir, "safari", "content", "index.js"))).toBe(true);
     expect(existsSync(join(distDir, "safari", "popup", "index.js"))).toBe(true);
-    expect(existsSync(join(distDir, "safari", "popup", "index.html"))).toBe(
-      true,
-    );
+    expect(existsSync(join(distDir, "safari", "popup", "index.html"))).toBe(true);
     expect(existsSync(join(distDir, "safari", "content-main", "spoof.js"))).toBe(true);
     expect(existsSync(join(distDir, "safari", "content-main", "control.js"))).toBe(true);
     expect(popupHtml).toContain("Brainrot");
@@ -81,9 +74,7 @@ describe("safari packaging", () => {
     expect(safariManifest.name).toBe("Brainrot");
     expect(safariManifest.action?.default_popup).toBe("popup/index.html");
     expect(safariManifest.permissions).toEqual(["storage", "tabs", "scripting"]);
-    expect(
-      safariManifest.browser_specific_settings?.safari?.strict_min_version,
-    ).toBe("14.0");
+    expect(safariManifest.browser_specific_settings?.safari?.strict_min_version).toBe("14.0");
     expect(safariManifest.browser_specific_settings?.gecko).toBeUndefined();
     expect(contentScript?.js).toEqual(["content/index.js"]);
     expect(contentScript?.matches).toEqual([
@@ -93,12 +84,12 @@ describe("safari packaging", () => {
       "https://www.instagram.com/*",
     ]);
     const mainWorldScript = safariManifest.content_scripts?.find(
-      (cs: { world?: string }) => cs.world === "MAIN"
+      (cs: { world?: string }) => cs.world === "MAIN",
     );
     expect(mainWorldScript).toBeDefined();
     expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
-    const controlScript = safariManifest.content_scripts?.find(
-      (cs) => cs.js?.includes("content-main/control.js"),
+    const controlScript = safariManifest.content_scripts?.find((cs) =>
+      cs.js?.includes("content-main/control.js"),
     );
     expect(controlScript?.run_at).toBe("document_start");
     expect(controlScript?.world).toBeUndefined();

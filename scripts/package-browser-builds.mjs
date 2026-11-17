@@ -30,8 +30,7 @@ function mergeDeep(baseValue, overlayValue) {
       if (value === null) {
         delete merged[key];
       } else {
-        merged[key] =
-          key in baseValue ? mergeDeep(baseValue[key], value) : value;
+        merged[key] = key in baseValue ? mergeDeep(baseValue[key], value) : value;
       }
     }
 
@@ -62,7 +61,11 @@ async function writePackage(packageName, manifest) {
   const entries = await readdir(distDir, { withFileTypes: true });
 
   for (const entry of entries) {
-    if (entry.name === "manifest.json" || packageTargetNames.has(entry.name) || entry.name === "site") {
+    if (
+      entry.name === "manifest.json" ||
+      packageTargetNames.has(entry.name) ||
+      entry.name === "site"
+    ) {
       continue;
     }
 
@@ -71,19 +74,14 @@ async function writePackage(packageName, manifest) {
     });
   }
 
-  await writeFile(
-    join(outputDir, "manifest.json"),
-    `${JSON.stringify(manifest, null, 2)}\n`,
-  );
+  await writeFile(join(outputDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
 async function run() {
   const { manifest: baseManifest, overlay } = await ensureSourceArtifacts();
 
   if (target !== "chromium" && target !== "firefox" && target !== "all") {
-    throw new Error(
-      `Unknown package target "${target}". Use chromium, firefox, or all.`,
-    );
+    throw new Error(`Unknown package target "${target}". Use chromium, firefox, or all.`);
   }
 
   if (target === "chromium" || target === "all") {

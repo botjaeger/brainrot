@@ -3,9 +3,7 @@
  * All URLs default to coming_soon until store listings are confirmed.
  */
 
-export type StoreUrlState =
-  | { state: "coming_soon" }
-  | { state: "live"; url: string };
+export type StoreUrlState = { state: "coming_soon" } | { state: "live"; url: string };
 
 export interface BrowserStoreUrls {
   chrome: StoreUrlState;

@@ -62,9 +62,7 @@ describe("startFeedEngine", () => {
     });
 
     expect(engine.isRunning()).toBe(false);
-    expect(
-      addSpy.mock.calls.filter((call) => call[0] === "ended"),
-    ).toHaveLength(0);
+    expect(addSpy.mock.calls.filter((call) => call[0] === "ended")).toHaveLength(0);
 
     engine.stop();
   });
@@ -270,7 +268,7 @@ describe("document.hidden guard", () => {
     });
 
     let videoEnded = false;
-    let videoPaused = false;
+    const videoPaused = false;
     Object.defineProperty(firstVideo, "ended", {
       configurable: true,
       get: () => videoEnded,
@@ -285,7 +283,7 @@ describe("document.hidden guard", () => {
     });
     Object.defineProperty(firstVideo, "currentTime", {
       configurable: true,
-      get: () => videoEnded ? 30 : 5,
+      get: () => (videoEnded ? 30 : 5),
     });
 
     const engine = startFeedEngine({
@@ -523,9 +521,7 @@ describe("background-aware behavior", () => {
         matches: () => true,
         findActiveItem: () => ({
           video: activeVideoForAdapter,
-          key:
-            activeVideoForAdapter.closest("ytd-reel-video-renderer") ??
-            activeVideoForAdapter,
+          key: activeVideoForAdapter.closest("ytd-reel-video-renderer") ?? activeVideoForAdapter,
         }),
         advancePlayback: () => ({ method: "scroll" }),
       };
@@ -711,7 +707,7 @@ describe("background-aware behavior", () => {
       });
       Object.defineProperty(firstVideo, "currentTime", {
         configurable: true,
-        get: () => videoEnded ? 10 : 5,
+        get: () => (videoEnded ? 10 : 5),
       });
 
       const engine = startFeedEngine({

@@ -89,7 +89,10 @@ for (const [file, pattern] of bumps) {
   if (matches.length !== 1) {
     fail(`${file}: expected 1 match for ${pattern}, found ${matches.length}`);
   }
-  files.set(path, text.replace(pattern, (_, before, after) => `${before}${version}${after}`));
+  files.set(
+    path,
+    text.replace(pattern, (_, before, after) => `${before}${version}${after}`),
+  );
   console.log(`${file}: ${current} -> ${version}`);
 }
 

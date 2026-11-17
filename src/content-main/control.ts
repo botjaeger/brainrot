@@ -13,10 +13,7 @@
   };
 
   type StorageChange = { newValue?: unknown };
-  type StorageChangeListener = (
-    changes: Record<string, StorageChange>,
-    areaName: string,
-  ) => void;
+  type StorageChangeListener = (changes: Record<string, StorageChange>, areaName: string) => void;
   type StorageApi = {
     local: { get(...args: unknown[]): unknown };
     onChanged?: {
@@ -29,8 +26,7 @@
   const abort = new AbortController();
   globalScope.__brainrotVisibilityControlAbort = abort;
 
-  const storage =
-    globalScope.browser?.storage ?? globalScope.chrome?.storage ?? null;
+  const storage = globalScope.browser?.storage ?? globalScope.chrome?.storage ?? null;
   let enabled: boolean | null = null;
 
   function dispatchState(): void {

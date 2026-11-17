@@ -70,8 +70,7 @@ describe("MAIN-world visibility spoof", () => {
     const dom = createDom();
     const { document } = dom.window;
     let onChanged:
-      | ((changes: Record<string, { newValue?: unknown }>, area: string) => void)
-      | undefined;
+      ((changes: Record<string, { newValue?: unknown }>, area: string) => void) | undefined;
 
     await installSpoof(dom);
     vi.stubGlobal("chrome", {
@@ -80,7 +79,7 @@ describe("MAIN-world visibility spoof", () => {
           get: vi.fn(() => Promise.resolve({ enabled: false })),
         },
         onChanged: {
-          addListener: vi.fn((listener) => {
+          addListener: vi.fn((listener: typeof onChanged) => {
             onChanged = listener;
           }),
           removeListener: vi.fn(),
@@ -110,17 +109,12 @@ describe("MAIN-world visibility spoof", () => {
     vi.stubGlobal("chrome", {
       storage: {
         local: {
-          get: vi.fn(
-            (
-              _keys: unknown,
-              callback?: (snapshot: Record<string, unknown>) => void,
-            ) => {
-              if (!callback) {
-                throw new TypeError("Callback required");
-              }
-              callback({ enabled: true });
-            },
-          ),
+          get: vi.fn((_keys: unknown, callback?: (snapshot: Record<string, unknown>) => void) => {
+            if (!callback) {
+              throw new TypeError("Callback required");
+            }
+            callback({ enabled: true });
+          }),
         },
         onChanged: {
           addListener: vi.fn(),

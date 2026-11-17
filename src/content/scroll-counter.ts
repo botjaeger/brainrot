@@ -42,8 +42,9 @@ async function readScrollStorage(): Promise<ScrollStorage> {
   const todayStats = result["todayStats"];
   return {
     scrollStats: stats && typeof stats === "object" ? (stats as Record<string, number>) : {},
-    todayDate: typeof result["todayDate"] === "string" ? result["todayDate"] as string : "",
-    todayStats: todayStats && typeof todayStats === "object" ? (todayStats as Record<string, number>) : {},
+    todayDate: typeof result["todayDate"] === "string" ? result["todayDate"] : "",
+    todayStats:
+      todayStats && typeof todayStats === "object" ? (todayStats as Record<string, number>) : {},
   };
 }
 

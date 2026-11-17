@@ -1,7 +1,4 @@
-import type {
-  ActiveFeedItem,
-  FeedSiteAdapter,
-} from "../core/feed-engine.js";
+import type { ActiveFeedItem, FeedSiteAdapter } from "../core/feed-engine.js";
 import {
   collectFeedItems,
   findActiveFeedVideo,
@@ -43,9 +40,8 @@ const FACEBOOK_REELS_NEXT_BUTTON_SELECTORS = [
 
 function getFacebookReelItem(video: HTMLVideoElement): Element {
   return (
-    video.closest(
-      "[data-pagelet*='ReelUnit'], article, [aria-label*='Reel' i], [role='dialog']",
-    ) ?? video
+    video.closest("[data-pagelet*='ReelUnit'], article, [aria-label*='Reel' i], [role='dialog']") ??
+    video
   );
 }
 
@@ -68,14 +64,10 @@ export const facebookReelsSiteAdapter: FeedSiteAdapter = {
     document: Document,
     currentVideo: HTMLVideoElement,
   ): { method: string; selector?: string } {
-    const nextButton = findClickableMatch(
-      document,
-      FACEBOOK_REELS_NEXT_BUTTON_SELECTORS,
-      {
-        scopeSelectors: FACEBOOK_REELS_SCOPE_SELECTORS,
-        isAllowed: isClickableElementActive,
-      },
-    );
+    const nextButton = findClickableMatch(document, FACEBOOK_REELS_NEXT_BUTTON_SELECTORS, {
+      scopeSelectors: FACEBOOK_REELS_SCOPE_SELECTORS,
+      isAllowed: isClickableElementActive,
+    });
 
     if (nextButton) {
       nextButton.element.click();

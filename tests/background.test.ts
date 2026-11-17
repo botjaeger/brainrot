@@ -16,9 +16,7 @@ const OPEN_TABS = [
   { id: 11 },
 ];
 
-async function loadBackground(
-  registerContentScripts = vi.fn().mockResolvedValue(undefined),
-) {
+async function loadBackground(registerContentScripts = vi.fn().mockResolvedValue(undefined)) {
   let onInstalled: InstalledListener | undefined;
   const chromeStub = {
     tabs: {
@@ -46,7 +44,9 @@ async function loadBackground(
   const install = async (reason: string) => {
     onInstalled?.({ reason });
     // Every stub settles immediately; one macrotask flushes the handlers.
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
   };
 
   return { chromeStub, install };
@@ -74,6 +74,33 @@ describe("background/index.ts", () => {
     await install("update");
 
     expect(reloadedIds(chromeStub.tabs.reload)).toEqual([1, 3, 5, 7, 8, 9]);
+  });
+
+  it("keeps reloading the other feed tabs when one reload rejects (tab closed meanwhile)", async () => {
+    const { chromeStub, install } = await loadBackground();
+    // A plain function, not vi.fn(): a mock attaches its own handler to every promise it returns,
+    // which would hide an unhandled rejection.
+    const reloaded: number[] = [];
+    Object.assign(chromeStub.tabs, {
+      reload: (id: number) => {
+        reloaded.push(id);
+        return id === 3 ? Promise.reject(new Error("No tab with id: 3")) : Promise.resolve();
+      },
+    });
+    const unhandled = vi.fn();
+    process.on("unhandledRejection", unhandled);
+
+    try {
+      await install("update");
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+    } finally {
+      process.off("unhandledRejection", unhandled);
+    }
+
+    expect(reloaded.sort((a, b) => a - b)).toEqual([1, 3, 5, 7, 8, 9]);
+    expect(unhandled).not.toHaveBeenCalled();
   });
 
   it("reloads nothing on a browser update", async () => {

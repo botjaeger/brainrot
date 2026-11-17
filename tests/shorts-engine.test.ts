@@ -26,11 +26,7 @@ function mockScrollIntoView(element: Element) {
   return scrollIntoView;
 }
 
-function setVideoPlaybackState(
-  video: HTMLVideoElement,
-  duration: number,
-  currentTime: number,
-) {
+function setVideoPlaybackState(video: HTMLVideoElement, duration: number, currentTime: number) {
   Object.defineProperty(video, "duration", {
     configurable: true,
     value: duration,
@@ -79,8 +75,12 @@ function appendNextButton(document: Document): HTMLButtonElement {
 }
 
 async function flushMutations(): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+  await new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
 }
 
 afterEach(() => {
@@ -108,9 +108,7 @@ describe("startShortsEngine", () => {
 
     firstVideo.dispatchEvent(new Event("ended"));
 
-    expect(
-      addSpy.mock.calls.filter((call) => call[0] === "ended"),
-    ).toHaveLength(1);
+    expect(addSpy.mock.calls.filter((call) => call[0] === "ended")).toHaveLength(1);
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     expect(scrollIntoView).toHaveBeenCalledWith({
       behavior: "smooth",
@@ -257,14 +255,17 @@ describe("startShortsEngine", () => {
     firstVideo.dispatchEvent(new Event("ended"));
 
     expect(
-      infoSpy.mock.calls.find(
-        (call) =>
+      infoSpy.mock.calls.find((call) => {
+        const details = call[2] as
+          { generation?: number; method?: string; selector?: string } | undefined;
+        return (
           call[0] === "[Brainrot]" &&
           call[1] === "advance" &&
-          call[2]?.generation === 1 &&
-          call[2]?.method === "next-button" &&
-          call[2]?.selector === "#navigation-button-down button",
-      ),
+          details?.generation === 1 &&
+          details?.method === "next-button" &&
+          details?.selector === "#navigation-button-down button"
+        );
+      }),
     ).toBeDefined();
 
     engine.stop();
@@ -293,12 +294,8 @@ describe("startShortsEngine", () => {
 
     await flushMutations();
 
-    expect(
-      addSpy.mock.calls.filter((call) => call[0] === "ended"),
-    ).toHaveLength(2);
-    expect(
-      removeSpy.mock.calls.filter((call) => call[0] === "ended"),
-    ).toHaveLength(1);
+    expect(addSpy.mock.calls.filter((call) => call[0] === "ended")).toHaveLength(2);
+    expect(removeSpy.mock.calls.filter((call) => call[0] === "ended")).toHaveLength(1);
 
     firstVideo.dispatchEvent(new Event("ended"));
     expect(scrollIntoView).toHaveBeenCalledTimes(0);
@@ -319,9 +316,7 @@ describe("startShortsEngine", () => {
       window: dom.window,
     });
 
-    expect(
-      addSpy.mock.calls.filter((call) => call[0] === "ended"),
-    ).toHaveLength(0);
+    expect(addSpy.mock.calls.filter((call) => call[0] === "ended")).toHaveLength(0);
 
     engine.stop();
   });

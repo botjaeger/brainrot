@@ -53,8 +53,16 @@ async function reloadFeedTabs(): Promise<void> {
 
   for (const tab of tabs) {
     if (tab.id != null && isFeedUrl(tab.url)) {
-      chrome.tabs.reload(tab.id);
+      void reloadTab(tab.id);
     }
+  }
+}
+
+async function reloadTab(tabId: number): Promise<void> {
+  try {
+    await chrome.tabs.reload(tabId);
+  } catch {
+    // The tab closed or navigated away since the query — nothing to reload.
   }
 }
 
@@ -71,11 +79,13 @@ async function registerMainWorldSpoofFallback(): Promise<void> {
 
   try {
     // Unregister first to avoid "script already registered" errors on reinstall
-    await chrome.scripting.unregisterContentScripts({
-      ids: ["brainrot-visibility-spoof"],
-    }).catch(() => {
-      // Script not registered yet — this is fine
-    });
+    await chrome.scripting
+      .unregisterContentScripts({
+        ids: ["brainrot-visibility-spoof"],
+      })
+      .catch(() => {
+        // Script not registered yet — this is fine
+      });
 
     await chrome.scripting.registerContentScripts([
       {

@@ -2,7 +2,10 @@ import { JSDOM } from "jsdom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createPopupHtml } from "../src/popup/popup-template.js";
 import { mountPopup } from "../src/popup/popup.js";
-import type { ExtensionSettings, ExtensionSettingsStore } from "../src/shared/extension-settings.js";
+import type {
+  ExtensionSettings,
+  ExtensionSettingsStore,
+} from "../src/shared/extension-settings.js";
 
 function loadPopupDom() {
   return new JSDOM(createPopupHtml({ version: "0.0.0-test" }), {
@@ -15,9 +18,9 @@ function makeSettings(overrides: Partial<ExtensionSettings> = {}): ExtensionSett
   return {
     enabled: true,
     debugLogging: false,
-    scrollStats: { "youtube-shorts": 0, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
+    scrollStats: { "youtube-shorts": 0, "facebook-reels": 0, tiktok: 0, "instagram-reels": 0 },
     todayDate: "",
-    todayStats: { "youtube-shorts": 0, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
+    todayStats: { "youtube-shorts": 0, "facebook-reels": 0, tiktok: 0, "instagram-reels": 0 },
     theme: "light",
     changelogSeenVersion: "",
     ...overrides,
@@ -39,10 +42,16 @@ describe("mountPopup", () => {
       note: "Brainrot supports this page.",
     }));
     const store: ExtensionSettingsStore = {
-      read: async () => makeSettings({
-        enabled: false,
-        scrollStats: { "youtube-shorts": 10, "facebook-reels": 5, "tiktok": 20, "instagram-reels": 3 },
-      }),
+      read: async () =>
+        makeSettings({
+          enabled: false,
+          scrollStats: {
+            "youtube-shorts": 10,
+            "facebook-reels": 5,
+            tiktok: 20,
+            "instagram-reels": 3,
+          },
+        }),
       write,
     };
 
@@ -62,9 +71,13 @@ describe("mountPopup", () => {
     expect(doc.querySelector("[data-count='facebook-reels']")?.textContent).toBe("5");
     expect(doc.querySelector("[data-count='tiktok']")?.textContent).toBe("20");
     expect(doc.querySelector("[data-count='instagram-reels']")?.textContent).toBe("3");
-    expect(doc.querySelector("[data-site-stats='facebook-reels']")?.classList.contains("active")).toBe(true);
+    expect(
+      doc.querySelector("[data-site-stats='facebook-reels']")?.classList.contains("active"),
+    ).toBe(true);
     expect(doc.querySelector("[data-site-stats='facebook-reels'] .active-badge")).toBeTruthy();
-    expect(doc.querySelector("[data-site-stats='tiktok']")?.classList.contains("active")).toBe(false);
+    expect(doc.querySelector("[data-site-stats='tiktok']")?.classList.contains("active")).toBe(
+      false,
+    );
     expect(doc.documentElement.classList.contains("is-ready")).toBe(true);
     expect(readActiveSite).toHaveBeenCalledTimes(1);
   });
@@ -87,7 +100,9 @@ describe("mountPopup", () => {
     enabledToggle.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
 
     expect(write).toHaveBeenCalledWith({ enabled: true });
-    expect(doc.querySelector<HTMLElement>("[data-status-copy]")?.textContent).toBe("No taps. No swipes. Just watch.");
+    expect(doc.querySelector<HTMLElement>("[data-status-copy]")?.textContent).toBe(
+      "No taps. No swipes. Just watch.",
+    );
   });
 
   it("rolls the toggle back when the write fails", async () => {
@@ -105,11 +120,15 @@ describe("mountPopup", () => {
     const enabledToggle = doc.querySelector<HTMLInputElement>("#enabled-toggle")!;
     enabledToggle.checked = true;
     enabledToggle.dispatchEvent(new dom.window.Event("change", { bubbles: true }));
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
 
     expect(enabledToggle.checked).toBe(false);
     expect(doc.documentElement.dataset.enabled).toBe("false");
-    expect(doc.querySelector<HTMLElement>("[data-status-copy]")?.textContent).toBe("Auto scroll paused.");
+    expect(doc.querySelector<HTMLElement>("[data-status-copy]")?.textContent).toBe(
+      "Auto scroll paused.",
+    );
   });
 
   it("cycles theme on theme-toggle click and writes to store", async () => {
@@ -155,42 +174,59 @@ describe("mountPopup", () => {
     const dom = loadPopupDom();
     const today = new Date().toLocaleDateString("en-CA");
     const store: ExtensionSettingsStore = {
-      read: async () => makeSettings({
-        todayDate: today,
-        todayStats: { "youtube-shorts": 7, "facebook-reels": 3, "tiktok": 5, "instagram-reels": 0 },
-      }),
+      read: async () =>
+        makeSettings({
+          todayDate: today,
+          todayStats: { "youtube-shorts": 7, "facebook-reels": 3, tiktok: 5, "instagram-reels": 0 },
+        }),
       write: vi.fn(async () => undefined),
     };
 
     await mountPopup({ document: dom.window.document, store });
 
     expect(dom.window.document.querySelector("[data-today-count]")?.textContent).toBe("15");
-    expect(dom.window.document.querySelector("[data-today-copy]")?.textContent).toBe("videos watched today");
+    expect(dom.window.document.querySelector("[data-today-copy]")?.textContent).toBe(
+      "videos watched today",
+    );
   });
 
   it("shows personality copy at 50+ videos", async () => {
     const dom = loadPopupDom();
     const today = new Date().toLocaleDateString("en-CA");
     const store: ExtensionSettingsStore = {
-      read: async () => makeSettings({
-        todayDate: today,
-        todayStats: { "youtube-shorts": 30, "facebook-reels": 10, "tiktok": 15, "instagram-reels": 0 },
-      }),
+      read: async () =>
+        makeSettings({
+          todayDate: today,
+          todayStats: {
+            "youtube-shorts": 30,
+            "facebook-reels": 10,
+            tiktok: 15,
+            "instagram-reels": 0,
+          },
+        }),
       write: vi.fn(async () => undefined),
     };
 
     await mountPopup({ document: dom.window.document, store });
 
-    expect(dom.window.document.querySelector("[data-today-copy]")?.textContent).toBe("videos. You're in deep now");
+    expect(dom.window.document.querySelector("[data-today-copy]")?.textContent).toBe(
+      "videos. You're in deep now",
+    );
   });
 
   it("shows zero today total when date is stale", async () => {
     const dom = loadPopupDom();
     const store: ExtensionSettingsStore = {
-      read: async () => makeSettings({
-        todayDate: "2020-01-01",
-        todayStats: { "youtube-shorts": 99, "facebook-reels": 0, "tiktok": 0, "instagram-reels": 0 },
-      }),
+      read: async () =>
+        makeSettings({
+          todayDate: "2020-01-01",
+          todayStats: {
+            "youtube-shorts": 99,
+            "facebook-reels": 0,
+            tiktok: 0,
+            "instagram-reels": 0,
+          },
+        }),
       write: vi.fn(async () => undefined),
     };
 
@@ -264,9 +300,7 @@ describe("mountPopup", () => {
       expect(write).not.toHaveBeenCalled();
 
       reset?.click();
-      expect(write).toHaveBeenCalledWith(
-        expect.objectContaining({ todayDate: "" }),
-      );
+      expect(write).toHaveBeenCalledWith(expect.objectContaining({ todayDate: "" }));
       expect(doc.querySelector("[data-count='tiktok']")?.textContent).toBe("0");
       expect(reset?.textContent).toBe("Reset stats");
     } finally {
@@ -307,17 +341,12 @@ describe("mountPopup", () => {
       const query =
         apiStyle === "promise"
           ? vi.fn(() => Promise.resolve([{ id: 42 }]))
-          : vi.fn(
-              (
-                _options: unknown,
-                callback?: (tabs: Array<{ id: number }>) => void,
-              ) => {
-                if (!callback) {
-                  throw new TypeError("Callback required");
-                }
-                callback([{ id: 42 }]);
-              },
-            );
+          : vi.fn((_options: unknown, callback?: (tabs: Array<{ id: number }>) => void) => {
+              if (!callback) {
+                throw new TypeError("Callback required");
+              }
+              callback([{ id: 42 }]);
+            });
 
       vi.stubGlobal("chrome", { tabs: { query, reload } });
 
@@ -349,11 +378,18 @@ describe("mountPopup", () => {
       write,
     };
 
-    await mountPopup({ document: dom.window.document, store, readActiveSite: async () => null, openPage });
+    await mountPopup({
+      document: dom.window.document,
+      store,
+      readActiveSite: async () => null,
+      openPage,
+    });
 
     const root = dom.window.document.documentElement;
     expect(root.dataset.changelogUnseen).toBe("true");
-    expect(dom.window.document.querySelector("#changelog-link")?.getAttribute("aria-label")).toBe("What's new in v0.0.0-test (unread)");
+    expect(dom.window.document.querySelector("#changelog-link")?.getAttribute("aria-label")).toBe(
+      "What's new in v0.0.0-test (unread)",
+    );
 
     dom.window.document.querySelector<HTMLElement>("#changelog-link")?.click();
 

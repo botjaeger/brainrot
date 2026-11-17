@@ -1,11 +1,7 @@
 import { APP_NAME, SUPPORTED_SITE_LABELS } from "../shared/brand.js";
 
 export type SupportedSiteKind =
-  | "youtube-shorts"
-  | "facebook-reels"
-  | "tiktok"
-  | "instagram-reels"
-  | "unsupported";
+  "youtube-shorts" | "facebook-reels" | "tiktok" | "instagram-reels" | "unsupported";
 
 export interface SupportedSiteStatus {
   kind: SupportedSiteKind;
@@ -25,10 +21,7 @@ type TabsQueryOptions = {
 };
 
 type TabsApi = {
-  query: (
-    queryInfo: TabsQueryOptions,
-    callback?: (tabs: TabsQueryTab[]) => void,
-  ) => unknown;
+  query: (queryInfo: TabsQueryOptions, callback?: (tabs: TabsQueryTab[]) => void) => unknown;
   reload?: (tabId?: number) => unknown;
   create?: (createProperties: { url: string }) => unknown;
 };
@@ -47,8 +40,7 @@ function getTabsApi(): TabsApi | null {
 }
 
 function firstTabUrl(tabs: TabsQueryTab[]): string | null {
-  return tabs.find((tab) => typeof tab.url === "string" && tab.url.length > 0)
-    ?.url ?? null;
+  return tabs.find((tab) => typeof tab.url === "string" && tab.url.length > 0)?.url ?? null;
 }
 
 function formatSiteList(items: readonly string[]): string {
@@ -99,8 +91,7 @@ function isTikTokPathname(pathname: string): boolean {
     normalizedPathname.startsWith("/foryou/") ||
     normalizedPathname === "/following" ||
     normalizedPathname.startsWith("/following/") ||
-    (normalizedPathname.startsWith("/@") &&
-      normalizedPathname.includes("/video/"))
+    (normalizedPathname.startsWith("/@") && normalizedPathname.includes("/video/"))
   );
 }
 
@@ -108,15 +99,10 @@ function matchesHostname(hostname: string, domain: string): boolean {
   return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 
-export function describeSupportedSiteFromUrl(
-  urlInput: string | URL,
-): SupportedSiteStatus {
+export function describeSupportedSiteFromUrl(urlInput: string | URL): SupportedSiteStatus {
   const url = typeof urlInput === "string" ? new URL(urlInput) : urlInput;
 
-  if (
-    matchesHostname(url.hostname, "youtube.com") &&
-    isYouTubeShortsPathname(url.pathname)
-  ) {
+  if (matchesHostname(url.hostname, "youtube.com") && isYouTubeShortsPathname(url.pathname)) {
     return {
       kind: "youtube-shorts",
       supported: true,
@@ -125,10 +111,7 @@ export function describeSupportedSiteFromUrl(
     };
   }
 
-  if (
-    matchesHostname(url.hostname, "facebook.com") &&
-    isReelsPathname(url.pathname)
-  ) {
+  if (matchesHostname(url.hostname, "facebook.com") && isReelsPathname(url.pathname)) {
     return {
       kind: "facebook-reels",
       supported: true,
@@ -137,10 +120,7 @@ export function describeSupportedSiteFromUrl(
     };
   }
 
-  if (
-    matchesHostname(url.hostname, "tiktok.com") &&
-    isTikTokPathname(url.pathname)
-  ) {
+  if (matchesHostname(url.hostname, "tiktok.com") && isTikTokPathname(url.pathname)) {
     return {
       kind: "tiktok",
       supported: true,
@@ -149,10 +129,7 @@ export function describeSupportedSiteFromUrl(
     };
   }
 
-  if (
-    matchesHostname(url.hostname, "instagram.com") &&
-    isReelsPathname(url.pathname)
-  ) {
+  if (matchesHostname(url.hostname, "instagram.com") && isReelsPathname(url.pathname)) {
     return {
       kind: "instagram-reels",
       supported: true,

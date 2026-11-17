@@ -16,14 +16,14 @@ export const DEFAULT_EXTENSION_SETTINGS: ExtensionSettings = {
   scrollStats: {
     "facebook-reels": 0,
     "instagram-reels": 0,
-    "tiktok": 0,
+    tiktok: 0,
     "youtube-shorts": 0,
   },
   todayDate: "",
   todayStats: {
     "facebook-reels": 0,
     "instagram-reels": 0,
-    "tiktok": 0,
+    tiktok: 0,
     "youtube-shorts": 0,
   },
   theme: "light",
@@ -43,10 +43,7 @@ type StorageChange = {
   newValue?: unknown;
 };
 
-type StorageChangeListener = (
-  changes: Record<string, StorageChange>,
-  areaName: string,
-) => void;
+type StorageChangeListener = (changes: Record<string, StorageChange>, areaName: string) => void;
 
 type StorageArea = {
   get(...args: unknown[]): unknown;
@@ -87,9 +84,7 @@ function isPromiseLike<T>(value: unknown): value is Promise<T> {
 function normalizeSettings(snapshot: StorageSnapshot): ExtensionSettings {
   return {
     enabled:
-      typeof snapshot.enabled === "boolean"
-        ? snapshot.enabled
-        : DEFAULT_EXTENSION_SETTINGS.enabled,
+      typeof snapshot.enabled === "boolean" ? snapshot.enabled : DEFAULT_EXTENSION_SETTINGS.enabled,
     debugLogging:
       typeof snapshot.debugLogging === "boolean"
         ? snapshot.debugLogging
@@ -139,9 +134,7 @@ async function readStorageSnapshot(): Promise<StorageSnapshot> {
 
 // Writes only the given keys, so a popup toggle never overwrites stats the
 // content script incremented after the popup last read them.
-async function writeStorageSnapshot(
-  snapshot: Partial<ExtensionSettings>,
-): Promise<void> {
+async function writeStorageSnapshot(snapshot: Partial<ExtensionSettings>): Promise<void> {
   const storage = getStorageApi();
 
   if (!storage) {
@@ -166,9 +159,7 @@ export async function readExtensionSettings(): Promise<ExtensionSettings> {
   return normalizeSettings(await readStorageSnapshot());
 }
 
-export async function saveExtensionSettings(
-  settings: Partial<ExtensionSettings>,
-): Promise<void> {
+export async function saveExtensionSettings(settings: Partial<ExtensionSettings>): Promise<void> {
   await writeStorageSnapshot(settings);
 }
 

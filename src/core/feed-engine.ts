@@ -19,10 +19,7 @@ export interface FeedSiteAdapter {
   nativeTransitionGraceMs?: number;
   matches(location: Location): boolean;
   findActiveItem(document: Document): ActiveFeedItem | null;
-  advancePlayback(
-    document: Document,
-    currentVideo: HTMLVideoElement,
-  ): FeedAdvanceResult;
+  advancePlayback(document: Document, currentVideo: HTMLVideoElement): FeedAdvanceResult;
 }
 
 export interface FeedEngineEnvironment {
@@ -72,13 +69,13 @@ const LOOP_WRAP_WINDOW_S = 1;
  * test environments where `Document` is not a global.
  */
 function getRealHidden(doc: Document): boolean {
-  let proto: object | null = Object.getPrototypeOf(doc);
+  let proto = Object.getPrototypeOf(doc) as object | null;
   while (proto !== null) {
     const desc = Object.getOwnPropertyDescriptor(proto, "hidden");
     if (desc) {
-      return desc.get?.call(doc) ?? doc.hidden;
+      return (desc.get?.call(doc) as boolean | undefined) ?? doc.hidden;
     }
-    proto = Object.getPrototypeOf(proto);
+    proto = Object.getPrototypeOf(proto) as object | null;
   }
   return doc.hidden;
 }
@@ -165,11 +162,7 @@ export function startFeedEngine({
   const isPlaybackNearEnd = (video: HTMLVideoElement): boolean => {
     const duration = video.duration;
 
-    return (
-      Number.isFinite(duration) &&
-      duration > 0 &&
-      video.currentTime >= duration - 0.25
-    );
+    return Number.isFinite(duration) && duration > 0 && video.currentTime >= duration - 0.25;
   };
 
   const getVideoSource = (video: HTMLVideoElement): string => {
@@ -214,14 +207,12 @@ export function startFeedEngine({
     itemKey: Element,
     source: string,
   ): boolean => {
-    if (
-      !(
-        playbackGeneration === generation &&
-        activeVideo === video &&
-        activeItemKey === itemKey &&
-        getVideoSource(video) === source
-      )
-    ) {
+    if (!(
+      playbackGeneration === generation &&
+      activeVideo === video &&
+      activeItemKey === itemKey &&
+      getVideoSource(video) === source
+    )) {
       return false;
     }
 
@@ -265,14 +256,8 @@ export function startFeedEngine({
     }, 500);
   };
 
-  const advanceFeed = (
-    trigger: "ended" | "timeupdate" | "visibility-return",
-  ): void => {
-    if (
-      !activeVideo ||
-      !activeItemKey ||
-      advancedGeneration === playbackGeneration
-    ) {
+  const advanceFeed = (trigger: "ended" | "timeupdate" | "visibility-return"): void => {
+    if (!activeVideo || !activeItemKey || advancedGeneration === playbackGeneration) {
       return;
     }
 
@@ -352,11 +337,7 @@ export function startFeedEngine({
       log?.("ended-while-hidden: deferring to visibility-return");
       return;
     }
-    scheduleIdentityBoundAdvance(
-      "ended",
-      adapter.nativeTransitionGraceMs ?? 0,
-      false,
-    );
+    scheduleIdentityBoundAdvance("ended", adapter.nativeTransitionGraceMs ?? 0, false);
   };
 
   const onPlaybackProgress = (): void => {
@@ -374,11 +355,7 @@ export function startFeedEngine({
       return;
     }
 
-    scheduleIdentityBoundAdvance(
-      "timeupdate",
-      END_FALLBACK_DELAY_MS,
-      true,
-    );
+    scheduleIdentityBoundAdvance("timeupdate", END_FALLBACK_DELAY_MS, true);
   };
 
   // Detect player-managed loops: the video seeks from near-end back to start
@@ -392,7 +369,8 @@ export function startFeedEngine({
     if (!activeVideo || advancedGeneration === playbackGeneration) return;
     const duration = activeVideo.duration;
     if (
-      Number.isFinite(duration) && duration > 0 &&
+      Number.isFinite(duration) &&
+      duration > 0 &&
       maxTimeReached >= duration - LOOP_WRAP_WINDOW_S &&
       activeVideo.currentTime < 1
     ) {
@@ -402,11 +380,7 @@ export function startFeedEngine({
         log?.("loop-seek-while-hidden: deferring to visibility-return");
         return;
       }
-      scheduleIdentityBoundAdvance(
-        "ended",
-        adapter.nativeTransitionGraceMs ?? 0,
-        false,
-      );
+      scheduleIdentityBoundAdvance("ended", adapter.nativeTransitionGraceMs ?? 0, false);
     }
   };
 
@@ -422,7 +396,9 @@ export function startFeedEngine({
     // Hidden pause: resume if user did not pause intentionally
     if (!userPaused && !activeVideo.ended) {
       log?.("pause-while-hidden: resuming");
-      activeVideo.play().catch(() => { /* best effort */ });
+      activeVideo.play().catch(() => {
+        /* best effort */
+      });
     }
   };
 
@@ -458,18 +434,24 @@ export function startFeedEngine({
       const elapsedMs = Date.now() - hideTimestamp;
       const remainingMs = (lastKnownDuration - lastKnownTime) * 1000;
 
-      const shouldAdvance = videoEndedWhileHidden ||
-        (activeVideo && wasPlayingBeforeHidden && (
-          activeVideo.ended ||
-          (lastKnownDuration > 0 && activeVideo.currentTime >= lastKnownDuration - 0.25) ||
-          (lastKnownDuration > 0 && lastKnownTime >= lastKnownDuration - 0.25 && activeVideo.currentTime < 1) ||
-          // Safari elapsed-time fallback: enough real time has passed for the video to
-          // have finished. Only apply when remaining time was > 200 ms at hide time,
-          // so a brief tab-switch near the end does not trigger a spurious advance.
-          // 200 ms covers realistic currentTime sampling jitter without false-positives.
-          (hideTimestamp > 0 && lastKnownDuration > 0 && lastKnownTime > 0 &&
-           remainingMs > 200 && elapsedMs >= remainingMs - 200)
-        ));
+      const shouldAdvance =
+        videoEndedWhileHidden ||
+        (activeVideo &&
+          wasPlayingBeforeHidden &&
+          (activeVideo.ended ||
+            (lastKnownDuration > 0 && activeVideo.currentTime >= lastKnownDuration - 0.25) ||
+            (lastKnownDuration > 0 &&
+              lastKnownTime >= lastKnownDuration - 0.25 &&
+              activeVideo.currentTime < 1) ||
+            // Safari elapsed-time fallback: enough real time has passed for the video to
+            // have finished. Only apply when remaining time was > 200 ms at hide time,
+            // so a brief tab-switch near the end does not trigger a spurious advance.
+            // 200 ms covers realistic currentTime sampling jitter without false-positives.
+            (hideTimestamp > 0 &&
+              lastKnownDuration > 0 &&
+              lastKnownTime > 0 &&
+              remainingMs > 200 &&
+              elapsedMs >= remainingMs - 200)));
 
       videoEndedWhileHidden = false;
 
@@ -483,15 +465,20 @@ export function startFeedEngine({
         const source = activeSource;
         visibilityAdvanceTimer = setTimeout(() => {
           visibilityAdvanceTimer = null;
-          if (
-            !stopped &&
-            isCurrentIdentity(generation, video, itemKey, source)
-          ) {
+          if (!stopped && isCurrentIdentity(generation, video, itemKey, source)) {
             advanceFeed("visibility-return");
           }
         }, 0);
-      } else if (activeVideo && wasPlayingBeforeHidden && activeVideo.paused && !activeVideo.ended && !userPaused) {
-        activeVideo.play().catch(() => { /* best effort */ });
+      } else if (
+        activeVideo &&
+        wasPlayingBeforeHidden &&
+        activeVideo.paused &&
+        !activeVideo.ended &&
+        !userPaused
+      ) {
+        activeVideo.play().catch(() => {
+          /* best effort */
+        });
       }
     }
   };

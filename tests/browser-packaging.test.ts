@@ -35,10 +35,7 @@ function readVisibilityScript(
   packageName: "chromium" | "firefox",
   scriptName: "control" | "spoof",
 ) {
-  return readFileSync(
-    join(distDir, packageName, "content-main", `${scriptName}.js`),
-    "utf8",
-  );
+  return readFileSync(join(distDir, packageName, "content-main", `${scriptName}.js`), "utf8");
 }
 
 function readPopupHtml(packageName: "chromium" | "firefox") {
@@ -82,13 +79,13 @@ describe("browser packaging", () => {
       "https://www.instagram.com/*",
     ]);
     const mainWorldScript = chromiumManifest.content_scripts?.find(
-      (cs: { world?: string }) => cs.world === "MAIN"
+      (cs: { world?: string }) => cs.world === "MAIN",
     );
     expect(mainWorldScript).toBeDefined();
     expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
     expect(mainWorldScript?.run_at).toBe("document_start");
-    const controlScript = chromiumManifest.content_scripts?.find(
-      (cs) => cs.js?.includes("content-main/control.js"),
+    const controlScript = chromiumManifest.content_scripts?.find((cs) =>
+      cs.js?.includes("content-main/control.js"),
     );
     expect(controlScript?.run_at).toBe("document_start");
     expect(controlScript?.world).toBeUndefined();
@@ -98,12 +95,10 @@ describe("browser packaging", () => {
     expect(popupHtml).toContain("./index.js");
     expect(popupHtml).toContain("min-width: 320px;");
     expect(contentBundle.trimStart().startsWith("import")).toBe(false);
-    expect(
-      readVisibilityScript("chromium", "control").trimStart().startsWith("import"),
-    ).toBe(false);
-    expect(
-      readVisibilityScript("chromium", "spoof").trimStart().startsWith("import"),
-    ).toBe(false);
+    expect(readVisibilityScript("chromium", "control").trimStart().startsWith("import")).toBe(
+      false,
+    );
+    expect(readVisibilityScript("chromium", "spoof").trimStart().startsWith("import")).toBe(false);
   });
 
   it("adds Firefox gecko metadata without changing the shared Shorts match", () => {
@@ -114,9 +109,7 @@ describe("browser packaging", () => {
 
     expect(firefoxManifest.name).toBe("Brainrot");
     expect(firefoxManifest.action?.default_popup).toBe("popup/index.html");
-    expect(firefoxManifest.browser_specific_settings?.gecko?.id).toBe(
-      "brainrot@brainrot.app",
-    );
+    expect(firefoxManifest.browser_specific_settings?.gecko?.id).toBe("brainrot@brainrot.app");
     expect(firefoxManifest.permissions).toEqual(["storage", "tabs", "scripting"]);
     expect(contentScript?.js).toEqual(["content/index.js"]);
     expect(contentScript?.matches).toEqual([
@@ -126,13 +119,13 @@ describe("browser packaging", () => {
       "https://www.instagram.com/*",
     ]);
     const mainWorldScript = firefoxManifest.content_scripts?.find(
-      (cs: { world?: string }) => cs.world === "MAIN"
+      (cs: { world?: string }) => cs.world === "MAIN",
     );
     expect(mainWorldScript).toBeDefined();
     expect(mainWorldScript?.js).toEqual(["content-main/spoof.js"]);
     expect(mainWorldScript?.run_at).toBe("document_start");
-    const controlScript = firefoxManifest.content_scripts?.find(
-      (cs) => cs.js?.includes("content-main/control.js"),
+    const controlScript = firefoxManifest.content_scripts?.find((cs) =>
+      cs.js?.includes("content-main/control.js"),
     );
     expect(controlScript?.run_at).toBe("document_start");
     expect(controlScript?.world).toBeUndefined();
@@ -142,11 +135,7 @@ describe("browser packaging", () => {
     expect(popupHtml).toContain("./index.js");
     expect(popupHtml).toContain("min-width: 320px;");
     expect(contentBundle.trimStart().startsWith("import")).toBe(false);
-    expect(
-      readVisibilityScript("firefox", "control").trimStart().startsWith("import"),
-    ).toBe(false);
-    expect(
-      readVisibilityScript("firefox", "spoof").trimStart().startsWith("import"),
-    ).toBe(false);
+    expect(readVisibilityScript("firefox", "control").trimStart().startsWith("import")).toBe(false);
+    expect(readVisibilityScript("firefox", "spoof").trimStart().startsWith("import")).toBe(false);
   });
 });

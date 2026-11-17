@@ -7,10 +7,7 @@ function isValidAppleTeamId(value) {
   return /^[A-Z0-9]{10}$/.test(value);
 }
 
-export function buildSafariXcodebuildArgs({
-  signed = false,
-  developmentTeam,
-} = {}) {
+export function buildSafariXcodebuildArgs({ signed = false, developmentTeam } = {}) {
   const args = [
     "-project",
     SAFARI_PROJECT_PATH,
@@ -24,9 +21,7 @@ export function buildSafariXcodebuildArgs({
 
   if (signed) {
     if (!developmentTeam) {
-      throw new Error(
-        "Set DEVELOPMENT_TEAM before running the signed Safari build.",
-      );
+      throw new Error("Set DEVELOPMENT_TEAM before running the signed Safari build.");
     }
 
     if (!isValidAppleTeamId(developmentTeam)) {

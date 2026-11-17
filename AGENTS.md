@@ -9,7 +9,10 @@ Scope stays narrow: auto-advance, background playback, local stats. No filters, 
 ## Commands
 
 ```bash
-pnpm check              # Gate: typecheck + all tests (tests/global-setup.ts builds dist/ once first)
+pnpm install            # Dev tools + sets core.hooksPath=.githooks (pre-commit runs pnpm check)
+pnpm check              # Gate: Prettier check + ESLint + typecheck + all tests (tests/global-setup.ts builds dist/ once first)
+pnpm lint               # ESLint (eslint.config.js)
+pnpm format             # Prettier --write (.prettierrc.json; markdown and tests/fixtures/ are left alone)
 pnpm release 0.1.5      # Bump, check, commit, tag, push; the tag makes CI publish to the stores
 pnpm test               # vitest run
 pnpm exec vitest run tests/popup.test.ts   # one file
@@ -25,7 +28,9 @@ pnpm dev:site           # Marketing site dev server
 pnpm build:site         # Marketing site to dist/site
 ```
 
-`pnpm check` is the whole local gate; CI runs the same command. Node 22, pnpm 11.7.0 (`packageManager`).
+`pnpm check` is the whole local gate; CI runs the same command. The pre-commit hook (`.githooks/pre-commit`) runs it, plus `pnpm build:site` when staged files touch `site/`; skip once with `git commit --no-verify`. Node 22, pnpm 11.7.0 (`packageManager`).
+
+`eslint.config.js` also enforces the bundle rules under Packaging: `src/background/` and `src/content-main/` import nothing, and content code (`src/content/`, `src/core/`, `src/sites/`) never imports a module a page imports (`src/popup/`, `src/changelog/`, `shared/brand`, `shared/changelog`, `shared/extension-settings`, `shared/page-html`). TypeScript files are linted type-aware (no `any`, no floating promises).
 
 ## Architecture
 
@@ -103,6 +108,7 @@ Workflows:
 
 | Workflow | Trigger | Does |
 |----------|---------|------|
+| `ci.yml` | pull request, push to other branches | `pnpm check`, extension build, site build |
 | `site.yml` | push to `main`, manual | `pnpm check` + site build, then deploys the site |
 | `release.yml` | `v*.*.*` tag | `build` job (version check, `pnpm check`, zips, `git archive` source zip); then `chrome`, `firefox` and `github-release` jobs in parallel |
 

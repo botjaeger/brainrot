@@ -25,8 +25,7 @@ function mergeDeep(baseValue, overlayValue) {
     const merged = { ...baseValue };
 
     for (const [key, value] of Object.entries(overlayValue)) {
-      merged[key] =
-        key in baseValue ? mergeDeep(baseValue[key], value) : value;
+      merged[key] = key in baseValue ? mergeDeep(baseValue[key], value) : value;
     }
 
     return merged;
@@ -56,7 +55,12 @@ async function writePackage(manifest) {
   const entries = await readdir(distDir, { withFileTypes: true });
 
   for (const entry of entries) {
-    if (entry.name === "manifest.json" || entry.name === "safari" || entry.name === "chromium" || entry.name === "firefox") {
+    if (
+      entry.name === "manifest.json" ||
+      entry.name === "safari" ||
+      entry.name === "chromium" ||
+      entry.name === "firefox"
+    ) {
       continue;
     }
 
@@ -65,19 +69,14 @@ async function writePackage(manifest) {
     });
   }
 
-  await writeFile(
-    join(outputDir, "manifest.json"),
-    `${JSON.stringify(manifest, null, 2)}\n`,
-  );
+  await writeFile(join(outputDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 }
 
 async function run() {
   const { manifest: baseManifest, overlay } = await ensureSourceArtifacts();
 
   if (target !== "safari" && target !== "all") {
-    throw new Error(
-      `Unknown package target "${target}". Use safari or all.`,
-    );
+    throw new Error(`Unknown package target "${target}". Use safari or all.`);
   }
 
   await writePackage(mergeDeep(baseManifest, overlay));

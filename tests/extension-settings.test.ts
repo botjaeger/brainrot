@@ -22,14 +22,9 @@ describe("extension settings storage", () => {
         });
       },
     );
-    const set = vi.fn(
-      (
-        _items: Record<string, unknown>,
-        callback?: () => void,
-      ) => {
-        callback?.();
-      },
-    );
+    const set = vi.fn((_items: Record<string, unknown>, callback?: () => void) => {
+      callback?.();
+    });
 
     vi.stubGlobal("chrome", {
       storage: {

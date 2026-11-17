@@ -31,10 +31,8 @@ export function getViewportOverlapRatio(element: Element): number {
   if (!view) return 0;
 
   const rect = element.getBoundingClientRect();
-  const viewportHeight =
-    view.innerHeight || element.ownerDocument.documentElement.clientHeight;
-  const overlap =
-    Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+  const viewportHeight = view.innerHeight || element.ownerDocument.documentElement.clientHeight;
+  const overlap = Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
 
   return rect.height > 0 ? Math.max(0, overlap) / rect.height : 0;
 }
@@ -49,10 +47,7 @@ function isScrollableElement(element: Element): boolean {
   const style = view.getComputedStyle(element);
   const overflow = `${style.overflowY} ${style.overflow}`;
 
-  return (
-    element.scrollHeight - element.clientHeight > 4 &&
-    /(auto|scroll|overlay)/i.test(overflow)
-  );
+  return element.scrollHeight - element.clientHeight > 4 && /(auto|scroll|overlay)/i.test(overflow);
 }
 
 function findScrollableAncestor(element: Element | null): HTMLElement | null {
@@ -143,10 +138,7 @@ export function findActiveFeedVideo(
 
   return (
     candidates.find(
-      (video) =>
-        !video.paused &&
-        !video.ended &&
-        getViewportOverlapRatio(video) >= 0.5,
+      (video) => !video.paused && !video.ended && getViewportOverlapRatio(video) >= 0.5,
     ) ??
     candidates.find((video) => !video.paused && !video.ended) ??
     candidates.find((video) => getViewportOverlapRatio(video) >= 0.5) ??
@@ -174,30 +166,20 @@ export function collectFeedItems(
   return items;
 }
 
-export function scrollDocumentForward(
-  document: Document,
-  startElement?: Element | null,
-): void {
+export function scrollDocumentForward(document: Document, startElement?: Element | null): void {
   const ancestor = findScrollableAncestor(startElement ?? null);
 
   if (ancestor) {
-    const scrollAmount = Math.max(
-      1,
-      Math.floor((ancestor.clientHeight || 1) * 0.9),
-    );
+    const scrollAmount = Math.max(1, Math.floor((ancestor.clientHeight || 1) * 0.9));
     ancestor.scrollTop += scrollAmount;
     return;
   }
 
-  const scrollTarget =
-    document.scrollingElement ?? document.documentElement ?? document.body;
+  const scrollTarget = document.scrollingElement ?? document.documentElement ?? document.body;
 
   if (scrollTarget && "scrollTop" in scrollTarget) {
     const target = scrollTarget as HTMLElement;
-    const scrollAmount = Math.max(
-      1,
-      Math.floor((target.clientHeight || 1) * 0.9),
-    );
+    const scrollAmount = Math.max(1, Math.floor((target.clientHeight || 1) * 0.9));
 
     target.scrollTop += scrollAmount;
     return;
@@ -210,10 +192,7 @@ export function scrollDocumentForward(
 }
 
 export type ShortsAdvanceMethod =
-  | "next-button"
-  | "shorts-container-scroll"
-  | "renderer-scroll"
-  | "window-scroll";
+  "next-button" | "shorts-container-scroll" | "renderer-scroll" | "window-scroll";
 
 export interface ShortsAdvanceResult {
   method: ShortsAdvanceMethod;
@@ -238,9 +217,7 @@ export function findActiveShortsVideo(document: Document): HTMLVideoElement | nu
   for (const element of document.querySelectorAll(SHORTS_VIDEO_SELECTOR)) {
     if (!isVideoElement(element)) continue;
     const renderer = element.closest(SHORTS_RENDERER_SELECTOR);
-    const active =
-      renderer?.hasAttribute("is-active") ||
-      renderer?.classList.contains("is-active");
+    const active = renderer?.hasAttribute("is-active") || renderer?.classList.contains("is-active");
     const score =
       (active ? 8 : 0) +
       (!element.paused && !element.ended ? 4 : 0) +
@@ -272,9 +249,9 @@ export function findNextShortsContainer(
   document: Document,
   currentVideo: HTMLVideoElement,
 ): Element | null {
-  const renderers = Array.from(
-    document.querySelectorAll(SHORTS_RENDERER_SELECTOR),
-  ).filter(isRendererContainer);
+  const renderers = Array.from(document.querySelectorAll(SHORTS_RENDERER_SELECTOR)).filter(
+    isRendererContainer,
+  );
 
   const currentContainer = currentVideo.closest(SHORTS_RENDERER_SELECTOR);
 
@@ -301,13 +278,10 @@ export function scrollShortsContainerIntoView(container: Element): void {
   });
 }
 
-export function findShortsNextButton(
-  document: Document,
-): ShortsNextButtonMatch | null {
+export function findShortsNextButton(document: Document): ShortsNextButtonMatch | null {
   const match = findClickableMatch(document, SHORTS_NEXT_BUTTON_SELECTORS, {
     scopeSelectors: ["ytd-shorts", "#shorts-container"],
-    isAllowed: (element) =>
-      isButtonElement(element) ? !element.disabled : false,
+    isAllowed: (element) => (isButtonElement(element) ? !element.disabled : false),
   });
 
   if (match && isButtonElement(match.element)) {

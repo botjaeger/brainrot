@@ -1,4 +1,8 @@
-import { DEFAULT_EXTENSION_SETTINGS, type ExtensionSettings, type ExtensionSettingsStore } from "../shared/extension-settings.js";
+import {
+  DEFAULT_EXTENSION_SETTINGS,
+  type ExtensionSettings,
+  type ExtensionSettingsStore,
+} from "../shared/extension-settings.js";
 import type { SupportedSiteStatus } from "./site-status.js";
 import { openExtensionPage, readActiveSupportedSite, reloadActiveTab } from "./site-status.js";
 
@@ -11,10 +15,7 @@ export interface PopupMountEnvironment {
   openPage?: (path: string, base: string) => Promise<void>;
 }
 
-function getRequiredElement<T extends Element>(
-  document: Document,
-  selector: string,
-): T {
+function getRequiredElement<T extends Element>(document: Document, selector: string): T {
   const element = document.querySelector<T>(selector);
 
   if (!element) {
@@ -37,15 +38,16 @@ function renderExtensionState(
   const changelogUnseen = settings.changelogSeenVersion !== version;
   document.documentElement.dataset.changelogUnseen = String(changelogUnseen);
   // The dot is visual only; say it to screen readers too.
-  document.querySelector("#changelog-link")?.setAttribute(
-    "aria-label",
-    `What's new in v${version}${changelogUnseen ? " (unread)" : ""}`,
-  );
+  document
+    .querySelector("#changelog-link")
+    ?.setAttribute("aria-label", `What's new in v${version}${changelogUnseen ? " (unread)" : ""}`);
 
-  document.querySelector("#theme-toggle")?.setAttribute(
-    "aria-label",
-    settings.theme === "dark" ? "Switch to light theme" : "Switch to dark theme",
-  );
+  document
+    .querySelector("#theme-toggle")
+    ?.setAttribute(
+      "aria-label",
+      settings.theme === "dark" ? "Switch to light theme" : "Switch to dark theme",
+    );
 
   // Rendered only after the tab lookup settled, so null means it failed:
   // say what to do rather than "Checking" forever.
@@ -68,7 +70,10 @@ function renderExtensionState(
   }
 
   // Update today total
-  const todayStats = settings.todayDate === new Date().toLocaleDateString("en-CA") ? settings.todayStats ?? {} : {};
+  const todayStats =
+    settings.todayDate === new Date().toLocaleDateString("en-CA")
+      ? (settings.todayStats ?? {})
+      : {};
   const todayTotal = Object.values(todayStats).reduce((sum, n) => sum + n, 0);
   const todaySpan = document.querySelector("[data-today-count]");
   const todayCopy = document.querySelector("[data-today-copy]");
@@ -83,17 +88,16 @@ function renderExtensionState(
     if (todaySpan) todaySpan.textContent = String(todayTotal);
     if (todayCopy) {
       todayCopy.textContent =
-        todayTotal < 25 ? "videos watched today"
-        : todayTotal < 50 ? "videos today... nice."
-        : "videos. You're in deep now";
+        todayTotal < 25
+          ? "videos watched today"
+          : todayTotal < 50
+            ? "videos today... nice."
+            : "videos. You're in deep now";
     }
   }
 }
 
-function renderSiteState(
-  siteState: SupportedSiteStatus | null,
-  statsRows: HTMLElement[],
-): void {
+function renderSiteState(siteState: SupportedSiteStatus | null, statsRows: HTMLElement[]): void {
   const kind = siteState?.kind ?? "checking";
 
   // Update Stats rows active state
@@ -113,26 +117,12 @@ export async function mountPopup({
   readActiveSite = readActiveSupportedSite,
   openPage = openExtensionPage,
 }: PopupMountEnvironment): Promise<void> {
-  const enabledToggle = getRequiredElement<HTMLInputElement>(
-    document,
-    "#enabled-toggle",
-  );
-  const themeToggle = getRequiredElement<HTMLElement>(
-    document,
-    "#theme-toggle",
-  );
+  const enabledToggle = getRequiredElement<HTMLInputElement>(document, "#enabled-toggle");
+  const themeToggle = getRequiredElement<HTMLElement>(document, "#theme-toggle");
 
-  const statusChip = getRequiredElement<HTMLElement>(
-    document,
-    "[data-status-chip]",
-  );
-  const statusCopy = getRequiredElement<HTMLElement>(
-    document,
-    "[data-status-copy]",
-  );
-  const statsRows = Array.from(
-    document.querySelectorAll<HTMLElement>("[data-site-stats]"),
-  );
+  const statusChip = getRequiredElement<HTMLElement>(document, "[data-status-chip]");
+  const statusCopy = getRequiredElement<HTMLElement>(document, "[data-status-copy]");
+  const statsRows = Array.from(document.querySelectorAll<HTMLElement>("[data-site-stats]"));
   const statsToggle = getRequiredElement<HTMLElement>(document, "#stats-toggle");
   const statsList = getRequiredElement<HTMLElement>(document, "#stats-list");
   statsToggle.addEventListener("click", () => {
@@ -153,19 +143,11 @@ export async function mountPopup({
 
   const render = (settings: ExtensionSettings): void => {
     enabledToggle.checked = settings.enabled;
-    renderExtensionState(
-      document,
-      settings,
-      currentSiteState,
-      statusChip,
-      statusCopy,
-    );
+    renderExtensionState(document, settings, currentSiteState, statusChip, statusCopy);
   };
 
   // Render optimistically, persist only the changed keys, roll back on failure.
-  const commitSettings = async (
-    patch: Partial<ExtensionSettings>,
-  ): Promise<void> => {
+  const commitSettings = async (patch: Partial<ExtensionSettings>): Promise<void> => {
     const previousSettings = currentSettings;
     currentSettings = { ...currentSettings, ...patch };
     render(currentSettings);

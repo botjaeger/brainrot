@@ -1,7 +1,4 @@
-export function matchesSiteHostname(
-  hostname: string,
-  domain: string,
-): boolean {
+export function matchesSiteHostname(hostname: string, domain: string): boolean {
   return hostname === domain || hostname.endsWith(`.${domain}`);
 }
 

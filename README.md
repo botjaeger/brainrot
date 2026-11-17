@@ -45,8 +45,9 @@ Brainrot collects no personal data and makes no network requests. Settings and c
 Requires Node 22 and pnpm 11.7.0.
 
 ```bash
-pnpm install
-pnpm check              # Typecheck + all tests (the gate CI runs)
+pnpm install            # Dev tools and the pre-commit hook
+pnpm check              # Prettier check + ESLint + typecheck + all tests (the gate CI and the pre-commit hook run)
+pnpm format             # Apply Prettier
 pnpm build              # dist/chromium, dist/firefox, dist/safari
 pnpm test:watch         # Tests in watch mode
 pnpm dev:site           # Marketing site dev server
