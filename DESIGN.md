@@ -45,19 +45,23 @@ Cream, yellow and charcoal, with a bold grotesque display face.
 | Token | Value | Use |
 |-------|-------|-----|
 | `--cream` | `#f7f1e3` | Page background |
-| `--sand` | `#efe5cf` | Alternate bands (FAQ), inline code |
+| `--sand` | `#efe5cf` | Alternate band (Get Brainrot), inline code |
 | `--paper` | `#fffdf6` | Cards on cream |
 | `--ink` / `--ink-2` / `--muted` | `#17150f` / `#36322b` / `#4f4a41` | Headings / body / secondary text |
 | `--line` | `rgba(23, 21, 15, 0.12)` | Dividers |
 | `--accent` / `--on-accent` | `#ffc20a` / `#1a1400` | Primary buttons, tiles, highlights |
-| `--sticker` | `#ff6b3d` | The hero sticker only |
-| `--night*` | `#17150f`, `#26231d`, `#f7f1e3`, `#cfc6b2` | Dark demo band |
+| `--accent-ink` | `#5c4b18` | Accent as text on cream or sand ("Coming soon", "Last updated") |
+| `--sticker` | `#ff6b3d` | The hero sticker and the pill dot only |
+| `--night*` | `#17150f`, `#26231d`, `#f7f1e3`, `#cfc6b2` | Recordings band, the Open source card |
 
 - Type: `--display` Bricolage Grotesque (800, tight tracking) for headings; `--body` Schibsted Grotesk for text, 17px/1.55. Both self-hosted via `@fontsource-variable`; never add a font CDN.
-- Layout: content width `--wrap` 1200px with 24px side padding; legal pages 760px. Radius `--radius` 24px for cards, 999px for buttons and pills.
-- Buttons: `.btn-accent` (yellow) for the primary install action, `.btn-ink` for secondary, `.link-cta` for text links. The primary button targets the visitor's browser (`data-cta="primary"`), the secondary the other (`main.ts`).
+- Layout: content width `--wrap` 1200px with 24px side padding. Radius `--radius` 24px for cards, 999px for buttons and pills.
+- Landing sections, in order: hero (the YouTube recording in a phone frame, the popup's Brainrot mode card, the Hands free sticker), the Works on strip, three numbered steps, the recordings band (one per supported site, 9:14 frames), What it does (a replica of the popup beside the four features), Get Brainrot (one card per browser), questions with the Privacy and Open source cards, the final call to action.
+- The popup replica uses the extension's light tokens (`THEME_TOKENS_CSS`), not the website's; its counts are example numbers.
+- Legal pages: a yellow "short version" box, then an "On this page" list beside a 760px text column; each `h2` sits in a `section` with an id the list links to.
+- Buttons: `.btn-accent` (yellow) for the primary install action, `.btn-ink` for secondary, `.link-cta` for text links. The primary button targets the visitor's browser (`data-cta="primary"`), the secondary the other; the Get Brainrot cards keep their own store (`data-store`) (`main.ts`).
 - Links hover to `#7a5c00`; focus is a 3px ink outline (`:focus-visible`), never removed.
-- Motion: marquee, bobbing player and hover lifts only. Everything stops under `prefers-reduced-motion: reduce`.
+- Motion: the bobbing phone, the caption's progress bar and hover lifts only. Everything stops under `prefers-reduced-motion: reduce`.
 - Phone breakpoint at 560px: header nav links hide, section padding drops from 112px to 72px.
 
 ## Rules for both

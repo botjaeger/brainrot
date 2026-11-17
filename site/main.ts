@@ -30,6 +30,14 @@ for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-cta]")) {
   label.textContent = `${text}${link.dataset.ctaSuffix ?? ""}`;
 }
 
+// Per-browser buttons ("Get Brainrot" cards) always point at their own store.
+for (const link of document.querySelectorAll<HTMLAnchorElement>("[data-store]")) {
+  const browser = link.dataset.store;
+  if (browser !== "chrome" && browser !== "firefox") continue;
+  const entry = STORE_URLS[browser];
+  if (entry.state === "live") link.href = entry.url;
+}
+
 for (const el of document.querySelectorAll("[data-version]")) {
   el.textContent = `v${manifest.version}`;
 }

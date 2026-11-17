@@ -6,7 +6,7 @@
     <title>Brainrot — auto-scroll for Shorts, Reels and TikTok</title>
     <meta
       name="description"
-      content="Free browser extension that moves your YouTube Shorts, TikTok, Instagram Reels and Facebook Reels feed to the next video when one ends. No account, collects nothing."
+      content="Free, open-source browser extension that moves your YouTube Shorts, TikTok, Instagram Reels and Facebook Reels feed to the next video when one ends. No account, collects nothing."
     />
     <meta name="theme-color" content="#f7f1e3" />
     <!-- Google Search Console ownership of botjaeger.github.io/brainrot/ (OAuth branding). -->
@@ -24,8 +24,9 @@
       </a>
       <nav class="nav" aria-label="Main">
         <a href="#how">How it works</a>
+        <a href="#sites">Sites</a>
         <a href="#faq">FAQ</a>
-        <a href="./privacy.html">Privacy</a>
+        <a href="https://github.com/botjaeger/brainrot">Source</a>
         <a
           class="btn btn-accent"
           data-cta="primary"
@@ -38,9 +39,10 @@
     <main id="main">
       <section id="top" class="wrap hero">
         <div class="hero-copy">
-          <div class="pill">
-            <span class="pill-dot"></span>Free browser extension · Chrome and Firefox
-          </div>
+          <p class="pill">
+            <span class="pill-dot" aria-hidden="true"></span>Free and open source · Chrome, Edge,
+            Brave and Firefox
+          </p>
           <h1 class="display hero-title">
             Stop scrolling.<br /><span class="mark">Let it scroll you.</span>
           </h1>
@@ -50,7 +52,7 @@
           </p>
           <div class="cta-row">
             <a
-              class="btn btn-accent btn-lg"
+              class="btn btn-accent btn-lg btn-pop"
               data-cta="primary"
               data-cta-suffix=" — it's free"
               href="https://chromewebstore.google.com/detail/brainrot-auto-scroll-for/epnminblfookppcemedaonmnanembgik"
@@ -121,19 +123,18 @@
                 stroke-linejoin="round"
               >
                 <path d="M20 6 9 17l-5-5" /></svg
-              >Desktop browsers
+              >Open source, MIT
             </li>
           </ul>
         </div>
 
         <div class="hero-visual">
-          <div class="stack">
-            <div class="stack-card is-accent"></div>
-            <div class="stack-card is-ink"></div>
-            <figure class="player">
+          <div class="stage">
+            <div class="phone-shadow" aria-hidden="true"></div>
+            <figure class="phone">
               <img
                 src="./demo.gif"
-                alt="A YouTube Short ends and the feed scrolls to the next one on its own"
+                alt="A YouTube Short ends and the feed moves to the next one on its own"
                 width="320"
                 height="285"
               />
@@ -150,92 +151,69 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                   >
-                    <path d="M12 5v14M6 13l6 6 6-6" />
-                  </svg>
-                  Next video starts on its own
+                    <path d="M12 5v14M19 12l-7 7-7-7" /></svg
+                  >Next video starts on its own
                 </span>
                 <span class="progress" aria-hidden="true"><span></span></span>
               </figcaption>
             </figure>
-            <div class="sticker" aria-hidden="true">Hands<br />free</div>
+            <div class="mode-card" aria-hidden="true">
+              <div class="mode-card-hero">
+                <div>
+                  <strong>Brainrot mode</strong>
+                  <span class="mode-card-sub">No taps. No swipes. Just watch.</span>
+                </div>
+                <span class="switch"><span></span></span>
+              </div>
+              <span class="mode-card-site">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M20 6 9 17l-5-5" /></svg
+                >YouTube Shorts
+              </span>
+            </div>
+            <p class="sticker" aria-hidden="true">Hands<br />free</p>
           </div>
         </div>
       </section>
 
-      <section
-        class="band"
-        aria-label="Works on YouTube Shorts, TikTok, Instagram Reels and Facebook Reels"
-      >
-        <div class="band-track" aria-hidden="true">
-          <span>YouTube Shorts</span><span class="arrow">↓</span> <span>TikTok</span
-          ><span class="arrow">↓</span> <span>Instagram Reels</span><span class="arrow">↓</span>
-          <span>Facebook Reels</span><span class="arrow">↓</span> <span>YouTube Shorts</span
-          ><span class="arrow">↓</span> <span>TikTok</span><span class="arrow">↓</span>
-          <span>Instagram Reels</span><span class="arrow">↓</span> <span>Facebook Reels</span
-          ><span class="arrow">↓</span>
+      <section id="sites" class="sites" aria-labelledby="sites-heading">
+        <div class="wrap sites-inner">
+          <h2 id="sites-heading" class="eyebrow">Works on</h2>
+          <ul class="sites-list">
+            <li>YouTube Shorts</li>
+            <li>TikTok</li>
+            <li>Instagram Reels</li>
+            <li>Facebook Reels</li>
+          </ul>
         </div>
       </section>
 
       <section id="how" class="wrap how" aria-labelledby="how-heading">
         <h2 id="how-heading" class="display h2">Install it, open a feed, watch.</h2>
         <ol class="steps">
-          <li class="step lift">
-            <span class="tile"
-              ><svg
-                aria-hidden="true"
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M12 3v12M7 10l5 5 5-5M5 21h14" /></svg
-            ></span>
-            <strong>Install</strong>
-            <span>Add it from the Chrome Web Store or Firefox Add-ons. No sign-up.</span>
+          <li class="step">
+            <span class="step-n" aria-hidden="true">1</span>
+            <h3>Install</h3>
+            <p>Add it from the Chrome Web Store or Firefox Add-ons. No sign-up.</p>
           </li>
-          <li class="step lift">
-            <span class="tile"
-              ><svg
-                aria-hidden="true"
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="6" y="2" width="12" height="20" rx="3" />
-                <path d="m10.5 9 4 3-4 3z" /></svg
-            ></span>
-            <strong>Open a feed</strong>
-            <span
-              >Shorts, TikTok, Instagram Reels or Facebook Reels. It switches on by itself.</span
-            >
+          <li class="step">
+            <span class="step-n" aria-hidden="true">2</span>
+            <h3>Open a feed</h3>
+            <p>Shorts, TikTok, Instagram Reels or Facebook Reels. It switches on by itself.</p>
           </li>
-          <li class="step lift">
-            <span class="tile"
-              ><svg
-                aria-hidden="true"
-                width="32"
-                height="32"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
-                <circle cx="12" cy="12" r="3" /></svg
-            ></span>
-            <strong>Watch</strong>
-            <span>Each video plays to the end, then the next one starts.</span>
+          <li class="step">
+            <span class="step-n" aria-hidden="true">3</span>
+            <h3>Watch</h3>
+            <p>Each video plays to the end, then the next one starts.</p>
           </li>
         </ol>
       </section>
@@ -244,216 +222,334 @@
         <div class="wrap">
           <div class="demos-head">
             <h2 id="demo-heading" class="display h2">
-              Recorded <span class="accent" style="white-space: nowrap">hands-free</span>
+              Recorded <span class="accent">hands-free</span>
             </h2>
             <p>Each clip runs from one video to the next without a click or a swipe.</p>
           </div>
-          <div class="demo-grid">
-            <figure class="demo lift">
-              <img
-                src="./demo.gif"
-                alt="YouTube Shorts advancing on its own"
-                loading="lazy"
-                width="320"
-                height="285"
-              />
-              <figcaption>YouTube Shorts</figcaption>
-            </figure>
-            <figure class="demo lift">
-              <img
-                src="./demo2.gif"
-                alt="TikTok advancing on its own"
-                loading="lazy"
-                width="320"
-                height="285"
-              />
-              <figcaption>TikTok</figcaption>
-            </figure>
-            <figure class="demo lift">
-              <img
-                src="./demo-fb.gif"
-                alt="Facebook Reels advancing on its own"
-                loading="lazy"
-                width="320"
-                height="285"
-              />
-              <figcaption>Facebook Reels</figcaption>
-            </figure>
-          </div>
+          <ul class="demo-grid">
+            <li>
+              <figure class="demo">
+                <img
+                  src="./demo.gif"
+                  alt="YouTube Shorts advancing on its own"
+                  loading="lazy"
+                  width="320"
+                  height="285"
+                />
+                <figcaption>YouTube Shorts</figcaption>
+              </figure>
+            </li>
+            <li>
+              <figure class="demo">
+                <img
+                  src="./demo2.gif"
+                  alt="TikTok advancing on its own"
+                  loading="lazy"
+                  width="320"
+                  height="285"
+                />
+                <figcaption>TikTok</figcaption>
+              </figure>
+            </li>
+            <li>
+              <figure class="demo">
+                <img
+                  src="./demo-ig.gif"
+                  alt="Instagram Reels advancing on its own"
+                  loading="lazy"
+                  width="288"
+                  height="460"
+                />
+                <figcaption>Instagram Reels</figcaption>
+              </figure>
+            </li>
+            <li>
+              <figure class="demo">
+                <img
+                  src="./demo-fb.gif"
+                  alt="Facebook Reels advancing on its own"
+                  loading="lazy"
+                  width="320"
+                  height="285"
+                />
+                <figcaption>Facebook Reels</figcaption>
+              </figure>
+            </li>
+          </ul>
         </div>
       </section>
 
       <section class="wrap features" aria-labelledby="features-heading">
-        <h2 id="features-heading" class="display h2">What it does</h2>
-        <div class="feature-grid">
-          <div class="feature">
-            <span class="tile"
-              ><svg
-                aria-hidden="true"
-                width="28"
-                height="28"
+        <div class="popup-wrap">
+          <div
+            class="popup"
+            role="img"
+            aria-label="The Brainrot popup: Brainrot mode is switched on, the tab is a YouTube Shorts feed, and the stats list videos watched today and per site"
+          >
+            <div class="popup-top">
+              <span><img src="/mascot.png" alt="" width="26" height="26" />Brainrot</span>
+              <span class="popup-version" data-version></span>
+            </div>
+            <div class="popup-hero">
+              <div>
+                <strong>Brainrot mode</strong>
+                <span>No taps. No swipes. Just watch.</span>
+              </div>
+              <span class="switch"><span></span></span>
+            </div>
+            <div class="popup-site">
+              <svg
+                width="16"
+                height="16"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                stroke-width="2"
+                stroke-width="3"
                 stroke-linecap="round"
                 stroke-linejoin="round"
               >
-                <path d="M12 5v14M6 13l6 6 6-6" /></svg
-            ></span>
-            <strong>Moves on by itself</strong>
-            <span>Uses each site's own next button, so the feed behaves as if you swiped.</span>
+                <path d="M20 6 9 17l-5-5" /></svg
+              >YouTube Shorts
+            </div>
+            <p class="popup-label">STATS</p>
+            <p class="popup-today"><strong>24</strong> videos today</p>
+            <div class="popup-rows">
+              <div><span>TikTok</span><span>112 watched</span></div>
+              <div>
+                <span>YouTube Shorts <span class="popup-badge">Active now</span></span
+                ><span>86 watched</span>
+              </div>
+              <div><span>Facebook Reels</span><span>31 watched</span></div>
+              <div><span>Instagram Reels</span><span>9 watched</span></div>
+            </div>
           </div>
-          <div class="feature">
-            <span class="tile"
-              ><svg
-                aria-hidden="true"
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="3" y="4" width="18" height="13" rx="2" />
-                <path d="M8 21h8M12 17v4" /></svg
-            ></span>
-            <strong>Plays in the background</strong>
-            <span
-              >Switch tabs and the video keeps going. The feed moves on when you come back.</span
-            >
-          </div>
-          <div class="feature">
-            <span class="tile"
-              ><svg
-                aria-hidden="true"
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="6" y="5" width="4" height="14" rx="1" />
-                <rect x="14" y="5" width="4" height="14" rx="1" /></svg
-            ></span>
-            <strong>Pause means pause</strong>
-            <span
-              >Stop a video yourself and it stays stopped. One switch turns everything off.</span
-            >
-          </div>
-          <div class="feature">
-            <span class="tile"
-              ><svg
-                aria-hidden="true"
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg
-            ></span>
-            <strong>Counts what you watched</strong>
-            <span>Today and all-time, per site, kept only in your browser.</span>
+        </div>
+        <div class="features-copy">
+          <h2 id="features-heading" class="display h2">What it does</h2>
+          <p class="features-lede">
+            The popup has the switch, shows which feed you're on, and counts what you watched.
+          </p>
+          <div class="feature-grid">
+            <div class="feature">
+              <span class="tile"
+                ><svg
+                  aria-hidden="true"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M12 5v14M19 12l-7 7-7-7" /></svg
+              ></span>
+              <h3>Moves on by itself</h3>
+              <p>Uses each site's own next button, so the feed behaves as if you swiped.</p>
+            </div>
+            <div class="feature">
+              <span class="tile"
+                ><svg
+                  aria-hidden="true"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="2" y="3" width="20" height="14" rx="2" />
+                  <path d="M8 21h8M12 17v4" /></svg
+              ></span>
+              <h3>Plays in the background</h3>
+              <p>Switch tabs and the video keeps going. The feed moves on when you come back.</p>
+            </div>
+            <div class="feature">
+              <span class="tile"
+                ><svg
+                  aria-hidden="true"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="6" y="4" width="4" height="16" rx="1" />
+                  <rect x="14" y="4" width="4" height="16" rx="1" /></svg
+              ></span>
+              <h3>Pause means pause</h3>
+              <p>Stop a video yourself and it stays stopped. One switch turns everything off.</p>
+            </div>
+            <div class="feature">
+              <span class="tile"
+                ><svg
+                  aria-hidden="true"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M18 20V10M12 20V4M6 20v-6" /></svg
+              ></span>
+              <h3>Counts what you watched</h3>
+              <p>Today and all-time, per site, kept only in your browser.</p>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="faq-band">
+      <section id="get" class="get" aria-labelledby="get-heading">
         <div class="wrap">
-          <div id="faq" class="faq">
-            <h2 class="display h2">Questions</h2>
-            <div class="faq-list">
-              <details>
-                <summary>
-                  Does it work in background tabs?<svg
-                    aria-hidden="true"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
-                  >
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </summary>
-                <p>
-                  Yes. Switch tabs and the video keeps playing. The feed moves on when you come
-                  back.
-                </p>
-              </details>
-              <details>
-                <summary>
-                  Is it free?<svg
-                    aria-hidden="true"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
-                  >
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </summary>
-                <p>Yes, completely. No account needed.</p>
-              </details>
-              <details>
-                <summary>
-                  Will it slow my browser down?<svg
-                    aria-hidden="true"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
-                  >
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </summary>
-                <p>
-                  No. It only listens for the end of the video on feed pages and stays idle
-                  everywhere else.
-                </p>
-              </details>
-              <details>
-                <summary>
-                  Safari? Phones?<svg
-                    aria-hidden="true"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2.2"
-                    stroke-linecap="round"
-                  >
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </summary>
-                <p>Safari is coming. Phones aren't supported: it's a desktop browser extension.</p>
-              </details>
-            </div>
+          <h2 id="get-heading" class="display h2">Get Brainrot</h2>
+          <ul class="browsers">
+            <li class="browser is-main">
+              <img src="./chrome.svg" alt="" width="44" height="44" />
+              <h3>Chrome</h3>
+              <p>Also Edge, Brave and other Chromium browsers.</p>
+              <a
+                class="btn btn-accent"
+                data-store="chrome"
+                href="https://chromewebstore.google.com/detail/brainrot-auto-scroll-for/epnminblfookppcemedaonmnanembgik"
+                >Add to Chrome</a
+              >
+            </li>
+            <li class="browser">
+              <img src="./firefox.svg" alt="" width="44" height="44" />
+              <h3>Firefox</h3>
+              <p>Firefox on desktop.</p>
+              <a
+                class="btn btn-ink"
+                data-store="firefox"
+                href="https://addons.mozilla.org/en-US/firefox/addon/brainrot-auto-scroll/"
+                >Get it for Firefox</a
+              >
+            </li>
+            <li class="browser is-soon">
+              <img src="/safari.svg" alt="" width="44" height="44" />
+              <h3>Safari</h3>
+              <p>On a Mac.</p>
+              <p class="soon">Coming soon</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="faq" class="wrap faq-band" aria-labelledby="faq-heading">
+        <div class="faq">
+          <h2 id="faq-heading" class="display h2">Questions</h2>
+          <div class="faq-list">
+            <details>
+              <summary>
+                Does it work in background tabs?<svg
+                  aria-hidden="true"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </summary>
+              <p>
+                Yes. Switch tabs and the video keeps playing. The feed moves on when you come back.
+              </p>
+            </details>
+            <details>
+              <summary>
+                Is it free?<svg
+                  aria-hidden="true"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </summary>
+              <p>Yes, completely. No account needed.</p>
+            </details>
+            <details>
+              <summary>
+                Will it slow my browser down?<svg
+                  aria-hidden="true"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </summary>
+              <p>
+                No. It only listens for the end of the video on feed pages and stays idle everywhere
+                else.
+              </p>
+            </details>
+            <details>
+              <summary>
+                Safari? Phones?<svg
+                  aria-hidden="true"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </summary>
+              <p>Safari is coming. Phones aren't supported: it's a desktop browser extension.</p>
+            </details>
+            <details>
+              <summary>
+                Can I see the code?<svg
+                  aria-hidden="true"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                >
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              </summary>
+              <p>
+                Yes. Brainrot is open source under the MIT license, on
+                <a href="https://github.com/botjaeger/brainrot">GitHub</a>.
+              </p>
+            </details>
           </div>
-          <aside id="privacy" class="privacy" aria-labelledby="privacy-heading">
+        </div>
+        <div class="side-cards">
+          <aside id="privacy" class="side-card" aria-labelledby="privacy-heading">
             <span class="tile"
               ><svg
                 aria-hidden="true"
-                width="30"
-                height="30"
+                width="24"
+                height="24"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -465,14 +561,35 @@
             ></span>
             <h2 id="privacy-heading" class="display">Privacy</h2>
             <p>
-              The extension collects nothing. No personal data is collected, stored or sent
-              anywhere; everything runs in your browser. No account.
+              The extension collects nothing. Settings and counts stay in your browser; nothing is
+              sent anywhere. No account.
             </p>
             <p class="small">
               When hosted on Vercel, this website counts anonymous page views with Vercel Web
               Analytics, which uses no cookies.
             </p>
-            <p><a class="link-cta" href="./privacy.html">Read the full privacy policy</a></p>
+            <a class="link-cta" href="./privacy.html">Read the privacy policy</a>
+          </aside>
+          <aside class="side-card is-night" aria-labelledby="source-heading">
+            <span class="tile"
+              ><svg
+                aria-hidden="true"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="m16 18 6-6-6-6M8 6l-6 6 6 6" /></svg
+            ></span>
+            <h2 id="source-heading" class="display">Open source</h2>
+            <p>All of the extension's code is public, under the MIT license.</p>
+            <a class="link-cta" href="https://github.com/botjaeger/brainrot"
+              >botjaeger/brainrot on GitHub</a
+            >
           </aside>
         </div>
       </section>
@@ -497,18 +614,26 @@
               >
             </div>
           </div>
-          <img src="/mascot.png" alt="" width="260" height="247" />
+          <img
+            src="/mascot.png"
+            alt="The Brainrot mascot, a yellow brain holding a phone"
+            width="260"
+            height="247"
+          />
         </div>
       </section>
     </main>
 
     <footer class="footer">
       <div class="wrap">
-        <span>© 2026 Brainrot · <span data-version></span></span>
+        <span
+          >© 2026 Brainrot · <span data-version></span> · Not affiliated with YouTube, TikTok or
+          Meta</span
+        >
         <nav aria-label="Footer">
           <a href="./privacy.html">Privacy</a>
           <a href="./terms.html">Terms</a>
-          <a href="#faq">FAQ</a>
+          <a href="https://github.com/botjaeger/brainrot">Source</a>
         </nav>
       </div>
     </footer>
