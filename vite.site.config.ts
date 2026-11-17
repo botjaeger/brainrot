@@ -10,9 +10,9 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "site/index.html"),
-        privacy: resolve(__dirname, "site/privacy.html"),
-        terms: resolve(__dirname, "site/terms.html"),
+        main: resolve(import.meta.dirname, "site/index.html"),
+        privacy: resolve(import.meta.dirname, "site/privacy.html"),
+        terms: resolve(import.meta.dirname, "site/terms.html"),
       },
     },
   },
