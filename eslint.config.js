@@ -19,8 +19,10 @@ const PAGE_MODULES = [
 export default defineConfig(
   {
     ignores: [
-      "dist/**",
+      "**/dist/**",
       "coverage/**",
+      "test-results/**",
+      "playwright-report/**",
       "web-ext-artifacts/**",
       "safari/**",
       "node_modules/**",

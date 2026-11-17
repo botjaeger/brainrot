@@ -18,3 +18,5 @@ scripts/*.d.ts
 
 # Local planning files (GSD)
 .planning/
+test-results/
+playwright-report/

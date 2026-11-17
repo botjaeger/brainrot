@@ -126,6 +126,7 @@ for (const [path, text] of files) {
 }
 
 run("pnpm check");
+run("pnpm e2e");
 
 const tag = `v${version}`;
 run(`git commit -am "chore(release): ${version}"`);

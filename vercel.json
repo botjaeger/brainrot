@@ -1,6 +1,6 @@
 {
   "framework": null,
-  "buildCommand": "npm run build:site",
-  "outputDirectory": "dist/site",
-  "installCommand": "npm install"
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm build:site",
+  "outputDirectory": "site/dist"
 }

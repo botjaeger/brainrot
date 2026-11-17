@@ -50,6 +50,7 @@ pnpm check              # Prettier check + ESLint + typecheck + all tests (the g
 pnpm format             # Apply Prettier
 pnpm build              # dist/chromium, dist/firefox, dist/safari
 pnpm test:watch         # Tests in watch mode
+pnpm e2e                # Playwright end-to-end tests of the built extension (first: pnpm exec playwright install chromium)
 pnpm dev:site           # Marketing site dev server
 ```
 
@@ -62,7 +63,7 @@ pnpm dev:site           # Marketing site dev server
 ### Release
 
 1. Add the version's notes to `src/shared/changelog.ts`.
-2. `pnpm release 0.1.5` bumps every version field, runs `pnpm check`, commits, tags `v0.1.5` and pushes.
+2. `pnpm release 0.1.5` bumps every version field, runs `pnpm check` and `pnpm e2e`, commits, tags `v0.1.5` and pushes.
 3. The tag runs `.github/workflows/release.yml`: one gate job, then Chrome Web Store, Firefox Add-ons and the GitHub release as separate jobs.
 
 Pushing to `main` deploys the website only; it never publishes the extension.
@@ -79,10 +80,10 @@ src/
   popup/          Popup UI (HTML generated at build time)
   changelog/      "What's new" page (HTML generated at build time)
   shared/         Settings, changelog data, DOM helpers, brand, store links
-site/             Marketing website, privacy policy and terms
+site/             Marketing website, privacy policy and terms (own pnpm package)
 safari/           Xcode project for the Safari app
 scripts/          Packaging, zips and release
-tests/            Vitest suite and live-site fixtures
+tests/            Vitest suite, live-site fixtures, Playwright end-to-end tests (tests/e2e)
 ```
 
 ## Documentation

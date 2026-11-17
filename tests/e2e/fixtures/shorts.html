@@ -1,0 +1,68 @@
+<!doctype html>
+<!-- A YouTube Shorts feed served at https://www.youtube.com/shorts/... by tests/e2e/extension.ts.
+     Same selectors as the live site: ytd-shorts > #shorts-container > ytd-reel-video-renderer[is-active],
+     and the "next" button under #navigation-button-down. Every video loops, as on YouTube. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Shorts e2e</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      #shorts-container {
+        height: 100vh;
+        overflow-y: scroll;
+      }
+      ytd-reel-video-renderer {
+        display: block;
+        height: 100vh;
+      }
+      video {
+        width: 100%;
+        height: 100%;
+      }
+      #navigation-button-down {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <ytd-shorts>
+      <div id="shorts-container">
+        <ytd-reel-video-renderer is-active>
+          <video src="/e2e/clip.webm" muted playsinline loop autoplay></video>
+        </ytd-reel-video-renderer>
+        <ytd-reel-video-renderer>
+          <video src="/e2e/clip.webm" muted playsinline loop></video>
+        </ytd-reel-video-renderer>
+        <ytd-reel-video-renderer>
+          <video src="/e2e/clip.webm" muted playsinline loop></video>
+        </ytd-reel-video-renderer>
+      </div>
+      <div id="navigation-button-down">
+        <button type="button" aria-label="Next video">Next</button>
+      </div>
+    </ytd-shorts>
+    <script>
+      // Like YouTube: the button activates the next short and plays it. Counts real advances.
+      window.nextClicks = 0;
+      const shorts = [...document.querySelectorAll("ytd-reel-video-renderer")];
+      document.querySelector("#navigation-button-down button").addEventListener("click", () => {
+        const current = shorts.findIndex((short) => short.hasAttribute("is-active"));
+        const next = shorts[current + 1];
+        if (!next) return;
+        window.nextClicks += 1;
+        shorts[current].removeAttribute("is-active");
+        shorts[current].querySelector("video").pause();
+        next.setAttribute("is-active", "");
+        next.scrollIntoView();
+        void next.querySelector("video").play();
+      });
+    </script>
+  </body>
+</html>

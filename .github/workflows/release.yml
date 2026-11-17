@@ -41,6 +41,11 @@ jobs:
       - name: Typecheck and test
         run: pnpm check
 
+      - name: End-to-end tests
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm e2e
+
       - name: Build store packages
         run: |
           pnpm build
