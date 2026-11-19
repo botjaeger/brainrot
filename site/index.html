@@ -9,9 +9,18 @@
       content="Free, open-source browser extension that moves your YouTube Shorts, TikTok, Instagram Reels and Facebook Reels feed to the next video when one ends. No account, collects nothing."
     />
     <meta name="theme-color" content="#f7f1e3" />
+    <link rel="canonical" href="https://botjaeger.github.io/brainrot/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Brainrot" />
+    <meta property="og:title" content="Brainrot — auto-scroll for Shorts, Reels and TikTok" />
+    <meta
+      property="og:description"
+      content="Free, open-source browser extension that moves your YouTube Shorts, TikTok, Instagram Reels and Facebook Reels feed to the next video when one ends. No account, collects nothing."
+    />
+    <meta property="og:url" content="https://botjaeger.github.io/brainrot/" />
     <!-- Google Search Console ownership of botjaeger.github.io/brainrot/ (OAuth branding). -->
     <meta name="google-site-verification" content="M3bv3VoYB8fJqfHb6aLkA2zZURGfp3fcdJDsCyLrds4" />
-    <link rel="icon" href="/icon-32.png" />
+    <link rel="icon" href="./icon-32.png" />
     <link rel="stylesheet" href="./style.css" />
   </head>
   <body>
@@ -19,7 +28,7 @@
 
     <header class="wrap header">
       <a href="#top" class="brand">
-        <img src="/mascot.png" alt="" width="40" height="40" />
+        <img src="./mascot-sm.png" alt="" width="40" height="40" />
         <span>Brainrot</span>
       </a>
       <nav class="nav" aria-label="Main">
@@ -132,12 +141,18 @@
           <div class="stage">
             <div class="phone-shadow" aria-hidden="true"></div>
             <figure class="phone">
-              <img
-                src="./demo.gif"
-                alt="A YouTube Short ends and the feed moves to the next one on its own"
+              <video
+                src="./media/demo.mp4"
+                poster="./media/demo.jpg"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="auto"
+                aria-label="A YouTube Short ends and the feed moves to the next one on its own"
                 width="320"
                 height="285"
-              />
+              ></video>
               <figcaption>
                 <span>
                   <svg
@@ -229,49 +244,69 @@
           <ul class="demo-grid">
             <li>
               <figure class="demo">
-                <img
-                  src="./demo.gif"
-                  alt="YouTube Shorts advancing on its own"
-                  loading="lazy"
+                <video
+                  src="./media/demo.mp4"
+                  poster="./media/demo.jpg"
+                  muted
+                  loop
+                  playsinline
+                  preload="none"
+                  data-lazy-play
+                  aria-label="YouTube Shorts advancing on its own"
                   width="320"
                   height="285"
-                />
+                ></video>
                 <figcaption>YouTube Shorts</figcaption>
               </figure>
             </li>
             <li>
               <figure class="demo">
-                <img
-                  src="./demo2.gif"
-                  alt="TikTok advancing on its own"
-                  loading="lazy"
+                <video
+                  src="./media/demo2.mp4"
+                  poster="./media/demo2.jpg"
+                  muted
+                  loop
+                  playsinline
+                  preload="none"
+                  data-lazy-play
+                  aria-label="TikTok advancing on its own"
                   width="320"
-                  height="285"
-                />
+                  height="273"
+                ></video>
                 <figcaption>TikTok</figcaption>
               </figure>
             </li>
             <li>
               <figure class="demo">
-                <img
-                  src="./demo-ig.gif"
-                  alt="Instagram Reels advancing on its own"
-                  loading="lazy"
+                <video
+                  src="./media/demo-ig.mp4"
+                  poster="./media/demo-ig.jpg"
+                  muted
+                  loop
+                  playsinline
+                  preload="none"
+                  data-lazy-play
+                  aria-label="Instagram Reels advancing on its own"
                   width="288"
                   height="460"
-                />
+                ></video>
                 <figcaption>Instagram Reels</figcaption>
               </figure>
             </li>
             <li>
               <figure class="demo">
-                <img
-                  src="./demo-fb.gif"
-                  alt="Facebook Reels advancing on its own"
-                  loading="lazy"
+                <video
+                  src="./media/demo-fb.mp4"
+                  poster="./media/demo-fb.jpg"
+                  muted
+                  loop
+                  playsinline
+                  preload="none"
+                  data-lazy-play
+                  aria-label="Facebook Reels advancing on its own"
                   width="320"
-                  height="285"
-                />
+                  height="282"
+                ></video>
                 <figcaption>Facebook Reels</figcaption>
               </figure>
             </li>
@@ -287,7 +322,7 @@
             aria-label="The Brainrot popup: Brainrot mode is switched on, the tab is a YouTube Shorts feed, and the stats list videos watched today and per site"
           >
             <div class="popup-top">
-              <span><img src="/mascot.png" alt="" width="26" height="26" />Brainrot</span>
+              <span><img src="./mascot-sm.png" alt="" width="26" height="26" />Brainrot</span>
               <span class="popup-version" data-version></span>
             </div>
             <div class="popup-hero">
@@ -435,7 +470,7 @@
               >
             </li>
             <li class="browser is-soon">
-              <img src="/safari.svg" alt="" width="44" height="44" />
+              <img src="./safari.svg" alt="" width="44" height="44" />
               <h3>Safari</h3>
               <p>On a Mac.</p>
               <p class="soon">Coming soon</p>
@@ -544,7 +579,7 @@
           </div>
         </div>
         <div class="side-cards">
-          <aside id="privacy" class="side-card" aria-labelledby="privacy-heading">
+          <section id="privacy" class="side-card" aria-labelledby="privacy-heading">
             <span class="tile"
               ><svg
                 aria-hidden="true"
@@ -569,8 +604,8 @@
               Analytics, which uses no cookies.
             </p>
             <a class="link-cta" href="./privacy.html">Read the privacy policy</a>
-          </aside>
-          <aside class="side-card is-night" aria-labelledby="source-heading">
+          </section>
+          <section class="side-card is-night" aria-labelledby="source-heading">
             <span class="tile"
               ><svg
                 aria-hidden="true"
@@ -590,7 +625,7 @@
             <a class="link-cta" href="https://github.com/botjaeger/brainrot"
               >botjaeger/brainrot on GitHub</a
             >
-          </aside>
+          </section>
         </div>
       </section>
 
@@ -615,7 +650,7 @@
             </div>
           </div>
           <img
-            src="/mascot.png"
+            src="./mascot.png"
             alt="The Brainrot mascot, a yellow brain holding a phone"
             width="260"
             height="247"
