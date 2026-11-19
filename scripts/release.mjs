@@ -121,12 +121,21 @@ if (dryRun) {
   process.exit(0);
 }
 
+// Keep the originals so a failed gate leaves the tree as it was; otherwise the
+// bumped fields stay behind and the next run refuses the dirty tree.
+const originals = new Map();
 for (const [path, text] of files) {
+  originals.set(path, readFileSync(path, "utf8"));
   writeFileSync(path, text);
 }
 
-run("pnpm check");
-run("pnpm e2e");
+try {
+  run("pnpm check");
+  run("pnpm e2e");
+} catch {
+  for (const [path, original] of originals) writeFileSync(path, original);
+  fail(`the gate failed; version fields restored to ${current}, nothing committed`);
+}
 
 const tag = `v${version}`;
 run(`git commit -am "chore(release): ${version}"`);
