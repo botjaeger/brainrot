@@ -3,13 +3,29 @@ name: Release
 # Runs when `pnpm release <version>` pushes a v<version> tag.
 # One gate job builds the packages; Chrome, Firefox and the GitHub release then
 # run as separate jobs, so one store's rejection never blocks the other. A
-# failed store job can be re-run alone from the Actions page.
+# failed store job can be re-run alone from the Actions page; a store whose
+# credentials are missing is skipped with a warning. Same process as botjaeger/lurk.
+# A manual run (Chrome only, e.g. STAGED_PUBLISH to hold it after review) must pick
+# the tag under "Use workflow from"; on a branch the tag check fails.
+#
+# Chrome: the "chrome-web-store" environment holds the secrets CWS_PUBLISHER_ID,
+# CWS_EXTENSION_ID and the variables GCP_WORKLOAD_IDENTITY_PROVIDER, GCP_SERVICE_ACCOUNT
+# (keyless sign-in), or the secrets CWS_CLIENT_ID, CWS_CLIENT_SECRET, CWS_REFRESH_TOKEN.
+# Firefox: repository secrets AMO_JWT_ISSUER, AMO_JWT_SECRET. See README.md, "Release".
 on:
   push:
     tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      publish_type:
+        description: DEFAULT_PUBLISH goes live after review; STAGED_PUBLISH waits for you
+        type: choice
+        options: [DEFAULT_PUBLISH, STAGED_PUBLISH]
+        default: DEFAULT_PUBLISH
 
+# Read-only by default; only github-release writes (it creates the release).
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: release
@@ -52,48 +68,74 @@ jobs:
           node scripts/zip-chrome.mjs
           node scripts/zip-firefox.mjs
           # AMO reviewers rebuild from this archive (see SOURCE_BUILD.md).
-          git archive --format=zip -o brainrot-source.zip HEAD
+          git archive --format=zip -o dist/brainrot-source.zip HEAD
 
       - uses: actions/upload-artifact@v7
         with:
           name: packages
           path: |
-            brainrot-chrome.zip
-            brainrot-firefox.zip
-            brainrot-source.zip
+            dist/brainrot-chrome.zip
+            dist/brainrot-firefox.zip
+            dist/brainrot-source.zip
           if-no-files-found: error
 
   chrome:
     needs: build
     runs-on: ubuntu-latest
+    environment: chrome-web-store
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation
     env:
-      # Chrome Web Store API (https://github.com/fregante/chrome-webstore-upload-keys)
-      EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
-      PUBLISHER_ID: ${{ secrets.CHROME_PUBLISHER_ID }}
-      CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
-      CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
-      REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+      # Chrome Web Store API v2 (scripts/cws-publish.mjs).
+      CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+      CWS_PUBLISHER_ID: ${{ secrets.CWS_PUBLISHER_ID }}
+      CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+      CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+      CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+      CWS_PUBLISH_TYPE: ${{ inputs.publish_type || 'DEFAULT_PUBLISH' }}
+      KEYLESS: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && vars.GCP_SERVICE_ACCOUNT != '' }}
     steps:
       - name: Warn about missing secrets
-        if: env.EXTENSION_ID == '' || env.REFRESH_TOKEN == ''
-        run: echo "::warning::Chrome Web Store secrets not set; Chrome was NOT published"
+        if: env.CWS_EXTENSION_ID == '' || (env.KEYLESS != 'true' && env.CWS_REFRESH_TOKEN == '')
+        run: echo "::warning::Chrome Web Store credentials not set; Chrome was NOT published"
+
+      # The publish script reads manifest.json (tag check); the zip comes from the build job.
+      - uses: actions/checkout@v7
+        if: env.CWS_EXTENSION_ID != '' && (env.KEYLESS == 'true' || env.CWS_REFRESH_TOKEN != '')
 
       - uses: actions/download-artifact@v8
-        if: env.EXTENSION_ID != '' && env.REFRESH_TOKEN != ''
+        if: env.CWS_EXTENSION_ID != '' && (env.KEYLESS == 'true' || env.CWS_REFRESH_TOKEN != '')
         with:
           name: packages
+          path: dist
 
       - uses: actions/setup-node@v7
-        if: env.EXTENSION_ID != '' && env.REFRESH_TOKEN != ''
+        if: env.CWS_EXTENSION_ID != '' && (env.KEYLESS == 'true' || env.CWS_REFRESH_TOKEN != '')
         with:
           node-version: 22
 
+      # Right before the upload: the access token lasts an hour.
+      - name: Sign in as the service account (no key)
+        id: gcp
+        if: env.CWS_EXTENSION_ID != '' && env.KEYLESS == 'true'
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+          create_credentials_file: false
+
       - name: Publish to Chrome Web Store
-        if: env.EXTENSION_ID != '' && env.REFRESH_TOKEN != ''
-        run: npx --yes chrome-webstore-upload-cli@4 --source brainrot-chrome.zip
+        if: env.CWS_EXTENSION_ID != '' && (env.KEYLESS == 'true' || env.CWS_REFRESH_TOKEN != '')
+        run: node scripts/cws-publish.mjs
+        env:
+          CWS_ACCESS_TOKEN: ${{ steps.gcp.outputs.access_token }}
 
   firefox:
     needs: build
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     env:
       # addons.mozilla.org API key (https://addons.mozilla.org/developers/addon/api/key/)
@@ -126,7 +168,10 @@ jobs:
 
   github-release:
     needs: build
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v8
         with:

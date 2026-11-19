@@ -22,7 +22,7 @@ pnpm typecheck          # tsc --noEmit
 pnpm build              # dist/ + dist/chromium + dist/firefox + dist/safari
 pnpm build:base         # Vite only (dist/ root)
 pnpm build:chromium     # build:base + dist/chromium (likewise build:firefox, build:safari)
-pnpm chrome:zip         # build + brainrot-chrome.zip (likewise firefox:zip)
+pnpm chrome:zip         # build + dist/brainrot-chrome.zip (likewise firefox:zip)
 pnpm firefox:run        # web-ext on dist/firefox
 pnpm safari:run         # macOS + Xcode; app builds to /tmp/brainrot-safari
 pnpm dev:site           # Marketing site dev server (site/ package)
@@ -86,7 +86,7 @@ A new stored value must also be listed in `site/privacy.html` ("What the extensi
 
 - `scripts/package-browser-builds.mjs` copies it to `dist/chromium/` (base manifest) and `dist/firefox/` (deep-merged with `manifest.firefox.json`).
 - `scripts/package-safari-builds.mjs` writes `dist/safari/` (merged with `manifest.safari.json`); `scripts/build-safari-app.mjs` runs `xcodebuild` on `safari/`.
-- `scripts/zip-chrome.mjs` and `scripts/zip-firefox.mjs` write the store zips at the repo root (git-ignored).
+- `scripts/zip-chrome.mjs` and `scripts/zip-firefox.mjs` write the store zips to `dist/` (`dist/brainrot-chrome.zip`, `dist/brainrot-firefox.zip`; git-ignored).
 
 Background, content and content-main bundles must stay self-contained (classic scripts, no `import`). Rollup splits any module imported by two entries into a shared chunk, so never import a module into those bundles that a page (popup, changelog) also imports; `tests/browser-packaging.test.ts` fails if a bundle starts with `import`.
 
@@ -111,9 +111,9 @@ Workflows:
 |----------|---------|------|
 | `ci.yml` | pull request, push to other branches | `pnpm check`, extension build, `pnpm e2e`, site build |
 | `site.yml` | push to `main`, manual | `pnpm check` + site build, then deploys the site |
-| `release.yml` | `v*.*.*` tag | `build` job (version check, `pnpm check`, `pnpm e2e`, zips, `git archive` source zip); then `chrome`, `firefox` and `github-release` jobs in parallel |
+| `release.yml` | `v*.*.*` tag; manual on a tag (Chrome only) | `build` job (version check, `pnpm check`, `pnpm e2e`, zips, `git archive` source zip); then `chrome`, `firefox` and `github-release` jobs in parallel |
 
-The store jobs are independent: one store's rejection never skips the other, and a failed job can be re-run alone from the Actions page. A store is skipped with a warning when its secrets (`CHROME_*`, `AMO_JWT_*`) are missing. AMO reviewers rebuild from the source zip with `SOURCE_BUILD.md`. Safari is not automated.
+The store jobs are independent: one store's rejection never skips the other, and a failed job can be re-run alone from the Actions page. A store is skipped with a warning when its credentials are missing (Firefox: repository secrets `AMO_JWT_*`; Chrome: the `chrome-web-store` environment's `CWS_EXTENSION_ID`, plus either its `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT` variables or its `CWS_CLIENT_ID`/`CWS_CLIENT_SECRET`/`CWS_REFRESH_TOKEN` OAuth secrets; `CWS_PUBLISHER_ID` is always needed). The Chrome job uploads with `scripts/cws-publish.mjs` (API v2) and signs in keyless through Workload Identity Federation when those variables are set; setup in `README.md`, "Release". A manual run (`workflow_dispatch` on the tag, `publish_type` `DEFAULT_PUBLISH` or `STAGED_PUBLISH`) publishes Chrome only. The workflow matches botjaeger/lurk's. AMO reviewers rebuild from the source zip with `SOURCE_BUILD.md`. Safari is not automated.
 
 ## Testing
 

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const firefoxDir = resolve(rootDir, "dist/firefox");
-const outFile = resolve(rootDir, "brainrot-firefox.zip");
+const outFile = resolve(rootDir, "dist/brainrot-firefox.zip");
 
 if (!existsSync(firefoxDir)) {
   console.error("dist/firefox/ not found — run `pnpm build` first.");

@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const chromiumDir = resolve(rootDir, "dist/chromium");
-const outFile = resolve(rootDir, "brainrot-chrome.zip");
+const outFile = resolve(rootDir, "dist/brainrot-chrome.zip");
 
 if (!existsSync(chromiumDir)) {
   console.error("dist/chromium/ not found — run `pnpm build` first.");
