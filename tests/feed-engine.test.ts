@@ -163,6 +163,83 @@ describe("startFeedEngine", () => {
     expect(scrollIntoView).toHaveBeenCalledTimes(1);
     engine.stop();
   });
+
+  it("leaves no listener behind after many rebinds and stop()", () => {
+    const dom = loadShortsDom();
+    const { document, EventTarget } = dom.window;
+    const videos = [getVideoById(document, "#video-1"), getVideoById(document, "#video-2")];
+    const keys = [getRendererById(document, "#short-1"), getRendererById(document, "#short-2")];
+    let active = 0;
+    const live = new Map<string, number>();
+    const track = (name: "addEventListener" | "removeEventListener", delta: number) => {
+      const original = EventTarget.prototype[name];
+      vi.spyOn(EventTarget.prototype, name).mockImplementation(function (
+        this: EventTarget,
+        type: string,
+        ...rest: unknown[]
+      ) {
+        const id = `${this instanceof dom.window.HTMLMediaElement ? "video" : "doc"}:${type}`;
+        live.set(id, (live.get(id) ?? 0) + delta);
+        return (original as (...args: unknown[]) => void).call(this, type, ...rest);
+      });
+    };
+    track("addEventListener", 1);
+    track("removeEventListener", -1);
+
+    const engine = startFeedEngine({
+      document,
+      window: dom.window,
+      adapters: [
+        {
+          name: "test",
+          siteKey: "test",
+          matches: () => true,
+          findActiveItem: () => ({ video: videos[active], key: keys[active] }),
+          advancePlayback: () => ({ method: "noop" }),
+        },
+      ],
+    });
+    for (let i = 0; i < 10; i += 1) {
+      active = (active + 1) % 2;
+      engine.rebind();
+    }
+    engine.stop();
+
+    const leaked = [...live].filter(
+      ([id, count]) => count !== 0 && id.startsWith("video:") && id !== "video:",
+    );
+    expect(leaked).toEqual([]);
+    expect(live.get("doc:visibilitychange")).toBe(0);
+    expect(live.get("doc:play")).toBe(0);
+  });
+
+  it("does not advance a video the user paused within the last 0.25 s", () => {
+    vi.useFakeTimers();
+    try {
+      const dom = loadShortsDom();
+      const { document, Event } = dom.window;
+      const firstVideo = getVideoById(document, "#video-1");
+      const scrollIntoView = mockScrollIntoView(getRendererById(document, "#short-2"));
+      Object.defineProperty(firstVideo, "duration", { configurable: true, value: 30 });
+      Object.defineProperty(firstVideo, "currentTime", { configurable: true, value: 29.9 });
+
+      const engine = startFeedEngine({ document, window: dom.window });
+
+      // A pause fires `pause`, then `timeupdate`, both with the playhead near the end.
+      firstVideo.dispatchEvent(new Event("pause"));
+      firstVideo.dispatchEvent(new Event("timeupdate"));
+      vi.advanceTimersByTime(1000);
+      expect(scrollIntoView).not.toHaveBeenCalled();
+
+      // Playing it on to the end still advances.
+      firstVideo.dispatchEvent(new Event("play"));
+      firstVideo.dispatchEvent(new Event("ended"));
+      expect(scrollIntoView).toHaveBeenCalledTimes(1);
+      engine.stop();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
 
 describe("getRealHidden spoof bypass", () => {

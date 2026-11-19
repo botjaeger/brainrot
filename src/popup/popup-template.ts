@@ -1,5 +1,5 @@
 import { APP_NAME } from "../shared/brand.js";
-import { escapeHtml, THEME_TOKENS_CSS } from "../shared/page-html.js";
+import { escapeHtml, REDUCED_MOTION_CSS, THEME_TOKENS_CSS } from "../shared/page-html.js";
 
 const iconSunSvg = `
   <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -84,6 +84,7 @@ export function createPopupHtml({ version }: { version: string }): string {
       body {
         margin: 0;
         width: 400px;
+        max-width: 100%;
         min-width: 320px;
         max-height: 600px;
         overflow-y: auto;
@@ -125,6 +126,7 @@ export function createPopupHtml({ version }: { version: string }): string {
         font-weight: 500;
         color: var(--muted);
         margin: 4px 0 0 4px;
+        min-height: 24px;
         padding: 3px 8px;
         background: none;
         border: none;
@@ -146,7 +148,7 @@ export function createPopupHtml({ version }: { version: string }): string {
         width: 7px;
         height: 7px;
         border-radius: 50%;
-        background: var(--hero-bg);
+        background: var(--accent-ink);
         box-shadow: 0 0 0 2px var(--bg);
       }
 
@@ -191,7 +193,7 @@ export function createPopupHtml({ version }: { version: string }): string {
         margin-bottom: 32px;
         color: var(--hero-text);
         position: relative;
-        box-shadow: 0 8px 24px rgba(255, 193, 7, 0.15);
+        box-shadow: var(--hero-glow);
         transition: transform 0.15s ease;
         cursor: pointer;
         user-select: none;
@@ -199,10 +201,6 @@ export function createPopupHtml({ version }: { version: string }): string {
 
       .hero:active {
         transform: scale(0.98);
-      }
-
-      :root[data-theme="dark"] .hero {
-        box-shadow: 0 0 30px rgba(255, 194, 10, 0.3);
       }
 
       .hero-top {
@@ -303,6 +301,7 @@ export function createPopupHtml({ version }: { version: string }): string {
       .reload-btn {
         width: 28px;
         height: 28px;
+        flex: none;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -349,7 +348,7 @@ export function createPopupHtml({ version }: { version: string }): string {
       .reset-btn:hover,
       .reset-btn[data-confirming="true"] {
         color: var(--danger-ink);
-        text-shadow: 0 0 12px rgba(229, 57, 53, 0.4);
+        text-shadow: var(--danger-glow);
       }
 
       /* Stats */
@@ -363,6 +362,7 @@ export function createPopupHtml({ version }: { version: string }): string {
         letter-spacing: 0.1em;
         color: var(--muted);
         margin-bottom: 0;
+        min-height: 28px;
         padding: 4px;
         cursor: pointer;
         user-select: none;
@@ -436,6 +436,7 @@ export function createPopupHtml({ version }: { version: string }): string {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 12px;
         transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       }
 
@@ -462,6 +463,8 @@ export function createPopupHtml({ version }: { version: string }): string {
       }
 
       .stats-right {
+        text-align: right;
+        white-space: nowrap;
         font-size: 14px;
         font-weight: 700;
         color: var(--ink);
@@ -525,6 +528,22 @@ export function createPopupHtml({ version }: { version: string }): string {
         outline-color: var(--hero-text);
       }
 
+      /* The switch's real input is invisible: ring its track instead. */
+      .switch input:focus-visible {
+        outline: none;
+      }
+
+      .switch input:focus-visible + .track {
+        outline: 2px solid var(--hero-text);
+        outline-offset: 3px;
+      }
+
+      /* Hidden until the stored settings are rendered, so the popup never
+         flashes its defaults (switch off, "Checking active tab"). */
+      html:not(.is-ready) body {
+        opacity: 0;
+      }
+
       /* Animations */
       .is-ready body {
         animation: fadeIn 0.3s ease-out;
@@ -534,9 +553,10 @@ export function createPopupHtml({ version }: { version: string }): string {
         from { opacity: 0; transform: translateY(4px); }
         to { opacity: 1; transform: translateY(0); }
       }
-    </style>
+${REDUCED_MOTION_CSS}    </style>
   </head>
   <body>
+    <main>
     <div class="header">
       <div class="logo">
         <img class="logo-mascot" src="../assets/mascot.png" alt="" />
@@ -556,7 +576,7 @@ export function createPopupHtml({ version }: { version: string }): string {
           <p class="hero-subtitle" data-status-copy>No taps. No swipes. Just watch.</p>
         </div>
         <label class="switch">
-          <input type="checkbox" id="enabled-toggle" aria-labelledby="hero-title">
+          <input type="checkbox" id="enabled-toggle" role="switch" aria-labelledby="hero-title">
           <span class="track"><span class="thumb"></span></span>
         </label>
       </div>
@@ -618,6 +638,7 @@ export function createPopupHtml({ version }: { version: string }): string {
       Try it: open YouTube Shorts<br>
       and let a video play to the end.
     </div>
+    </main>
 
     <script type="module" src="./index.js"></script>
   </body>

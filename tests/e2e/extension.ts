@@ -39,6 +39,20 @@ export const test = base.extend<Fixtures>({
   },
   serviceWorker: async ({ context }, use) => {
     const worker = context.serviceWorkers()[0] ?? (await context.waitForEvent("serviceworker"));
+    // Wait until onInstalled has run: it reloads open feed tabs, so a page opened before
+    // it queries the tabs would be reloaded mid-test. It marks the changelog seen and
+    // registers the MAIN-world spoof in the same handler, after starting the tab query.
+    await base.expect
+      .poll(
+        () =>
+          worker.evaluate(async () => {
+            const { changelogSeenVersion } = await chrome.storage.local.get("changelogSeenVersion");
+            const scripts = await chrome.scripting.getRegisteredContentScripts();
+            return Boolean(changelogSeenVersion) && scripts.length > 0;
+          }),
+        { timeout: 10_000 },
+      )
+      .toBe(true);
     await use(worker);
   },
   extensionId: async ({ serviceWorker }, use) => {

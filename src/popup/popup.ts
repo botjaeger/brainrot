@@ -8,6 +8,11 @@ import { openExtensionPage, readActiveSupportedSite, reloadActiveTab } from "./s
 
 const RESET_CONFIRM_MS = 4000;
 
+/** A count with the reader's digit grouping: 1234567 reads as "1,234,567". */
+function formatCount(count: number): string {
+  return count.toLocaleString();
+}
+
 export interface PopupMountEnvironment {
   document: Document;
   store: ExtensionSettingsStore;
@@ -62,11 +67,9 @@ function renderExtensionState(
     : "Auto scroll paused.";
 
   // Update Stats counts
-  for (const [key, count] of Object.entries(settings.scrollStats ?? {})) {
-    const span = document.querySelector(`[data-count="${key}"]`);
-    if (span) {
-      span.textContent = String(count);
-    }
+  // Walk the page's own rows, never selectors built from stored keys.
+  for (const span of document.querySelectorAll<HTMLElement>("[data-count]")) {
+    span.textContent = formatCount(settings.scrollStats?.[span.dataset.count ?? ""] ?? 0);
   }
 
   // Update today total
@@ -85,7 +88,7 @@ function renderExtensionState(
     if (todaySpan) todaySpan.textContent = "";
     if (todayCopy) todayCopy.textContent = "Start watching 👀";
   } else {
-    if (todaySpan) todaySpan.textContent = String(todayTotal);
+    if (todaySpan) todaySpan.textContent = formatCount(todayTotal);
     if (todayCopy) {
       todayCopy.textContent =
         todayTotal < 25

@@ -31,21 +31,39 @@ async function readScrollStorage(): Promise<ScrollStorage> {
   const storage = getStorageApi();
   if (!storage) return { scrollStats: {}, todayDate: "", todayStats: {} };
 
-  const maybeResult = storage.local.get(SCROLL_KEYS);
+  // Callback-only implementations throw when called without a callback.
+  let maybeResult: unknown;
+  try {
+    maybeResult = storage.local.get(SCROLL_KEYS);
+  } catch {
+    maybeResult = undefined;
+  }
   const result: Record<string, unknown> = isPromiseLike<Record<string, unknown>>(maybeResult)
     ? await maybeResult
     : await new Promise<Record<string, unknown>>((resolve) => {
         storage.local.get(SCROLL_KEYS, (items: Record<string, unknown>) => resolve(items));
       });
 
-  const stats = result["scrollStats"];
-  const todayStats = result["todayStats"];
   return {
-    scrollStats: stats && typeof stats === "object" ? (stats as Record<string, number>) : {},
+    scrollStats: normalizeCounts(result["scrollStats"]),
     todayDate: typeof result["todayDate"] === "string" ? result["todayDate"] : "",
-    todayStats:
-      todayStats && typeof todayStats === "object" ? (todayStats as Record<string, number>) : {},
+    todayStats: normalizeCounts(result["todayStats"]),
   };
+}
+
+// Same rule as normalizeCounts in src/shared/extension-settings.ts (cannot be imported:
+// a shared chunk would become an `import` in the content bundle).
+function normalizeCounts(value: unknown): Record<string, number> {
+  const counts: Record<string, number> = {};
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return counts;
+  }
+  for (const [key, count] of Object.entries(value)) {
+    if (typeof count === "number" && Number.isSafeInteger(count) && count >= 0) {
+      counts[key] = count;
+    }
+  }
+  return counts;
 }
 
 async function writeScrollStorage(data: ScrollStorage): Promise<void> {
@@ -62,7 +80,17 @@ async function writeScrollStorage(data: ScrollStorage): Promise<void> {
   });
 }
 
-export async function incrementScrollStat(siteKey: string): Promise<void> {
+// Increments run one at a time: two overlapping read-then-write calls would
+// both read the same count and one increment would be lost.
+let pending: Promise<void> = Promise.resolve();
+
+export function incrementScrollStat(siteKey: string): Promise<void> {
+  const next = pending.then(() => applyIncrement(siteKey));
+  pending = next.catch(() => undefined);
+  return next;
+}
+
+async function applyIncrement(siteKey: string): Promise<void> {
   const data = await readScrollStorage();
   // en-CA formats as YYYY-MM-DD in local time, so "today" rolls over at local midnight.
   const today = new Date().toLocaleDateString("en-CA");

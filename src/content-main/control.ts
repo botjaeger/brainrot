@@ -78,11 +78,15 @@
     storage?.onChanged?.removeListener(onChanged);
   });
 
-  void readEnabled().then((nextEnabled) => {
-    if (abort.signal.aborted) return;
-    enabled = nextEnabled;
-    dispatchState();
-  });
+  void readEnabled()
+    .then((nextEnabled) => {
+      if (abort.signal.aborted) return;
+      enabled = nextEnabled;
+      dispatchState();
+    })
+    .catch(() => {
+      // Storage unreadable (e.g. extension context invalidated): the spoof stays dormant.
+    });
 })();
 
 export {};

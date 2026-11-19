@@ -1,6 +1,8 @@
 import { JSDOM } from "jsdom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { createChangelogHtml } from "../src/changelog/changelog-template.js";
 import { createPopupHtml } from "../src/popup/popup-template.js";
+import { REDUCED_MOTION_CSS, THEME_TOKENS_CSS } from "../src/shared/page-html.js";
 import { mountPopup } from "../src/popup/popup.js";
 import type {
   ExtensionSettings,
@@ -408,5 +410,76 @@ describe("mountPopup", () => {
     await mountPopup({ document: dom.window.document, store, readActiveSite: async () => null });
 
     expect(dom.window.document.documentElement.dataset.changelogUnseen).toBe("false");
+  });
+});
+
+describe("extension page templates", () => {
+  const pages = {
+    popup: createPopupHtml({ version: "0.0.0-test" }),
+    changelog: createChangelogHtml({ version: "0.1.4" }),
+  };
+
+  for (const [name, html] of Object.entries(pages)) {
+    it(`${name}: takes every colour from the shared tokens`, () => {
+      const outsideTokens = html.replace(THEME_TOKENS_CSS, "");
+      expect(outsideTokens.match(/#[0-9a-f]{3,8}\b|\brgba?\(|\bhsla?\(/gi)).toBeNull();
+    });
+
+    it(`${name}: stops its motion under prefers-reduced-motion`, () => {
+      expect(html).toMatch(/\b(?:transition|animation)\b/);
+      expect(html).toContain(REDUCED_MOTION_CSS);
+    });
+
+    it(`${name}: stays hidden until the stored theme is applied`, () => {
+      expect(html).toContain("html:not(.is-ready) body");
+    });
+  }
+
+  it("popup: wraps its content in a main landmark and exposes the switch role", () => {
+    const doc = new JSDOM(pages.popup).window.document;
+    expect(doc.querySelectorAll("main")).toHaveLength(1);
+    expect(doc.querySelector("main #enabled-toggle")?.getAttribute("role")).toBe("switch");
+    expect(doc.querySelectorAll("body > :not(main):not(script)")).toHaveLength(0);
+  });
+});
+
+describe("mountPopup with corrupt stored counts", () => {
+  it("renders a key that is not a valid selector, and resets counts the store dropped", async () => {
+    const dom = loadPopupDom();
+    const store: ExtensionSettingsStore = {
+      read: async () => makeSettings({ scrollStats: { 'a"]b': 1, tiktok: 2 } }),
+      write: vi.fn(async () => undefined),
+    };
+
+    await mountPopup({ document: dom.window.document, store, readActiveSite: async () => null });
+
+    const doc = dom.window.document;
+    expect(doc.documentElement.classList.contains("is-ready")).toBe(true);
+    expect(doc.querySelector("[data-count='tiktok']")?.textContent).toBe("2");
+    expect(doc.querySelector("[data-count='youtube-shorts']")?.textContent).toBe("0");
+  });
+});
+
+describe("mountPopup with large counts", () => {
+  it("groups the digits of site and today counts", async () => {
+    const dom = loadPopupDom();
+    const today = new Date().toLocaleDateString("en-CA");
+    const store: ExtensionSettingsStore = {
+      read: async () =>
+        makeSettings({
+          scrollStats: { tiktok: 1234567 },
+          todayDate: today,
+          todayStats: { tiktok: 1234567 },
+        }),
+      write: vi.fn(async () => undefined),
+    };
+
+    await mountPopup({ document: dom.window.document, store, readActiveSite: async () => null });
+
+    const doc = dom.window.document;
+    const grouped = (1234567).toLocaleString();
+    expect(grouped).not.toBe("1234567");
+    expect(doc.querySelector("[data-count='tiktok']")?.textContent).toBe(grouped);
+    expect(doc.querySelector("[data-today-count]")?.textContent).toBe(grouped);
   });
 });

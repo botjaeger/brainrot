@@ -1,6 +1,6 @@
 /**
  * Store URL configuration with typed states.
- * All URLs default to coming_soon until store listings are confirmed.
+ * A store is coming_soon until its listing is confirmed, then live with its URL.
  */
 
 export type StoreUrlState = { state: "coming_soon" } | { state: "live"; url: string };

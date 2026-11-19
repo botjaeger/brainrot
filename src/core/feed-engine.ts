@@ -320,7 +320,7 @@ export function startFeedEngine({
       if (
         stopped ||
         !isCurrentIdentity(generation, video, itemKey, source) ||
-        (requireNearEnd && !isPlaybackNearEnd(video))
+        (requireNearEnd && (userPaused || !isPlaybackNearEnd(video)))
       ) {
         scheduleRebind();
         return;
@@ -350,6 +350,8 @@ export function startFeedEngine({
     if (
       advancedGeneration === playbackGeneration ||
       !isPlaybackNearEnd(activeVideo) ||
+      // Pausing fires `timeupdate`: a video the user stopped near the end stays.
+      userPaused ||
       getRealHidden(document)
     ) {
       return;

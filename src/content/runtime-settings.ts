@@ -62,7 +62,13 @@ async function readStorageSnapshot(): Promise<StorageSnapshot> {
     return {};
   }
 
-  const maybeSnapshot = storage.local.get(STORAGE_KEYS);
+  // Callback-only implementations throw when called without a callback.
+  let maybeSnapshot: unknown;
+  try {
+    maybeSnapshot = storage.local.get(STORAGE_KEYS);
+  } catch {
+    maybeSnapshot = undefined;
+  }
 
   if (isPromiseLike<StorageSnapshot>(maybeSnapshot)) {
     return await maybeSnapshot;

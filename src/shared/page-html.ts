@@ -19,6 +19,8 @@ export const THEME_TOKENS_CSS = `
         --stats-row-active-bg: #fefcf3;
         --stats-row-active-border: rgba(255, 193, 7, 0.5);
         --stats-glow: none;
+        --hero-glow: 0 8px 24px rgba(255, 193, 7, 0.15);
+        --danger-glow: 0 0 12px rgba(229, 57, 53, 0.4);
 
         --font-main: "Segoe UI", "Segoe UI Variable", system-ui, -apple-system, sans-serif;
         --shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -41,7 +43,20 @@ export const THEME_TOKENS_CSS = `
         --stats-row-active-bg: #1a1a1a;
         --stats-row-active-border: rgba(255, 194, 10, 0.4);
         --stats-glow: 0 0 15px rgba(255, 194, 10, 0.25);
+        --hero-glow: 0 0 30px rgba(255, 194, 10, 0.3);
+        --danger-glow: 0 0 12px rgba(229, 57, 53, 0.4);
         --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
+`;
+
+// Every transition and animation in the page templates stops for users who ask
+// for less motion. Include it in each template that moves.
+export const REDUCED_MOTION_CSS = `
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation: none !important;
+          transition: none !important;
+        }
       }
 `;
 

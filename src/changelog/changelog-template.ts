@@ -5,7 +5,7 @@ import {
   type ChangeKind,
   type ChangelogEntry,
 } from "../shared/changelog.js";
-import { escapeHtml, THEME_TOKENS_CSS } from "../shared/page-html.js";
+import { escapeHtml, REDUCED_MOTION_CSS, THEME_TOKENS_CSS } from "../shared/page-html.js";
 
 const KIND_LABELS: Record<ChangeKind, string> = {
   new: "New",
@@ -274,7 +274,7 @@ export function createChangelogHtml({
           margin-top: 0;
         }
       }
-    </style>
+${REDUCED_MOTION_CSS}    </style>
   </head>
   <body>
     <main class="page">

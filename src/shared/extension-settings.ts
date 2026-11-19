@@ -81,7 +81,24 @@ function isPromiseLike<T>(value: unknown): value is Promise<T> {
   return Boolean(value) && typeof (value as { then?: unknown }).then === "function";
 }
 
-function normalizeSettings(snapshot: StorageSnapshot): ExtensionSettings {
+// Counts come from storage the extension does not fully control (older
+// versions, manual edits): keep only non-negative safe integers, so the popup
+// never shows "abc", "-5" or "1e+21" or builds a total by string concatenation.
+function normalizeCounts(value: unknown, fallback: Record<string, number>): Record<string, number> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return fallback;
+  }
+
+  const counts: Record<string, number> = {};
+  for (const [key, count] of Object.entries(value)) {
+    if (typeof count === "number" && Number.isSafeInteger(count) && count >= 0) {
+      counts[key] = count;
+    }
+  }
+  return counts;
+}
+
+function normalizeSettings(snapshot: StorageSnapshot = {}): ExtensionSettings {
   return {
     enabled:
       typeof snapshot.enabled === "boolean" ? snapshot.enabled : DEFAULT_EXTENSION_SETTINGS.enabled,
@@ -89,18 +106,12 @@ function normalizeSettings(snapshot: StorageSnapshot): ExtensionSettings {
       typeof snapshot.debugLogging === "boolean"
         ? snapshot.debugLogging
         : DEFAULT_EXTENSION_SETTINGS.debugLogging,
-    scrollStats:
-      snapshot.scrollStats && typeof snapshot.scrollStats === "object"
-        ? (snapshot.scrollStats as Record<string, number>)
-        : DEFAULT_EXTENSION_SETTINGS.scrollStats,
+    scrollStats: normalizeCounts(snapshot.scrollStats, DEFAULT_EXTENSION_SETTINGS.scrollStats),
     todayDate:
       typeof snapshot.todayDate === "string"
         ? snapshot.todayDate
         : DEFAULT_EXTENSION_SETTINGS.todayDate,
-    todayStats:
-      snapshot.todayStats && typeof snapshot.todayStats === "object"
-        ? (snapshot.todayStats as Record<string, number>)
-        : DEFAULT_EXTENSION_SETTINGS.todayStats,
+    todayStats: normalizeCounts(snapshot.todayStats, DEFAULT_EXTENSION_SETTINGS.todayStats),
     theme:
       snapshot.theme === "light" || snapshot.theme === "dark"
         ? snapshot.theme
@@ -119,15 +130,22 @@ async function readStorageSnapshot(): Promise<StorageSnapshot> {
     return {};
   }
 
-  const maybeSnapshot = storage.local.get(STORAGE_KEYS);
+  // A callback-only storage API throws when get() is called without a callback.
+  let maybeSnapshot: unknown;
+  try {
+    maybeSnapshot = storage.local.get(STORAGE_KEYS);
+  } catch {
+    maybeSnapshot = undefined;
+  }
 
   if (isPromiseLike<StorageSnapshot>(maybeSnapshot)) {
     return await maybeSnapshot;
   }
 
   return await new Promise<StorageSnapshot>((resolve) => {
-    storage.local.get(STORAGE_KEYS, (items: StorageSnapshot) => {
-      resolve(items);
+    storage.local.get(STORAGE_KEYS, (items?: StorageSnapshot) => {
+      // A failed read (runtime.lastError) calls back with undefined.
+      resolve(items ?? {});
     });
   });
 }

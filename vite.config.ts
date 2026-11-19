@@ -40,7 +40,9 @@ function manifestPlugin(): Plugin {
       this.emitFile({
         type: "asset",
         fileName: "assets/mascot.png",
-        source: readFileSync(resolve(rootDir, "assets/mascot.png")),
+        // The pages draw it at 72px at most; 160px covers 2x screens. The full-size
+        // assets/mascot.png is for the README.
+        source: readFileSync(resolve(rootDir, "assets/mascot-160.png")),
       });
     },
   };

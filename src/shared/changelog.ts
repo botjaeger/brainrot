@@ -23,6 +23,39 @@ export function compareVersions(left: string, right: string): number {
 
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
+    version: "0.1.5",
+    changes: [
+      {
+        kind: "fixed",
+        text: "Pausing a video in its last moment no longer skips to the next one.",
+      },
+      {
+        kind: "fixed",
+        text: "Videos counted in quick succession are all counted; none are lost.",
+      },
+      {
+        kind: "fixed",
+        text: "Damaged saved stats no longer stop the popup from opening or show odd numbers.",
+      },
+      {
+        kind: "fixed",
+        text: "Brainrot keeps working in browsers whose storage only answers callbacks.",
+      },
+      {
+        kind: "improved",
+        text: "Large counts read with digit grouping, like 1,234,567, and stay on one line.",
+      },
+      {
+        kind: "improved",
+        text: "The popup fits narrow windows, shows a focus ring on the switch, and stops its animations when your system asks for reduced motion.",
+      },
+      {
+        kind: "improved",
+        text: "The new-version dot is easier to see on the light theme.",
+      },
+    ],
+  },
+  {
     version: "0.1.4",
     date: "2026-10-12",
     changes: [
