@@ -24,6 +24,7 @@ export function compareVersions(left: string, right: string): number {
 export const CHANGELOG: readonly ChangelogEntry[] = [
   {
     version: "0.1.5",
+    date: "2026-11-19",
     changes: [
       {
         kind: "fixed",

@@ -1,6 +1,6 @@
 # Firefox Source Build
 
-These instructions reproduce the Firefox package for Brainrot 0.1.4 from the
+These instructions reproduce the Firefox package for Brainrot 0.1.5 from the
 submitted source archive.
 
 ## Environment
@@ -28,7 +28,7 @@ pnpm exec web-ext build --source-dir dist/firefox --overwrite-dest
 The unpacked Firefox extension is written to `dist/firefox`.
 
 The uploadable archive is written to
-`web-ext-artifacts/brainrot-0.1.4.zip`.
+`web-ext-artifacts/brainrot-0.1.5.zip`.
 
 `pnpm build:firefox` runs Vite and applies the Firefox manifest overlay. The
 final `web-ext build` command packages those generated files without changing
